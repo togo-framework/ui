@@ -80,6 +80,11 @@ export {
 } from "./i18n/LanguageProvider";
 export type { LanguageContextValue, LanguageProviderProps } from "./i18n/LanguageProvider";
 
+// ── copilot artifacts (presentational renderers) ──
+export * from "./components/copilot/artifacts";
+export { SeverityChip } from "./components/intel/SeverityChip";
+export { default as MarkdownContent } from "./components/chat/MarkdownContent";
+
 // ── feedback (reporter surface) ──
 export * from "./components/feedback";
 
@@ -89,3 +94,13 @@ export type { DynamicSectionProps, SectionBoardProps, SectionModel, ModelOption 
 
 // ── utils ──
 export { cn } from "./lib/utils";
+
+// ── copilot (chat dock + streaming; host injects a CopilotClient) ──
+export { CopilotProvider, useCopilot } from "./components/copilot/CopilotProvider";
+export { default as UnifiedCopilotDock } from "./components/copilot/UnifiedCopilotDock";
+export { CopilotLauncher } from "./components/copilot/CopilotLauncher";
+export { default as ChatThread } from "./components/copilot/ChatThread";
+export { default as StreamingMessage } from "./components/copilot/StreamingMessage";
+export { default as ArtifactViewer } from "./components/copilot/ArtifactViewer";
+export { default as AgentSteps } from "./components/copilot/AgentSteps";
+export type { CopilotClient, CopilotRequest, CopilotEvent } from "./components/copilot/client";

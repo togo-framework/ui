@@ -2387,6 +2387,395 @@ declare const useT: () => LanguageContextValue;
  */
 declare const useLanguage: () => LanguageContextValue;
 
+/**
+ * A2UI artifact types — client-side mirror of cortex/internal/copilot/sse.go A2UIArtifact.
+ *
+ * Wire contract (version 1, additive):
+ *   {"type":"artifact","artifact":{"version":1,"kind":"table|chart|card|actions|markdown",
+ *     "title_en":"...","title_ar":"...","data":{...}}}
+ *
+ * Rule 8: bilingual — both title_en and title_ar carried; renderer picks by language prop.
+ * Rule 25: product-agnostic — no fetching, no context reads, pure typed shapes.
+ *
+ * Adding a new kind: add its data type here, add a case in ArtifactRenderer.tsx.
+ * The unknown-kind fallback in ArtifactRenderer renders a labeled JSON <details> block —
+ * forward-compatible for future kinds without a consumer upgrade.
+ */
+/** A column descriptor in an A2UI table artifact. */
+interface A2UITableColumn {
+    /** Stable accessor key — matches the property names in each row object. */
+    key: string;
+    /** English column header. */
+    label_en: string;
+    /** Arabic column header (optional; falls back to label_en). */
+    label_ar?: string;
+}
+/**
+ * Data payload for kind: "table". Two wire shapes are accepted (ArtifactTable
+ * normalizes both):
+ *  - SIMPLE (what the model emits): columns: string[], rows: unknown[][]
+ *  - RICH: columns: A2UITableColumn[], rows: Array<Record<string, unknown>>
+ */
+interface A2UITableData {
+    columns: Array<string | A2UITableColumn>;
+    rows: Array<Record<string, unknown> | unknown[]>;
+}
+/** One data series in an A2UI chart. */
+interface A2UIChartSeries {
+    label_en: string;
+    label_ar?: string;
+    points: Array<{
+        x: string | number;
+        y: number;
+    }>;
+}
+/** Data payload for kind: "chart". */
+interface A2UIChartData {
+    type: 'bar' | 'line' | 'pie';
+    series: A2UIChartSeries[];
+}
+/** One field row in an A2UI card. */
+interface A2UICardField {
+    label: string;
+    value: string | number;
+}
+/** Data payload for kind: "card". */
+interface A2UICardData {
+    title_en?: string;
+    title_ar?: string;
+    body_en?: string;
+    body_ar?: string;
+    /** Severity level — maps to SeverityChip tokens when provided. */
+    severity?: 'critical' | 'high' | 'medium' | 'low';
+    /** Key/value detail rows rendered below the body. */
+    fields?: A2UICardField[];
+}
+/** One action item in an A2UI actions artifact. */
+interface A2UIActionItem {
+    id: string;
+    label_en: string;
+    label_ar?: string;
+    /**
+     * When provided, clicking this action sends the prompt as a new user message
+     * via the onAction callback. Use this to pre-fill follow-up questions.
+     */
+    prompt?: string;
+}
+/** Data payload for kind: "actions". */
+interface A2UIActionsData {
+    items: A2UIActionItem[];
+}
+/** Data payload for kind: "markdown". */
+interface A2UIMarkdownData {
+    content: string;
+}
+/** One candidate client returned by the discovery tool. */
+interface A2UIClientCandidate {
+    name: string;
+    website_url?: string;
+    sector?: string;
+    summary?: string;
+}
+/**
+ * Data payload for kind: "client_candidates".
+ * Renders a list of candidate clients the user can pick from.
+ */
+interface A2UIClientCandidatesData {
+    candidates: A2UIClientCandidate[];
+    /** Optional prompt shown above the list (instruction / clarification). */
+    prompt?: string;
+}
+/** One field entry in a client field picker. */
+interface A2UIClientField {
+    /** Stable field key (maps to the DB column / API field name). */
+    key: string;
+    /** English label. */
+    label_en: string;
+    /** Arabic label (optional; falls back to label_en). */
+    label_ar?: string;
+    /** Current stored value (may be empty/absent). */
+    current?: string;
+    /** AI-suggested value for this field. */
+    suggested?: string;
+}
+/**
+ * Data payload for kind: "client_field_picker".
+ * Lets the user select which fields to fill / confirm before saving.
+ */
+interface A2UIClientFieldPickerData {
+    fields: A2UIClientField[];
+}
+/** One diff row in a client save confirmation. */
+interface A2UIClientDiffRow {
+    /** Stable field key. */
+    field: string;
+    /** English label. */
+    label_en: string;
+    /** Arabic label (optional). */
+    label_ar?: string;
+    /** Current stored value (absent = field is new). */
+    old?: string;
+    /** New / proposed value. */
+    new: string;
+}
+/**
+ * Data payload for kind: "client_diff_confirm".
+ * Shows a before/after diff the user must confirm before the save is committed.
+ */
+interface A2UIClientDiffConfirmData {
+    /** Dialog title in English. */
+    title_en: string;
+    /** Dialog title in Arabic (optional). */
+    title_ar?: string;
+    rows: A2UIClientDiffRow[];
+    /** Confirm button label in English. */
+    confirm_label_en: string;
+    /** Confirm button label in Arabic (optional). */
+    confirm_label_ar?: string;
+}
+/** One opening question / starter for a persona chat. */
+interface A2UIPersonaStarter {
+    /** English chip label. */
+    label_en: string;
+    /** Arabic chip label (optional; falls back to label_en). */
+    label_ar?: string;
+    /** The prompt sent to the copilot when the user clicks this chip. */
+    prompt: string;
+}
+/**
+ * Data payload for kind: "persona_starters".
+ * Renders suggested opening questions that launch a persona conversation.
+ */
+interface A2UIPersonaStartersData {
+    starters: A2UIPersonaStarter[];
+}
+/**
+ * ArtifactInteraction — a structured post-back emitted by interactive artifact
+ * renderers when the user makes a selection or confirms an action.
+ *
+ * Sent from the renderer → ArtifactRenderer → UnifiedCopilotDock →
+ * CopilotProvider.handleArtifactInteract → CopilotRequest.interaction.
+ *
+ * Kind strings used by the four Phase-3 renderers:
+ *   "select_candidate"  — user picked a client candidate
+ *   "pick_fields"       — user selected fields to fill/update
+ *   "confirm_diff"      — user confirmed (or cancelled) a before/after diff save
+ *   "persona_start"     — user clicked a persona opening prompt chip
+ *
+ * The type is open (string) so future renderers can extend without a breaking
+ * change; consumers should handle unknown kinds defensively.
+ */
+interface ArtifactInteraction {
+    kind: 'select_candidate' | 'pick_fields' | 'confirm_diff' | 'persona_start' | string;
+    payload: Record<string, unknown>;
+}
+type A2UIKind = 'table' | 'chart' | 'card' | 'actions' | 'markdown' | 'client_candidates' | 'client_field_picker' | 'client_diff_confirm' | 'persona_starters';
+/**
+ * A2UIArtifact — the versioned structured artifact the Cortex copilot stream emits.
+ *
+ * Mirrors internal/copilot/sse.go A2UIArtifact (version 1).
+ *
+ * `kind` is the rendering discriminator. Renderers pattern-match on it.
+ * Unknown kinds are forwarded to the fallback renderer — never crash.
+ *
+ * `data` is typed per kind. Consumers narrow via `artifact.kind`:
+ *
+ * ```ts
+ * if (artifact.kind === 'table') {
+ *   const d = artifact.data as A2UITableData
+ * }
+ * ```
+ */
+interface A2UIArtifact$1 {
+    /** Schema version. Currently 1. */
+    version: number;
+    /** Rendering hint: "table" | "chart" | "card" | "actions" | "markdown" | unknown future kinds. */
+    kind: string;
+    /** Display title in English. */
+    title_en?: string;
+    /** Display title in Arabic. Fallback to title_en when absent. */
+    title_ar?: string;
+    /**
+     * Kind-specific payload. Cast to the matching A2UI*Data type after narrowing kind.
+     * Use `unknown` to stay forward-compatible with future kinds.
+     */
+    data: unknown;
+}
+
+interface ArtifactRendererProps {
+    artifact: A2UIArtifact$1;
+    /** Fired when the user clicks an "actions" chip — sends item.prompt as a text message. */
+    onAction?: (item: A2UIActionItem) => void;
+    /**
+     * Fired when an interactive artifact (client_candidates, client_field_picker,
+     * client_diff_confirm, persona_starters) posts a structured interaction.
+     * CopilotProvider wires this to handleArtifactInteract which forwards the
+     * interaction to the dispatch request and suppresses the user bubble.
+     */
+    onInteract?: (interaction: ArtifactInteraction) => void;
+    language?: 'en' | 'ar';
+    dir?: 'ltr' | 'rtl';
+}
+declare const ArtifactRenderer: {
+    ({ artifact, onAction, onInteract, language, dir, }: ArtifactRendererProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+interface ArtifactTableProps {
+    data: A2UITableData;
+    language?: 'en' | 'ar';
+    dir?: 'ltr' | 'rtl';
+}
+declare const ArtifactTable: {
+    ({ data, language, dir }: ArtifactTableProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+interface ArtifactChartProps {
+    data: A2UIChartData;
+    language?: 'en' | 'ar';
+    dir?: 'ltr' | 'rtl';
+}
+declare const ArtifactChart: {
+    ({ data, language }: ArtifactChartProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+interface ArtifactCardProps {
+    data: A2UICardData;
+    /** Outer artifact title (title_en / title_ar from the A2UIArtifact envelope). */
+    artifactTitle?: string;
+    language?: 'en' | 'ar';
+    dir?: 'ltr' | 'rtl';
+}
+declare const ArtifactCard: {
+    ({ data, artifactTitle, language, dir }: ArtifactCardProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+interface ArtifactActionsProps {
+    data: A2UIActionsData;
+    /** Called when the user clicks an action chip. */
+    onAction?: (item: A2UIActionItem) => void;
+    language?: 'en' | 'ar';
+    dir?: 'ltr' | 'rtl';
+}
+declare const ArtifactActions: {
+    ({ data, onAction, language, dir }: ArtifactActionsProps): React$1.JSX.Element | null;
+    displayName: string;
+};
+
+interface ArtifactMarkdownProps {
+    data: A2UIMarkdownData;
+    language?: 'en' | 'ar';
+    dir?: 'ltr' | 'rtl';
+}
+declare const ArtifactMarkdown: {
+    ({ data, language, dir }: ArtifactMarkdownProps): React$1.JSX.Element | null;
+    displayName: string;
+};
+
+interface ArtifactClientCandidatesProps {
+    data: A2UIClientCandidatesData;
+    /** Fired when the user selects a candidate. Carries a "select_candidate" interaction. */
+    onInteract?: (interaction: ArtifactInteraction) => void;
+    language?: 'en' | 'ar';
+    dir?: 'ltr' | 'rtl';
+}
+declare const ArtifactClientCandidates: {
+    ({ data, onInteract, language, dir, }: ArtifactClientCandidatesProps): React$1.JSX.Element | null;
+    displayName: string;
+};
+
+interface ArtifactClientFieldPickerProps {
+    data: A2UIClientFieldPickerData;
+    /** Fired when the user confirms the selected fields. Carries a "pick_fields" interaction. */
+    onInteract?: (interaction: ArtifactInteraction) => void;
+    language?: 'en' | 'ar';
+    dir?: 'ltr' | 'rtl';
+}
+declare const ArtifactClientFieldPicker: {
+    ({ data, onInteract, language, dir, }: ArtifactClientFieldPickerProps): React$1.JSX.Element | null;
+    displayName: string;
+};
+
+interface ArtifactClientDiffConfirmProps {
+    data: A2UIClientDiffConfirmData;
+    /** Fired when the user confirms or cancels the diff. Carries a "confirm_diff" interaction. */
+    onInteract?: (interaction: ArtifactInteraction) => void;
+    language?: 'en' | 'ar';
+    dir?: 'ltr' | 'rtl';
+}
+declare const ArtifactClientDiffConfirm: {
+    ({ data, onInteract, language, dir, }: ArtifactClientDiffConfirmProps): React$1.JSX.Element | null;
+    displayName: string;
+};
+
+interface ArtifactPersonaStartersProps {
+    data: A2UIPersonaStartersData;
+    /** Fired when the user clicks a starter chip. Carries a "persona_start" interaction. */
+    onInteract?: (interaction: ArtifactInteraction) => void;
+    language?: 'en' | 'ar';
+    dir?: 'ltr' | 'rtl';
+}
+declare const ArtifactPersonaStarters: {
+    ({ data, onInteract, language, dir, }: ArtifactPersonaStartersProps): React$1.JSX.Element | null;
+    displayName: string;
+};
+
+/**
+ * Intel component types — shared type definitions for the IntelCard family,
+ * ScopeGauge, ScopesAtAGlance, and FeedHeader.
+ *
+ * Design rules:
+ *   - Rule 8  — bilingual (EN/AR): all user-facing text fields carry _en / _ar pairs
+ *   - Rule 25 — product-agnostic: pure rendering types, no fetching, no context reads
+ *   - Rule 26 — video = metadata only (URL + poster + permalink; never embedded player)
+ */
+type IntelSeverity = 'critical' | 'high' | 'medium' | 'low';
+
+interface SeverityChipProps {
+    severity: IntelSeverity;
+    /** Scope/region name shown as a neutral secondary tag beside the badge */
+    scopeName?: string;
+    language?: 'en' | 'ar';
+    className?: string;
+}
+declare const SeverityChip: {
+    ({ severity, scopeName, language, className }: SeverityChipProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+interface MarkdownContentProps {
+    /** Markdown source — typically an assistant chat message. */
+    content: string;
+    /**
+     * Text direction. Drives RTL-safe layout (logical padding on lists and
+     * blockquotes flips automatically; code blocks stay LTR regardless).
+     * Defaults to 'ltr'.
+     */
+    dir?: 'ltr' | 'rtl';
+    /** Extra classes merged onto the wrapper. */
+    className?: string;
+}
+/**
+ * MarkdownContent
+ *
+ * Shared markdown renderer for assistant chat messages (copilot dock, chat
+ * thread, project chat). GFM enabled (tables, strikethrough, task lists,
+ * autolinks).
+ *
+ * Security: `skipHtml` — raw HTML in the markdown source is never rendered,
+ * so no sanitizer is needed; links open in a new tab with rel="noopener".
+ *
+ * User messages should stay plain text — only assistant output goes through
+ * this component.
+ */
+declare const MarkdownContent: {
+    ({ content, dir, className }: MarkdownContentProps): React$1.JSX.Element;
+    displayName: string;
+};
+
 /** Issue lifecycle status. Lowercase string values mirror the SDK / DB enum. */
 type IssueStatus = "todo" | "in_progress" | "blocked" | "ready_for_review" | "done";
 /** Issue kind. `change` doubles as a feature request (carries the upvotes). */
@@ -2676,4 +3065,647 @@ declare function SectionBoard({ sections, editMode, models, language, columns, o
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { type ActivityBucket, type AlertMapItem, type AlertSeverity, AppPageShell, type AppPageShellProps, AppSidebar, type AppSidebarProps, type AppearanceMode, AuthCard, type AuthCardBrand, type AuthClient, AuthErrorAlert, AuthFlow, type AuthLayout, AuthStepHeader, type BarPoint, type BrandContextValue, type BrandTokens, BrandingProvider, type BrandingProviderProps, type CardFilter, CardGrid, type CardGridLabels, ColorPicker, type ColorPickerProps, ContextualSkeleton, DEFAULT_LAYERS, DEFAULT_LEGEND_GROUPS, DEFAULT_REGION_PRESETS, DataState, type DataStateLabels, type DataStateProps, DataTable, type DataTableBulkAction, type DataTableColumnFilter, type DataTableColumnMeta, type DataTableDensity, type DataTableFilterType, type DataTableLanguage, type DataTableProps, type DataTableSelectOption, type DataTableServerCallbacks, type DataTableServerState, DynamicIcon, DynamicSection, type DynamicSectionProps, EmptyState, type EmptyStateProps, EntityNetworkGraph, type EntityNetworkGraphProps, type ErrorFilter, ErrorTrackingPage, type ErrorTrackingPageProps, EventMapPanel, type EventMapPanelProps, FeedbackButton, type FeedbackButtonProps, FeedbackHub, type FeedbackHubProps, ForgotForm, type GraphLink, type GraphNode, IconPicker, type IconPickerProps, type Issue$1 as Issue, type IssueAssignee, type IssueBreadcrumb, IssueDetail, type IssueDetailProps, type IssueLevel, type IssueSort, type IssueTag, IssuesList, type IssuesListProps, LANG_COOKIE_NAME, type LanguageContextValue, LanguageProvider, type LanguageProviderProps, type LegendGroup, type LegendItem, type LegendShapeType, LockScreen, type LockScreenProps, type LockScreenUser, type LogLevel, LoginForm, type LoginResult, type LogsFilter, LogsView, type LogsViewProps, MARKER_COLORS, MARKER_LABELS, type MapLayer, MapLayersPanel, type MapLayersPanelProps, MapLegend, type MapLegendProps, type MapMarker$1 as MapMarker, type MapMarkerType, MapPanel, type MapPanelProps, type MapRegionPreset, MapView, type MapViewProps, MiniBarChart, type ModelOption, MotorFeedbackLauncher, type MotorFeedbackLauncherProps, NestedStepsEditor, type NestedStepsEditorProps, NetworkGraph, type NetworkGraphProps, OTPBoxGroup, type OtpResult, PIPELINE_STAGES, PageHeader, type PageHeaderProps, PasswordInput, PasswordLockScreen, type PasswordLockScreenProps, type PasswordLockScreenUser, type PasswordRule, PasswordStrengthMeter, type PipelineCard, type PipelineLane, type PipelineModel, type PluginActivitySummary, type PluginAppearanceFields, PluginAppearanceSection, type PluginAppearanceSectionProps, PluginCard, type PluginCatalogEntry, type PluginDetailIdentity, PluginDetailLayout, type PluginDetailLayoutProps, type PluginDetailTab, PluginHero, PluginHeroSkeleton, PluginPageHeader, PluginSectionCard, PluginSparkline, type ProfileSession, ProfileView, type ProfileViewProps, type RenderMapContext, ResetForm, type ResolvedIcon, RouteProgress, type RouteProgressProps, SENTRA_BRAND, STEP_FIELD_REGISTRY, SectionBoard, type SectionBoardProps, type SectionModel, SectionSkeleton, SentraLoading, type ServiceLogRow, ServiceUnavailable, type ServiceUnavailableProps, SessionExpired, type SessionExpiredProps, type SidebarConversation, type SidebarUser, SourceBadge, type SparklinePoint, type StackFrame, type StackFrameContextLine, StatCard, type StatCardProps, StatusBadge, type StatusBadgeProps, type StatusBadgeTone, type Step, type StepFieldDef, type StepFieldType, type StepMetrics7d, StepOptionsDialog, type StepOptionsDialogProps, type TestRunCallbacks, type TestRunCompletePayload, TestRunPanel, type TestRunPanelProps, type TestRunSavedItem, type TestRunStep, TwoFAForm, type UnlockCredentials, type Verify2FAResult, type View, ViewToggle, type ViewToggleProps, Workflow, WorkflowEditor, type WorkflowEditorProps, type WorkflowPalette, WorkflowPipeline, type WorkflowPipelineProps, type WorkflowProps, type WorkflowSource, type WorkflowStep, type WorkflowStepLike, WorkflowStepNode, type WorkflowStepNodeProps, type WorkflowView, applyBrand, cn, computeRules, computeScore, feedbackButtonVariants, hexToHSL, isHSL, isValidColor, levelTone, nudgeL, resolveIcon, statValueVariants, statusBadgeVariants, toHSLSafe, useBrand, useLanguage, useT };
+interface CopilotRequest {
+    [key: string]: any;
+    attachments?: unknown[];
+    intelligenceContext?: {
+        data_summary?: string;
+        [key: string]: unknown;
+    };
+}
+interface CopilotEvent {
+    type?: string;
+    [key: string]: any;
+}
+/** The streaming client the host injects into CopilotProvider. */
+interface CopilotClient {
+    copilotDispatch(req: CopilotRequest, opts?: {
+        signal?: AbortSignal;
+    }): AsyncIterable<CopilotEvent>;
+}
+
+interface AgentStep {
+    step: string;
+    message: string;
+    query?: string;
+    subQuery?: string;
+    count?: number;
+    highQuality?: number;
+    citations?: string[];
+    sources?: string[];
+    domains?: string[];
+    handles?: string[];
+    duration_ms?: number;
+    done?: boolean;
+}
+interface ArtifactPayload {
+    controller_slug: string;
+    title?: string;
+    title_ar?: string;
+    data: unknown;
+}
+interface A2UIArtifact {
+    version: number;
+    kind: string;
+    title_en?: string;
+    title_ar?: string;
+    data: unknown;
+}
+interface CopilotMessage {
+    id: string;
+    role: 'user' | 'assistant';
+    content: string;
+    content_ar?: string;
+    /** Whether the user message should be hidden (insight-trigger bubbles) */
+    hidden?: boolean;
+    steps?: AgentStep[];
+    citations?: Array<{
+        number: number;
+        title: string;
+        slug: string;
+        type: string;
+        description?: string;
+    }>;
+    briefing?: Record<string, unknown>;
+    /** Legacy controller-slug artifacts (ArtifactViewer). */
+    artifacts?: ArtifactPayload[];
+    /**
+     * A2UI structured artifacts from the Cortex SSE stream (phase 4).
+     * A single message may carry multiple artifacts (emitted before [DONE]).
+     * Rendered by ArtifactRenderer below the message text in the dock.
+     */
+    a2uiArtifacts?: A2UIArtifact[];
+}
+interface ForcedTools {
+    search?: boolean;
+    search_sources?: string[];
+    deep_research?: boolean;
+}
+interface SendOptions {
+    thinkingMode?: boolean;
+    insight?: boolean;
+    hideUserMessage?: boolean;
+    forcedTools?: ForcedTools;
+    attachments?: Array<{
+        url?: string;
+        data?: string;
+        name: string;
+        type: string;
+    }>;
+    /**
+     * Structured interaction post-back from an interactive artifact renderer.
+     * When set, CopilotProvider attaches it to the CopilotRequest.interaction
+     * field so the backend can dispatch on the structured payload rather than
+     * the synthesised text message. The user bubble is suppressed via hideUserMessage.
+     */
+    interaction?: {
+        kind: string;
+        payload: Record<string, unknown>;
+    };
+}
+interface CopilotChatState {
+    messages: CopilotMessage[];
+    streamingText: string;
+    isReceiving: boolean;
+    isLoading: boolean;
+    isStreaming: boolean;
+    agentSteps: AgentStep[];
+    streamError: string | null;
+    inputValue: string;
+    onInputChange: (value: string) => void;
+    onSend: (text: string, opts?: SendOptions) => void;
+    onStop?: () => void;
+    onRetry: () => void;
+    onNewConversation: () => void;
+    conversationTitle?: string;
+    conversationId?: string;
+    conversationHistory?: Array<{
+        id: string;
+        title: string;
+        updated_at: string;
+        context_label?: string;
+    }>;
+    onLoadConversation?: (id: string) => void;
+    onFetchHistory?: () => Promise<Array<{
+        id: string;
+        title: string;
+        updated_at: string;
+        context_label?: string;
+    }>>;
+    onDeleteConversation?: (id: string) => Promise<void>;
+    loadedContextType?: string;
+    loadedContextRef?: string;
+    loadedContextLabel?: string;
+    loadedCreatedAt?: string;
+    loadedUpdatedAt?: string;
+    effectiveMode?: string;
+}
+/**
+ * A suggestion chip. Either a plain string (back-compat — same text in both
+ * languages) or a bilingual pair so the dock can render the right language.
+ */
+type CopilotSuggestion = string | {
+    en: string;
+    ar: string;
+};
+interface CopilotDockContext {
+    type: string;
+    contextRef: string;
+    title: string;
+    mode: string;
+    systemContext?: Record<string, unknown>;
+    suggestions: CopilotSuggestion[];
+    entityImageUrl?: string | null;
+}
+
+/**
+ * CopilotProvider — @prism/ui F3
+ *
+ * Context provider that wires UnifiedCopilotDock to the cortex-sdk
+ * CortexClient.copilotDispatch() SSE stream. Apps mount this once at their
+ * root (or inside LanguageProvider) and call useCopilot() anywhere to
+ * open/close the dock.
+ *
+ * Wave B additions (2026-06-06):
+ *   B1 — Fetches /v1/copilot/config on mount; exposes allowedAgents as dynamic
+ *        personas list and allowedTools/allowedSkills for the dock panels.
+ *        Falls back to empty/undefined when Cortex is unreachable (nil-safe).
+ *   B2 — allowedTools + allowedSkills passed to dock via new prop.
+ *   B3 — AR suggestions already fixed (bilingual pair shape). Provider default
+ *        suggestions are now bilingual.
+ *   B4 — pageContext prop forwarded into CopilotRequest.intelligenceContext.data_summary.
+ *
+ * Architecture:
+ *   - Provider manages CopilotChatState (messages, streaming, error).
+ *   - onSend → CortexClient.copilotDispatch() → async generator → state updates.
+ *   - Language comes from the shared LanguageProvider context so the copilot
+ *     always answers in the active locale (EN/AR).
+ *   - cortex-sdk is a pure fetch/SSE SDK — no React dependency. Safe in any
+ *     runtime (browser, Node 18+, edge).
+ *
+ * Error handling (Rule 14 spirit):
+ *   - Network / Cortex unreachable → streamError shown in dock; no crash.
+ *   - Each SSE turn is wrapped in try/catch/finally so state always resolves.
+ *
+ * Rules: Rule 7 (displayName), Rule 8 (bilingual), Rule 16 (Sentra style),
+ *        Rule 25 (product-agnostic — no product DB/context reads).
+ */
+
+interface CopilotConfigTool {
+    slug: string;
+    name: string;
+    name_ar?: string;
+    function_name?: string;
+}
+interface CopilotConfigSkill {
+    slug: string;
+    name: string;
+    name_ar?: string;
+}
+interface CopilotConfigAgent {
+    slug: string;
+    name: string;
+    /** Arabic name. The Go config handler currently returns only `name` (EN).
+     *  When the server starts emitting this field it will be picked up automatically.
+     *  Until then, CopilotProvider falls back to the AGENT_AR_NAMES map below.
+     */
+    name_ar?: string;
+}
+/**
+ * Token-scoped branding the dashboard/SDK applies to the copilot dock.
+ * Forwarded verbatim from cortex_api_keys.capabilities.branding (config_handler.go).
+ * All fields optional — an empty object means "use the dock defaults".
+ */
+interface CopilotBranding {
+    /** Dock header title (EN). Overrides the default "Copilot". */
+    title?: string;
+    /** Dock header title (AR). */
+    titleAr?: string;
+    /** Accent colour (CSS colour string) applied to the dock's primary surfaces. */
+    primaryColor?: string;
+    /** Input placeholder (EN). */
+    placeholder?: string;
+    /** Input placeholder (AR). */
+    placeholderAr?: string;
+}
+/**
+ * Token-scoped UI toggles. Forwarded from capabilities.ui. Each defaults to
+ * "shown" when undefined so an unconfigured token keeps the full surface.
+ */
+interface CopilotUIConfig {
+    /** Show the in-dock Tools panel + / command tools group. Default true. */
+    showTools?: boolean;
+    /** Show the in-dock Skills panel + / command skills group. Default true. */
+    showSkills?: boolean;
+    /** Show the @ agent/persona menu + picker. Default true. */
+    showAgents?: boolean;
+}
+interface CopilotConfig {
+    allowed_tools: CopilotConfigTool[];
+    allowed_skills: CopilotConfigSkill[];
+    allowed_agents: CopilotConfigAgent[];
+    allowed_mcp: unknown[];
+    branding: CopilotBranding;
+    ui: CopilotUIConfig;
+    limits: {
+        rate_per_min: number | null;
+        monthly_budget: string | null;
+        hard_cap: string | null;
+    };
+}
+/**
+ * Options accepted by `useCopilot().open()`.
+ *
+ * Backwards-compatible: bare `open()` (no args) still works unchanged.
+ */
+interface OpenCopilotOptions {
+    /**
+     * Pre-fill the dock input with this message text.
+     * When autoSend is false (default), the text is placed in the input field
+     * and focus is moved to it so the user can review before sending.
+     */
+    message?: string;
+    /**
+     * When true, the message is sent automatically as soon as the dock opens,
+     * without user confirmation. Use for smart-action "اسأل" flows where the
+     * intent is clear from the card context.
+     */
+    autoSend?: boolean;
+}
+interface CopilotContextValue {
+    /**
+     * Open the copilot dock.
+     *
+     * @example bare open (no pre-load)
+     * ```tsx
+     * const { open } = useCopilot()
+     * <button onClick={() => open()}>Copilot</button>
+     * ```
+     *
+     * @example pre-fill input
+     * ```tsx
+     * open({ message: `اشرح هذا الخبر: ${card.title_ar}` })
+     * ```
+     *
+     * @example auto-send
+     * ```tsx
+     * open({ message: `اشرح هذا الخبر: ${card.title_ar}`, autoSend: true })
+     * ```
+     */
+    open: (opts?: OpenCopilotOptions) => void;
+    /** Close the copilot dock */
+    close: () => void;
+    /** Whether the dock is currently open/expanded */
+    isOpen: boolean;
+    /** Token-scoped config (null while loading or when Cortex is unreachable) */
+    config: CopilotConfig | null;
+}
+interface CopilotProviderProps {
+    children: ReactNode;
+    /**
+     * Cortex base URL. Defaults to '/api/v1'.
+     * Apps that proxy Cortex through Next.js rewrites pass the rewrite path here
+     * (e.g. '/api/cortex'). Apps with a separate Cortex service pass the full
+     * service URL (e.g. 'http://cortex:8210').
+     */
+    baseUrl?: string;
+    /**
+     * Optional Cortex API token (Bearer). When apps proxy Cortex via cookie-auth
+     * (Next.js middleware attaches the token server-side) the token can be omitted.
+     * When a raw token is available client-side, pass it here.
+     */
+    token?: string;
+    /** Streaming client (replaces the cortex-sdk). Without it the dock renders but cannot dispatch. */
+    client?: CopilotClient;
+    /**
+     * Page-level context fed to the copilot dock (type, title, suggestions, etc.).
+     * Defaults to a generic "global" context. Apps update this by re-rendering
+     * the provider with different context (or by wrapping per-page sub-sections).
+     */
+    context?: CopilotDockContext;
+    /**
+     * Start the dock in an open/expanded state. Defaults to false.
+     */
+    defaultOpen?: boolean;
+    /**
+     * B4: Optional markdown description of the current page. When set, the copilot
+     * receives it as intelligenceContext.data_summary in every dispatch so it
+     * "understands the current page" without the user having to explain.
+     *
+     * Apps update this prop on navigation to keep the context current.
+     *
+     * Example: "User is on the Plugins page. 13 plugins are loaded. Active types:
+     * tool, skill, agent. The user can enable/disable plugins here."
+     */
+    pageContext?: string;
+}
+declare const CopilotProvider: {
+    ({ children, baseUrl, token, context, defaultOpen, pageContext, client: injectedClient, }: CopilotProviderProps): React__default.JSX.Element;
+    displayName: string;
+};
+/**
+ * useCopilot — consume the copilot context.
+ *
+ * Returns `{ open, close, isOpen, config }`.
+ * Must be used inside a <CopilotProvider>.
+ *
+ * @example
+ * ```tsx
+ * const { open } = useCopilot()
+ * <button onClick={open}>Ask AI</button>
+ * ```
+ */
+declare const useCopilot: () => CopilotContextValue;
+
+type SlugChecker = (table: 'entities' | 'alerts' | 'narratives' | 'events', slugs: string[]) => Promise<string[]>;
+
+interface UnifiedCopilotDockProps {
+    /**
+     * The chat state seam. The product creates this from its useCopilotChat hook
+     * (Sentra) or its own streaming hook (Cortex, Scout). This is the ONLY API
+     * surface that touches actual streaming/network logic.
+     */
+    chatState: CopilotChatState;
+    /** Page-level context (type, title, suggestions) */
+    context: CopilotDockContext;
+    /**
+     * UI language — 'en' or 'ar'. The product reads this from its LanguageContext
+     * and passes it here. No context import needed in this component.
+     */
+    language?: 'en' | 'ar';
+    /**
+     * Navigation callback. Called with an absolute path when the user clicks
+     * an internal link (context badge, citation, entity chip, etc.).
+     * The product wires this to router.push (Next.js) or window.location.href.
+     */
+    onNavigate?: (path: string) => void;
+    /**
+     * Optional: batch slug-check for ChatStructuredData.
+     * When omitted, all slugs are assumed valid.
+     */
+    onCheckSlugs?: SlugChecker;
+    /**
+     * Optional: navigate to the full-page chat view.
+     * Called when the user clicks the Maximize button.
+     */
+    onExpandToFullPage?: () => void;
+    /** Pre-fill the input with this text */
+    pendingMessage?: string | null;
+    /** If true, auto-send pendingMessage instead of just filling the input */
+    pendingAutoSend?: boolean;
+    /** Called once the pending message has been consumed */
+    onPendingMessageConsumed?: () => void;
+    /** Quick-action chips shown after the first insight response */
+    followUpChips?: string[];
+    /** Start the dock in expanded state */
+    defaultExpanded?: boolean;
+    /** Assistant greeting shown above suggestion chips when chat is empty */
+    seedGreeting?: string;
+    /** Called when user closes/collapses the dock */
+    onClose?: () => void;
+    /**
+     * Optional: persona list override.
+     * Defaults to analyst/strategist/advisor. Pass empty array to hide the picker.
+     */
+    personas?: Array<{
+        id: string;
+        label: string;
+        labelAr: string;
+        icon?: string;
+    }>;
+    /**
+     * Token-scoped allowed tools (from /v1/copilot/config). Drives the Tools panel
+     * + the `/` command menu. Undefined = no token restriction (panel hidden or
+     * uses defaults). Each item: { slug, name, function_name? }.
+     */
+    allowedTools?: Array<{
+        slug: string;
+        name: string;
+        function_name?: string;
+    }>;
+    /**
+     * Token-scoped allowed skills (from /v1/copilot/config). Drives the Skills
+     * panel + the `/` command menu's activate-skill entries. Undefined = none.
+     */
+    allowedSkills?: Array<{
+        slug: string;
+        name: string;
+    }>;
+    /**
+     * B4: Optional markdown description of the current page. The dock stores
+     * this and CopilotProvider injects it as intelligenceContext.data_summary.
+     * For direct-mount consumers using their own chatState, wire page context
+     * through their own send path. This prop is accepted but not auto-forwarded
+     * from the dock itself (provider handles it).
+     */
+    pageContext?: string;
+    /**
+     * E: token-scoped branding (from /v1/copilot/config.branding). Optional —
+     * an omitted/empty object keeps the dock defaults. Backwards-compatible.
+     */
+    branding?: {
+        title?: string;
+        titleAr?: string;
+        primaryColor?: string;
+        placeholder?: string;
+        placeholderAr?: string;
+    };
+    /**
+     * E: token-scoped UI toggles (from /v1/copilot/config.ui). Each defaults to
+     * shown when undefined, so an unconfigured token keeps the full surface.
+     */
+    uiConfig?: {
+        showTools?: boolean;
+        showSkills?: boolean;
+        showAgents?: boolean;
+    };
+    /**
+     * A2UI: callback fired when the user clicks an action chip in an ArtifactActions
+     * artifact. The item.prompt (when set) should be sent as a new user message.
+     * CopilotProvider wires this automatically — direct mount consumers may pass
+     * their own handler here.
+     *
+     * When omitted the dock provides a default that calls chatState.onSend(item.prompt).
+     */
+    onArtifactAction?: (item: A2UIActionItem) => void;
+    /**
+     * Phase-3 structured interaction channel. Fired when the user interacts with
+     * a client_candidates, client_field_picker, client_diff_confirm, or
+     * persona_starters artifact. The interaction carries a kind discriminator and
+     * a structured payload — no free-text echo.
+     *
+     * CopilotProvider wires this to handleArtifactInteract (attaches the
+     * interaction to the dispatch request, suppresses the user bubble).
+     * Direct mount consumers may provide their own handler.
+     *
+     * When omitted the dock falls back to sending a synthesised hidden message
+     * via chatState.onSend with { hideUserMessage: true, interaction }.
+     */
+    onArtifactInteract?: (interaction: ArtifactInteraction) => void;
+}
+/**
+ * UnifiedCopilotDock
+ *
+ * Floating AI copilot dock (collapsed bar / expanded panel). Supports three
+ * dock positions (bottom, left, right), streaming agent steps, structured data
+ * blocks, compare-factors cards, attachment uploads, thinking-mode toggle, and
+ * conversation history.
+ *
+ * ALL app-specific dependencies removed:
+ *  - useCopilotChat  → chatState prop (CopilotChatState seam)
+ *  - useAuth         → removed (no user avatar needed in shared lib)
+ *  - useLanguage     → language prop
+ *  - useRouter       → onNavigate / onExpandToFullPage props
+ *  - bridge          → onCheckSlugs prop (ChatStructuredData seam)
+ *  - Mode type       → plain string in CopilotDockContext
+ *  - AuthImage       → plain <img> or omitted
+ */
+declare const UnifiedCopilotDock: {
+    ({ chatState, context, language: languageProp, onNavigate, onCheckSlugs, onExpandToFullPage, pendingMessage, pendingAutoSend, onPendingMessageConsumed, followUpChips, defaultExpanded, seedGreeting, onClose, personas, allowedTools, allowedSkills, branding, uiConfig, pageContext: _pageContext, onArtifactAction, onArtifactInteract, }: UnifiedCopilotDockProps): React__default.JSX.Element;
+    displayName: string;
+};
+
+/**
+ * CopilotLauncher — @prism/ui F3
+ *
+ * A composable button that calls useCopilot().open(). Two variants:
+ *
+ *   variant="fab"     — floating action button (fixed bottom-right, z-40).
+ *                       Good for apps without a header slot.
+ *   variant="header"  — compact icon+label button for embedding in AppHeader's
+ *                       right cluster or any nav bar.
+ *
+ * Bilingual label from the shared 'nav:copilot' key (EN: "Copilot", AR: "المساعد الذكي").
+ * Language follows the shared LanguageProvider context automatically.
+ *
+ * Rules: Rule 7 (displayName, handle* events), Rule 8 (bilingual),
+ *        Rule 16 (Sentra style — Tailwind tokens only).
+ */
+
+interface CopilotLauncherProps {
+    /**
+     * "fab"    — floating action button (position: fixed, bottom-right).
+     * "header" — compact icon+label for embedding in a top-nav cluster.
+     * Default: "header".
+     */
+    variant?: 'fab' | 'header';
+    /** Additional Tailwind classes */
+    className?: string;
+    /**
+     * Override label (skips the i18n lookup). Useful when the consuming app
+     * has its own translation layer and wants to pass a pre-resolved string.
+     */
+    label?: string;
+}
+declare const CopilotLauncher: {
+    ({ variant, className, label, }: CopilotLauncherProps): React__default.JSX.Element;
+    displayName: string;
+};
+
+interface ThreadMessage {
+    id: string;
+    role: 'user' | 'assistant';
+    /** English content — always present */
+    text_en: string;
+    /** Arabic content — used when language === 'ar' */
+    text_ar?: string;
+    /** Legacy controller-slug artifacts (ArtifactViewer). */
+    artifacts?: ArtifactPayload[];
+    /** A2UI structured artifacts from the Cortex SSE stream (table/chart/card/…). */
+    a2uiArtifacts?: A2UIArtifact[];
+}
+interface ChatThreadProps {
+    messages: ThreadMessage[];
+    /** The text currently being accumulated from the SSE stream */
+    streamingText?: string;
+    isStreaming?: boolean;
+    /** UI language. Defaults to 'en'. */
+    language?: 'en' | 'ar';
+    /** Text direction. Inferred from language when not provided. */
+    dir?: 'ltr' | 'rtl';
+}
+/**
+ * ChatThread
+ *
+ * Renders the full conversation history plus an optional live streaming tail.
+ * Bilingual: reads `text_ar` when language === 'ar', falls back to `text_en`.
+ * RTL-aware: message alignment and avatar order flip for Arabic.
+ * Auto-scrolls to the bottom on new messages or streaming token updates.
+ *
+ * All app deps removed — language/dir are plain props.
+ */
+declare const ChatThread: {
+    ({ messages, streamingText, isStreaming, language, dir, }: ChatThreadProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+interface StreamingMessageProps {
+    text: string;
+    isStreaming: boolean;
+    /** UI language. Defaults to 'en'. */
+    language?: 'en' | 'ar';
+    /** Text direction. Inferred from language when not provided. */
+    dir?: 'ltr' | 'rtl';
+}
+/**
+ * StreamingMessage
+ *
+ * Renders an assistant message that may still be receiving SSE token deltas.
+ * While streaming, shows a pulsing cursor at the end.
+ * Content renders as markdown via the shared MarkdownContent primitive
+ * (GFM, skipHtml, links in new tab, RTL-safe logical padding).
+ *
+ * All app deps removed — language/dir are plain props.
+ */
+declare const StreamingMessage: {
+    ({ text, isStreaming, language, dir }: StreamingMessageProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+interface ArtifactViewerProps {
+    artifact: ArtifactPayload;
+    /** UI language. Defaults to 'en'. */
+    language?: 'en' | 'ar';
+    /** Text direction. Inferred from language when not provided. */
+    dir?: 'ltr' | 'rtl';
+}
+/**
+ * ArtifactViewer
+ *
+ * Switches on `artifact.controller_slug` to render the appropriate visualisation.
+ * Supported slugs:
+ *   - map-of-events
+ *   - timeline
+ *   - network-graph
+ *   - kpi-card
+ *
+ * All others render a JSON fallback. All app dependencies removed — language/dir
+ * are plain props.
+ */
+declare const ArtifactViewer: {
+    ({ artifact, language, dir }: ArtifactViewerProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+interface AgentStepsProps {
+    steps: AgentStep[];
+    isStreaming: boolean;
+    /** UI language. Defaults to 'en'. */
+    language?: 'en' | 'ar';
+    /** Text direction. Inferred from language when not provided. */
+    dir?: 'ltr' | 'rtl';
+}
+/**
+ * AgentSteps
+ *
+ * Collapsible list of streaming agent tool-call steps with real-time state
+ * indicators (active/complete/error). Bilingual EN/AR, RTL-aware.
+ *
+ * All app deps removed — language/dir are plain props.
+ */
+declare const AgentSteps: {
+    ({ steps, isStreaming, language, dir }: AgentStepsProps): React$1.JSX.Element | null;
+    displayName: string;
+};
+
+export { type A2UIActionItem, type A2UIActionsData, type A2UIArtifact$1 as A2UIArtifact, type A2UICardData, type A2UICardField, type A2UIChartData, type A2UIChartSeries, type A2UIClientCandidate, type A2UIClientCandidatesData, type A2UIClientDiffConfirmData, type A2UIClientDiffRow, type A2UIClientField, type A2UIClientFieldPickerData, type A2UIKind, type A2UIMarkdownData, type A2UIPersonaStarter, type A2UIPersonaStartersData, type A2UITableColumn, type A2UITableData, type ActivityBucket, AgentSteps, type AlertMapItem, type AlertSeverity, AppPageShell, type AppPageShellProps, AppSidebar, type AppSidebarProps, type AppearanceMode, ArtifactActions, type ArtifactActionsProps, ArtifactCard, type ArtifactCardProps, ArtifactChart, type ArtifactChartProps, ArtifactClientCandidates, type ArtifactClientCandidatesProps, ArtifactClientDiffConfirm, type ArtifactClientDiffConfirmProps, ArtifactClientFieldPicker, type ArtifactClientFieldPickerProps, type ArtifactInteraction, ArtifactMarkdown, type ArtifactMarkdownProps, ArtifactPersonaStarters, type ArtifactPersonaStartersProps, ArtifactRenderer, type ArtifactRendererProps, ArtifactTable, type ArtifactTableProps, ArtifactViewer, AuthCard, type AuthCardBrand, type AuthClient, AuthErrorAlert, AuthFlow, type AuthLayout, AuthStepHeader, type BarPoint, type BrandContextValue, type BrandTokens, BrandingProvider, type BrandingProviderProps, type CardFilter, CardGrid, type CardGridLabels, ChatThread, ColorPicker, type ColorPickerProps, ContextualSkeleton, type CopilotClient, type CopilotEvent, CopilotLauncher, CopilotProvider, type CopilotRequest, DEFAULT_LAYERS, DEFAULT_LEGEND_GROUPS, DEFAULT_REGION_PRESETS, DataState, type DataStateLabels, type DataStateProps, DataTable, type DataTableBulkAction, type DataTableColumnFilter, type DataTableColumnMeta, type DataTableDensity, type DataTableFilterType, type DataTableLanguage, type DataTableProps, type DataTableSelectOption, type DataTableServerCallbacks, type DataTableServerState, DynamicIcon, DynamicSection, type DynamicSectionProps, EmptyState, type EmptyStateProps, EntityNetworkGraph, type EntityNetworkGraphProps, type ErrorFilter, ErrorTrackingPage, type ErrorTrackingPageProps, EventMapPanel, type EventMapPanelProps, FeedbackButton, type FeedbackButtonProps, FeedbackHub, type FeedbackHubProps, ForgotForm, type GraphLink, type GraphNode, IconPicker, type IconPickerProps, type Issue$1 as Issue, type IssueAssignee, type IssueBreadcrumb, IssueDetail, type IssueDetailProps, type IssueLevel, type IssueSort, type IssueTag, IssuesList, type IssuesListProps, LANG_COOKIE_NAME, type LanguageContextValue, LanguageProvider, type LanguageProviderProps, type LegendGroup, type LegendItem, type LegendShapeType, LockScreen, type LockScreenProps, type LockScreenUser, type LogLevel, LoginForm, type LoginResult, type LogsFilter, LogsView, type LogsViewProps, MARKER_COLORS, MARKER_LABELS, type MapLayer, MapLayersPanel, type MapLayersPanelProps, MapLegend, type MapLegendProps, type MapMarker$1 as MapMarker, type MapMarkerType, MapPanel, type MapPanelProps, type MapRegionPreset, MapView, type MapViewProps, MarkdownContent, MiniBarChart, type ModelOption, MotorFeedbackLauncher, type MotorFeedbackLauncherProps, NestedStepsEditor, type NestedStepsEditorProps, NetworkGraph, type NetworkGraphProps, OTPBoxGroup, type OtpResult, PIPELINE_STAGES, PageHeader, type PageHeaderProps, PasswordInput, PasswordLockScreen, type PasswordLockScreenProps, type PasswordLockScreenUser, type PasswordRule, PasswordStrengthMeter, type PipelineCard, type PipelineLane, type PipelineModel, type PluginActivitySummary, type PluginAppearanceFields, PluginAppearanceSection, type PluginAppearanceSectionProps, PluginCard, type PluginCatalogEntry, type PluginDetailIdentity, PluginDetailLayout, type PluginDetailLayoutProps, type PluginDetailTab, PluginHero, PluginHeroSkeleton, PluginPageHeader, PluginSectionCard, PluginSparkline, type ProfileSession, ProfileView, type ProfileViewProps, type RenderMapContext, ResetForm, type ResolvedIcon, RouteProgress, type RouteProgressProps, SENTRA_BRAND, STEP_FIELD_REGISTRY, SectionBoard, type SectionBoardProps, type SectionModel, SectionSkeleton, SentraLoading, type ServiceLogRow, ServiceUnavailable, type ServiceUnavailableProps, SessionExpired, type SessionExpiredProps, SeverityChip, type SidebarConversation, type SidebarUser, SourceBadge, type SparklinePoint, type StackFrame, type StackFrameContextLine, StatCard, type StatCardProps, StatusBadge, type StatusBadgeProps, type StatusBadgeTone, type Step, type StepFieldDef, type StepFieldType, type StepMetrics7d, StepOptionsDialog, type StepOptionsDialogProps, StreamingMessage, type TestRunCallbacks, type TestRunCompletePayload, TestRunPanel, type TestRunPanelProps, type TestRunSavedItem, type TestRunStep, TwoFAForm, UnifiedCopilotDock, type UnlockCredentials, type Verify2FAResult, type View, ViewToggle, type ViewToggleProps, Workflow, WorkflowEditor, type WorkflowEditorProps, type WorkflowPalette, WorkflowPipeline, type WorkflowPipelineProps, type WorkflowProps, type WorkflowSource, type WorkflowStep, type WorkflowStepLike, WorkflowStepNode, type WorkflowStepNodeProps, type WorkflowView, applyBrand, cn, computeRules, computeScore, feedbackButtonVariants, hexToHSL, isHSL, isValidColor, levelTone, nudgeL, resolveIcon, statValueVariants, statusBadgeVariants, toHSLSafe, useBrand, useCopilot, useLanguage, useT };

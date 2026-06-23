@@ -9159,7 +9159,7 @@ var LogsView = ({
   onLoadMore,
   hasMore = false,
   services = [],
-  components = [],
+  components: components2 = [],
   liveTail = false,
   onToggleLiveTail,
   className
@@ -9269,7 +9269,7 @@ var LogsView = ({
               }
             )
           ] }),
-          components.length > 0 && /* @__PURE__ */ jsxs47("div", { className: "flex flex-col gap-1 min-w-[130px]", children: [
+          components2.length > 0 && /* @__PURE__ */ jsxs47("div", { className: "flex flex-col gap-1 min-w-[130px]", children: [
             /* @__PURE__ */ jsx53("span", { className: "text-xs text-muted-foreground font-medium", children: t2.component }),
             /* @__PURE__ */ jsxs47(
               Select,
@@ -9280,7 +9280,7 @@ var LogsView = ({
                   /* @__PURE__ */ jsx53(SelectTrigger, { className: "h-8 text-xs", children: /* @__PURE__ */ jsx53(SelectValue, { placeholder: t2.allComponents }) }),
                   /* @__PURE__ */ jsxs47(SelectContent, { children: [
                     /* @__PURE__ */ jsx53(SelectItem, { value: "__all__", children: t2.allComponents }),
-                    components.map((c) => /* @__PURE__ */ jsx53(SelectItem, { value: c, children: c }, c))
+                    components2.map((c) => /* @__PURE__ */ jsx53(SelectItem, { value: c, children: c }, c))
                   ] })
                 ]
               }
@@ -10352,11 +10352,863 @@ var useT2 = () => {
 };
 var useLanguage = () => useT2();
 
+// src/components/copilot/artifacts/ArtifactTable.tsx
+import { jsx as jsx62, jsxs as jsxs54 } from "react/jsx-runtime";
+var ArtifactTable = ({ data, language = "en", dir }) => {
+  const resolvedDir = dir ?? (language === "ar" ? "rtl" : "ltr");
+  const rawCols = data?.columns ?? [];
+  const cols = rawCols.map(
+    (c, i) => typeof c === "string" ? { key: String(i), label_en: c, label_ar: c } : c
+  );
+  const rawRows = data?.rows ?? [];
+  const cellOf = (row, col, colIdx) => Array.isArray(row) ? row[colIdx] : row?.[col.key];
+  if (cols.length === 0) {
+    return /* @__PURE__ */ jsx62("p", { className: "text-xs text-muted-foreground italic", children: language === "ar" ? "\u0644\u0627 \u062A\u0648\u062C\u062F \u0628\u064A\u0627\u0646\u0627\u062A" : "No data" });
+  }
+  return /* @__PURE__ */ jsx62("div", { className: "overflow-x-auto rounded-md border border-border", dir: resolvedDir, children: /* @__PURE__ */ jsxs54(Table, { children: [
+    /* @__PURE__ */ jsx62(TableHeader, { children: /* @__PURE__ */ jsx62(TableRow, { children: cols.map((col, colIdx) => /* @__PURE__ */ jsx62(
+      TableHead,
+      {
+        className: "text-start text-xs font-semibold text-muted-foreground bg-muted/40 px-3 py-2",
+        children: language === "ar" && col.label_ar ? col.label_ar : col.label_en
+      },
+      col.key ?? colIdx
+    )) }) }),
+    /* @__PURE__ */ jsx62(TableBody, { children: rawRows.length === 0 ? /* @__PURE__ */ jsx62(TableRow, { children: /* @__PURE__ */ jsx62(
+      TableCell,
+      {
+        colSpan: cols.length,
+        className: "text-center text-xs text-muted-foreground py-4",
+        children: language === "ar" ? "\u0644\u0627 \u062A\u0648\u062C\u062F \u0635\u0641\u0648\u0641" : "No rows"
+      }
+    ) }) : rawRows.map((row, rowIdx) => /* @__PURE__ */ jsx62(TableRow, { className: "hover:bg-muted/30 transition-colors duration-fast ease-standard", children: cols.map((col, colIdx) => {
+      const v = cellOf(row, col, colIdx);
+      return /* @__PURE__ */ jsx62(
+        TableCell,
+        {
+          className: "text-start text-xs text-foreground px-3 py-2",
+          children: v !== void 0 && v !== null ? String(v) : "\u2014"
+        },
+        col.key ?? colIdx
+      );
+    }) }, rowIdx)) })
+  ] }) });
+};
+ArtifactTable.displayName = "ArtifactTable";
+
+// src/components/copilot/artifacts/ArtifactChart.tsx
+import {
+  BarChart,
+  Bar,
+  LineChart,
+  Line,
+  PieChart,
+  Pie,
+  Cell,
+  XAxis,
+  YAxis,
+  Tooltip as Tooltip2,
+  Legend,
+  ResponsiveContainer as ResponsiveContainer3
+} from "recharts";
+import { jsx as jsx63, jsxs as jsxs55 } from "react/jsx-runtime";
+var CHART_PALETTE = [
+  "hsl(var(--primary))",
+  "hsl(var(--gold, 45 90% 58%))",
+  "hsl(var(--alert-amber))",
+  "hsl(var(--success))",
+  "hsl(var(--alert-cyan))",
+  "#7E96BA",
+  // sentra-navy-300 (fallback)
+  "#B38A22"
+  // sentra-gold-600 (fallback)
+];
+function seriesLabel(s, language) {
+  return language === "ar" && s.label_ar ? s.label_ar : s.label_en;
+}
+var BarChartView = ({ series, language }) => {
+  const allX = Array.from(new Set(series.flatMap((s) => s.points.map((p) => String(p.x)))));
+  const chartData = allX.map((x) => {
+    const row = { x };
+    series.forEach((s, i) => {
+      const pt = s.points.find((p) => String(p.x) === x);
+      row[`s${i}`] = pt ? pt.y : 0;
+    });
+    return row;
+  });
+  return /* @__PURE__ */ jsx63(ResponsiveContainer3, { width: "100%", height: 180, children: /* @__PURE__ */ jsxs55(BarChart, { data: chartData, margin: { top: 4, right: 4, left: -16, bottom: 0 }, children: [
+    /* @__PURE__ */ jsx63(XAxis, { dataKey: "x", tick: { fontSize: 10, fill: "hsl(var(--muted-foreground))" } }),
+    /* @__PURE__ */ jsx63(YAxis, { tick: { fontSize: 10, fill: "hsl(var(--muted-foreground))" } }),
+    /* @__PURE__ */ jsx63(
+      Tooltip2,
+      {
+        contentStyle: { background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 11 },
+        labelStyle: { color: "hsl(var(--foreground))" }
+      }
+    ),
+    series.length > 1 && /* @__PURE__ */ jsx63(
+      Legend,
+      {
+        formatter: (value) => {
+          const idx = Number(value.slice(1));
+          return seriesLabel(series[idx], language);
+        },
+        wrapperStyle: { fontSize: 10 }
+      }
+    ),
+    series.map((s, i) => /* @__PURE__ */ jsx63(Bar, { dataKey: `s${i}`, fill: CHART_PALETTE[i % CHART_PALETTE.length], radius: [2, 2, 0, 0] }, `s${i}`))
+  ] }) });
+};
+BarChartView.displayName = "BarChartView";
+var LineChartView = ({ series, language }) => {
+  const allX = Array.from(new Set(series.flatMap((s) => s.points.map((p) => String(p.x)))));
+  const chartData = allX.map((x) => {
+    const row = { x };
+    series.forEach((s, i) => {
+      const pt = s.points.find((p) => String(p.x) === x);
+      row[`s${i}`] = pt ? pt.y : 0;
+    });
+    return row;
+  });
+  return /* @__PURE__ */ jsx63(ResponsiveContainer3, { width: "100%", height: 180, children: /* @__PURE__ */ jsxs55(LineChart, { data: chartData, margin: { top: 4, right: 4, left: -16, bottom: 0 }, children: [
+    /* @__PURE__ */ jsx63(XAxis, { dataKey: "x", tick: { fontSize: 10, fill: "hsl(var(--muted-foreground))" } }),
+    /* @__PURE__ */ jsx63(YAxis, { tick: { fontSize: 10, fill: "hsl(var(--muted-foreground))" } }),
+    /* @__PURE__ */ jsx63(
+      Tooltip2,
+      {
+        contentStyle: { background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 11 },
+        labelStyle: { color: "hsl(var(--foreground))" }
+      }
+    ),
+    series.length > 1 && /* @__PURE__ */ jsx63(
+      Legend,
+      {
+        formatter: (value) => {
+          const idx = Number(value.slice(1));
+          return seriesLabel(series[idx], language);
+        },
+        wrapperStyle: { fontSize: 10 }
+      }
+    ),
+    series.map((s, i) => /* @__PURE__ */ jsx63(
+      Line,
+      {
+        type: "monotone",
+        dataKey: `s${i}`,
+        stroke: CHART_PALETTE[i % CHART_PALETTE.length],
+        dot: false,
+        strokeWidth: 2
+      },
+      `s${i}`
+    ))
+  ] }) });
+};
+LineChartView.displayName = "LineChartView";
+var PieChartView = ({ series, language }) => {
+  const first = series[0];
+  if (!first) return null;
+  const pieData = first.points.map((p) => ({
+    name: String(p.x),
+    value: p.y
+  }));
+  return /* @__PURE__ */ jsx63(ResponsiveContainer3, { width: "100%", height: 180, children: /* @__PURE__ */ jsxs55(PieChart, { children: [
+    /* @__PURE__ */ jsx63(
+      Pie,
+      {
+        data: pieData,
+        cx: "50%",
+        cy: "50%",
+        innerRadius: 40,
+        outerRadius: 70,
+        paddingAngle: 2,
+        dataKey: "value",
+        label: ({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`,
+        labelLine: false,
+        children: pieData.map((_, idx) => /* @__PURE__ */ jsx63(Cell, { fill: CHART_PALETTE[idx % CHART_PALETTE.length] }, `cell-${idx}`))
+      }
+    ),
+    /* @__PURE__ */ jsx63(
+      Tooltip2,
+      {
+        contentStyle: { background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 11 }
+      }
+    ),
+    series.length > 1 && /* @__PURE__ */ jsx63(
+      Legend,
+      {
+        wrapperStyle: { fontSize: 10 }
+      }
+    ),
+    series.length === 1 && first.label_ar && language === "ar" && first.label_ar !== first.label_en && /* @__PURE__ */ jsx63(Legend, { wrapperStyle: { fontSize: 10 } })
+  ] }) });
+};
+PieChartView.displayName = "PieChartView";
+var ArtifactChart = ({ data, language = "en" }) => {
+  const raw = data;
+  const type = raw.type === "line" || raw.type === "pie" ? raw.type : "bar";
+  let series = Array.isArray(raw.series) ? raw.series : [];
+  if (series.length === 0 && Array.isArray(raw.datasets) && Array.isArray(raw.labels)) {
+    const labels = raw.labels;
+    series = raw.datasets.map((ds, di) => ({
+      label_en: ds.label ?? `Series ${di + 1}`,
+      points: (ds.data ?? []).map((y, i) => ({ x: labels[i] ?? i, y }))
+    }));
+  }
+  if (series.length === 0) {
+    return /* @__PURE__ */ jsx63("p", { className: "text-xs text-muted-foreground italic", children: language === "ar" ? "\u0644\u0627 \u062A\u0648\u062C\u062F \u0628\u064A\u0627\u0646\u0627\u062A" : "No data" });
+  }
+  return /* @__PURE__ */ jsxs55("div", { className: "w-full", dir: "ltr", children: [
+    type === "bar" && /* @__PURE__ */ jsx63(BarChartView, { series, language }),
+    type === "line" && /* @__PURE__ */ jsx63(LineChartView, { series, language }),
+    type === "pie" && /* @__PURE__ */ jsx63(PieChartView, { series, language })
+  ] });
+};
+ArtifactChart.displayName = "ArtifactChart";
+
+// src/components/intel/SeverityChip.tsx
+import { jsx as jsx64, jsxs as jsxs56 } from "react/jsx-runtime";
+var SEVERITY_LABELS = {
+  critical: { en: "Critical", ar: "\u062D\u0631\u062C" },
+  high: { en: "High", ar: "\u0645\u0631\u062A\u0641\u0639" },
+  medium: { en: "Medium", ar: "\u0645\u062A\u0648\u0633\u0637" },
+  low: { en: "Low", ar: "\u0645\u0646\u062E\u0641\u0636" }
+};
+var SEVERITY_DOT = {
+  critical: "bg-destructive",
+  high: "bg-destructive/70",
+  medium: "bg-amber-400",
+  low: "bg-green-500"
+};
+var SEVERITY_BADGE = {
+  critical: "bg-destructive/10 text-destructive border-destructive/25",
+  high: "bg-destructive/8  text-destructive border-destructive/18",
+  medium: "bg-amber-400/10   text-amber-600   border-amber-400/25  dark:text-amber-400",
+  low: "bg-green-500/10   text-green-700   border-green-500/25  dark:text-green-400"
+};
+var SeverityChip = ({ severity, scopeName, language = "en", className }) => {
+  const label = language === "ar" ? SEVERITY_LABELS[severity].ar : SEVERITY_LABELS[severity].en;
+  return /* @__PURE__ */ jsxs56(
+    "span",
+    {
+      className: cn("inline-flex items-center gap-2 flex-wrap", className),
+      "aria-label": `${label}${scopeName ? ` \xB7 ${scopeName}` : ""}`,
+      children: [
+        /* @__PURE__ */ jsxs56(
+          "span",
+          {
+            className: cn(
+              "inline-flex items-center gap-1 rounded-md border px-1.5 py-0.5 text-[10px] font-semibold leading-none tracking-wide uppercase",
+              SEVERITY_BADGE[severity]
+            ),
+            "aria-hidden": "true",
+            children: [
+              /* @__PURE__ */ jsx64(
+                "span",
+                {
+                  className: cn("size-1.5 rounded-full shrink-0", SEVERITY_DOT[severity]),
+                  "aria-hidden": "true"
+                }
+              ),
+              label
+            ]
+          }
+        ),
+        scopeName && /* @__PURE__ */ jsx64(
+          "span",
+          {
+            className: "inline-flex items-center rounded-md border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[10px] font-medium leading-none text-muted-foreground",
+            "aria-hidden": "true",
+            children: scopeName
+          }
+        )
+      ]
+    }
+  );
+};
+SeverityChip.displayName = "SeverityChip";
+
+// src/components/copilot/artifacts/ArtifactCard.tsx
+import { jsx as jsx65, jsxs as jsxs57 } from "react/jsx-runtime";
+var ArtifactCard = ({ data, artifactTitle, language = "en", dir }) => {
+  const resolvedDir = dir ?? (language === "ar" ? "rtl" : "ltr");
+  const cardTitle = language === "ar" ? data.title_ar || data.title_en || artifactTitle || "" : data.title_en || artifactTitle || "";
+  const cardBody = language === "ar" ? data.body_ar || data.body_en || "" : data.body_en || "";
+  const validSeverities = ["critical", "high", "medium", "low"];
+  const severity = data.severity && validSeverities.includes(data.severity) ? data.severity : null;
+  return /* @__PURE__ */ jsxs57(
+    "div",
+    {
+      className: "rounded-lg border border-border bg-card text-foreground p-3 space-y-2",
+      dir: resolvedDir,
+      children: [
+        (cardTitle || severity) && /* @__PURE__ */ jsxs57("div", { className: "flex items-start justify-between gap-2", children: [
+          cardTitle && /* @__PURE__ */ jsx65("p", { className: "text-sm font-semibold text-foreground leading-snug flex-1 min-w-0", children: cardTitle }),
+          severity && /* @__PURE__ */ jsx65(
+            SeverityChip,
+            {
+              severity,
+              language,
+              className: "shrink-0 mt-0.5"
+            }
+          )
+        ] }),
+        cardBody && /* @__PURE__ */ jsx65("p", { className: "text-xs text-muted-foreground leading-relaxed", dir: "auto", children: cardBody }),
+        data.fields && data.fields.length > 0 && /* @__PURE__ */ jsx65("dl", { className: "space-y-1 border-t border-border/50 pt-2 mt-2", children: data.fields.map((field, i) => /* @__PURE__ */ jsxs57("div", { className: "flex items-start gap-2 text-xs", children: [
+          /* @__PURE__ */ jsx65("dt", { className: "text-muted-foreground shrink-0 min-w-[6rem] max-w-[8rem] truncate font-medium", children: field.label }),
+          /* @__PURE__ */ jsx65("dd", { className: "text-foreground flex-1 min-w-0 break-words", dir: "auto", children: String(field.value) })
+        ] }, i)) })
+      ]
+    }
+  );
+};
+ArtifactCard.displayName = "ArtifactCard";
+
+// src/components/copilot/artifacts/ArtifactActions.tsx
+import { jsx as jsx66 } from "react/jsx-runtime";
+var ArtifactActions = ({ data, onAction, language = "en", dir }) => {
+  const resolvedDir = dir ?? (language === "ar" ? "rtl" : "ltr");
+  if (!data.items || data.items.length === 0) {
+    return null;
+  }
+  const handleClick = (item) => {
+    onAction?.(item);
+  };
+  return /* @__PURE__ */ jsx66(
+    "div",
+    {
+      className: "flex flex-wrap gap-2",
+      dir: resolvedDir,
+      role: "group",
+      "aria-label": language === "ar" ? "\u0625\u062C\u0631\u0627\u0621\u0627\u062A \u0645\u0642\u062A\u0631\u062D\u0629" : "Suggested actions",
+      children: data.items.map((item) => {
+        const label = language === "ar" && item.label_ar ? item.label_ar : item.label_en;
+        return /* @__PURE__ */ jsx66(
+          "button",
+          {
+            type: "button",
+            onClick: () => handleClick(item),
+            className: "inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 hover:border-primary/50 transition-colors duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
+            "aria-label": label,
+            children: label
+          },
+          item.id
+        );
+      })
+    }
+  );
+};
+ArtifactActions.displayName = "ArtifactActions";
+
+// src/components/chat/MarkdownContent.tsx
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import { jsx as jsx67 } from "react/jsx-runtime";
+var components = {
+  p: ({ node: _node, ref: _ref, ...props }) => /* @__PURE__ */ jsx67("p", { className: "my-1.5 leading-relaxed", ...props }),
+  a: ({ node: _node, ref: _ref, ...props }) => /* @__PURE__ */ jsx67(
+    "a",
+    {
+      target: "_blank",
+      rel: "noopener noreferrer",
+      className: "text-primary underline underline-offset-2 break-words hover:opacity-80 transition-opacity duration-fast ease-standard",
+      ...props
+    }
+  ),
+  ul: ({ node: _node, ref: _ref, ...props }) => /* @__PURE__ */ jsx67("ul", { className: "my-1.5 list-disc ps-5 space-y-1", ...props }),
+  ol: ({ node: _node, ref: _ref, ...props }) => /* @__PURE__ */ jsx67("ol", { className: "my-1.5 list-decimal ps-5 space-y-1", ...props }),
+  li: ({ node: _node, ref: _ref, ...props }) => /* @__PURE__ */ jsx67("li", { className: "leading-relaxed", ...props }),
+  blockquote: ({ node: _node, ref: _ref, ...props }) => /* @__PURE__ */ jsx67(
+    "blockquote",
+    {
+      className: "my-2 border-s-2 border-border ps-3 text-muted-foreground italic",
+      ...props
+    }
+  ),
+  // Block code: <pre> owns the box; forced LTR + start-aligned so code never
+  // mirrors inside an RTL message bubble.
+  pre: ({ node: _node, ref: _ref, ...props }) => /* @__PURE__ */ jsx67(
+    "pre",
+    {
+      dir: "ltr",
+      className: "my-2 overflow-x-auto rounded-md border border-border bg-background/70 p-3 font-mono text-xs leading-relaxed text-start",
+      ...props
+    }
+  ),
+  // Inline code gets a subtle chip; fenced code (inside <pre>, detectable via
+  // the language- class) stays transparent so it doesn't double-box.
+  code: ({ node: _node, ref: _ref, className, ...props }) => {
+    const isBlock = /language-/.test(className ?? "");
+    return /* @__PURE__ */ jsx67(
+      "code",
+      {
+        dir: "ltr",
+        className: cn(
+          "font-mono",
+          isBlock ? className : "rounded bg-background/70 px-1 py-0.5 text-[0.85em]"
+        ),
+        ...props
+      }
+    );
+  },
+  h1: ({ node: _node, ref: _ref, ...props }) => /* @__PURE__ */ jsx67("h1", { className: "mt-3 mb-1.5 text-base font-bold text-foreground", ...props }),
+  h2: ({ node: _node, ref: _ref, ...props }) => /* @__PURE__ */ jsx67("h2", { className: "mt-3 mb-1 text-sm font-bold text-foreground", ...props }),
+  h3: ({ node: _node, ref: _ref, ...props }) => /* @__PURE__ */ jsx67("h3", { className: "mt-2 mb-1 text-sm font-semibold text-foreground", ...props }),
+  h4: ({ node: _node, ref: _ref, ...props }) => /* @__PURE__ */ jsx67("h4", { className: "mt-2 mb-0.5 text-sm font-semibold text-foreground", ...props }),
+  h5: ({ node: _node, ref: _ref, ...props }) => /* @__PURE__ */ jsx67("h5", { className: "mt-2 mb-0.5 text-xs font-semibold text-foreground", ...props }),
+  h6: ({ node: _node, ref: _ref, ...props }) => /* @__PURE__ */ jsx67("h6", { className: "mt-2 mb-0.5 text-xs font-semibold text-muted-foreground", ...props }),
+  table: ({ node: _node, ref: _ref, ...props }) => /* @__PURE__ */ jsx67("div", { className: "my-2 w-full overflow-x-auto", children: /* @__PURE__ */ jsx67("table", { className: "w-full border-collapse text-xs", ...props }) }),
+  th: ({ node: _node, ref: _ref, ...props }) => /* @__PURE__ */ jsx67(
+    "th",
+    {
+      className: "border border-border bg-muted/50 px-2 py-1 text-start font-semibold",
+      ...props
+    }
+  ),
+  td: ({ node: _node, ref: _ref, ...props }) => /* @__PURE__ */ jsx67("td", { className: "border border-border px-2 py-1 text-start align-top", ...props }),
+  hr: ({ node: _node, ref: _ref, ...props }) => /* @__PURE__ */ jsx67("hr", { className: "my-3 border-border", ...props }),
+  strong: ({ node: _node, ref: _ref, ...props }) => /* @__PURE__ */ jsx67("strong", { className: "font-semibold text-foreground", ...props })
+};
+var MarkdownContent = ({ content, dir = "ltr", className }) => {
+  return /* @__PURE__ */ jsx67(
+    "div",
+    {
+      dir,
+      className: cn(
+        "break-words text-sm [&>*:first-child]:mt-0 [&>*:last-child]:mb-0",
+        className
+      ),
+      children: /* @__PURE__ */ jsx67(ReactMarkdown, { remarkPlugins: [remarkGfm], skipHtml: true, components, children: content })
+    }
+  );
+};
+MarkdownContent.displayName = "MarkdownContent";
+var MarkdownContent_default = MarkdownContent;
+
+// src/components/copilot/artifacts/ArtifactMarkdown.tsx
+import { jsx as jsx68 } from "react/jsx-runtime";
+var ArtifactMarkdown = ({ data, language = "en", dir }) => {
+  const resolvedDir = dir ?? (language === "ar" ? "rtl" : "ltr");
+  if (!data.content) {
+    return null;
+  }
+  return /* @__PURE__ */ jsx68("div", { className: "rounded-md bg-muted/30 border border-border/60 p-3", dir: resolvedDir, children: /* @__PURE__ */ jsx68(MarkdownContent_default, { content: data.content, dir: resolvedDir }) });
+};
+ArtifactMarkdown.displayName = "ArtifactMarkdown";
+
+// src/components/copilot/artifacts/ArtifactClientCandidates.tsx
+import { jsx as jsx69, jsxs as jsxs58 } from "react/jsx-runtime";
+var ArtifactClientCandidates = ({
+  data,
+  onInteract,
+  language = "en",
+  dir
+}) => {
+  const resolvedDir = dir ?? (language === "ar" ? "rtl" : "ltr");
+  if (!data.candidates || data.candidates.length === 0) return null;
+  const handleSelect = (candidate) => {
+    const payload = { name: candidate.name };
+    if (candidate.website_url) payload.website_url = candidate.website_url;
+    if (candidate.sector) payload.sector = candidate.sector;
+    onInteract?.({ kind: "select_candidate", payload });
+  };
+  const chooseLabel = language === "ar" ? "\u0627\u062E\u062A\u0631 \u0647\u0630\u0627 \u0627\u0644\u0639\u0645\u064A\u0644" : "Select this client";
+  return /* @__PURE__ */ jsxs58(
+    "div",
+    {
+      className: "space-y-2",
+      dir: resolvedDir,
+      role: "list",
+      "aria-label": language === "ar" ? "\u0639\u0645\u0644\u0627\u0621 \u0645\u0631\u0634\u062D\u0648\u0646" : "Candidate clients",
+      children: [
+        data.prompt && /* @__PURE__ */ jsx69("p", { className: "text-xs text-muted-foreground mb-2", dir: "auto", children: data.prompt }),
+        data.candidates.map((candidate, idx) => /* @__PURE__ */ jsxs58(
+          "button",
+          {
+            type: "button",
+            role: "listitem",
+            onClick: () => handleSelect(candidate),
+            className: "w-full text-start rounded-lg border border-border bg-card hover:bg-accent/50 hover:border-primary/40 px-3 py-2.5 transition-colors duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
+            "aria-label": `${chooseLabel}: ${candidate.name}`,
+            children: [
+              /* @__PURE__ */ jsx69("p", { className: "text-sm font-semibold text-foreground leading-snug", children: candidate.name }),
+              candidate.website_url && /* @__PURE__ */ jsx69("p", { className: "text-xs text-muted-foreground mt-0.5 truncate", children: candidate.website_url }),
+              candidate.sector && /* @__PURE__ */ jsx69("span", { className: "mt-1 inline-block text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium", children: candidate.sector }),
+              candidate.summary && /* @__PURE__ */ jsx69("p", { className: "text-xs text-foreground/70 mt-1.5 line-clamp-2 leading-relaxed", dir: "auto", children: candidate.summary })
+            ]
+          },
+          idx
+        ))
+      ]
+    }
+  );
+};
+ArtifactClientCandidates.displayName = "ArtifactClientCandidates";
+
+// src/components/copilot/artifacts/ArtifactClientFieldPicker.tsx
+import { useState as useState34 } from "react";
+import { jsx as jsx70, jsxs as jsxs59 } from "react/jsx-runtime";
+var ArtifactClientFieldPicker = ({
+  data,
+  onInteract,
+  language = "en",
+  dir
+}) => {
+  const resolvedDir = dir ?? (language === "ar" ? "rtl" : "ltr");
+  const [selected, setSelected] = useState34(
+    new Set((data.fields ?? []).map((f) => f.key))
+  );
+  if (!data.fields || data.fields.length === 0) return null;
+  const handleToggle = (key) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
+  };
+  const handleConfirm = () => {
+    const fields = data.fields.filter((f) => selected.has(f.key)).map((f) => f.key);
+    onInteract?.({ kind: "pick_fields", payload: { fields } });
+  };
+  const confirmLabel = language === "ar" ? "\u062A\u0623\u0643\u064A\u062F \u0627\u0644\u062D\u0642\u0648\u0644 \u0627\u0644\u0645\u062E\u062A\u0627\u0631\u0629" : "Confirm selected fields";
+  const currentLabel = language === "ar" ? "\u0627\u0644\u062D\u0627\u0644\u064A:" : "Current:";
+  const suggestedLabel = language === "ar" ? "\u0645\u0642\u062A\u0631\u062D:" : "Suggested:";
+  return /* @__PURE__ */ jsxs59("div", { className: "space-y-1.5", dir: resolvedDir, children: [
+    data.fields.map((field) => {
+      const label = language === "ar" && field.label_ar ? field.label_ar : field.label_en;
+      const isChecked = selected.has(field.key);
+      return /* @__PURE__ */ jsx70(
+        "button",
+        {
+          type: "button",
+          onClick: () => handleToggle(field.key),
+          "aria-pressed": isChecked,
+          className: `w-full text-start rounded-lg border px-3 py-2 transition-colors duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${isChecked ? "border-primary/40 bg-primary/5" : "border-border bg-card hover:bg-muted/40"}`,
+          children: /* @__PURE__ */ jsxs59("div", { className: "flex items-start gap-2.5", children: [
+            /* @__PURE__ */ jsx70(
+              "span",
+              {
+                className: `mt-0.5 w-4 h-4 rounded shrink-0 flex items-center justify-center border transition-colors duration-fast ease-standard ${isChecked ? "bg-primary border-primary" : "border-border bg-background"}`,
+                "aria-hidden": "true",
+                children: isChecked && /* @__PURE__ */ jsx70(
+                  "svg",
+                  {
+                    className: "w-2.5 h-2.5 text-primary-foreground",
+                    fill: "none",
+                    viewBox: "0 0 12 12",
+                    "aria-hidden": "true",
+                    children: /* @__PURE__ */ jsx70(
+                      "path",
+                      {
+                        d: "M2 6l3 3 5-5",
+                        stroke: "currentColor",
+                        strokeWidth: "2",
+                        strokeLinecap: "round",
+                        strokeLinejoin: "round"
+                      }
+                    )
+                  }
+                )
+              }
+            ),
+            /* @__PURE__ */ jsxs59("div", { className: "min-w-0 flex-1", children: [
+              /* @__PURE__ */ jsx70("p", { className: "text-xs font-medium text-foreground leading-snug", children: label }),
+              field.current && /* @__PURE__ */ jsxs59("p", { className: "text-[10px] text-muted-foreground mt-0.5 truncate", children: [
+                /* @__PURE__ */ jsx70("span", { className: "font-medium", children: currentLabel }),
+                " ",
+                field.current
+              ] }),
+              field.suggested && /* @__PURE__ */ jsxs59("p", { className: "text-[10px] text-primary mt-0.5 truncate", children: [
+                /* @__PURE__ */ jsx70("span", { className: "font-medium", children: suggestedLabel }),
+                " ",
+                field.suggested
+              ] })
+            ] })
+          ] })
+        },
+        field.key
+      );
+    }),
+    /* @__PURE__ */ jsx70(
+      "button",
+      {
+        type: "button",
+        onClick: handleConfirm,
+        disabled: selected.size === 0,
+        className: "mt-2 w-full rounded-lg bg-primary px-3 py-2 text-xs font-semibold text-primary-foreground hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-colors duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
+        children: confirmLabel
+      }
+    )
+  ] });
+};
+ArtifactClientFieldPicker.displayName = "ArtifactClientFieldPicker";
+
+// src/components/copilot/artifacts/ArtifactClientDiffConfirm.tsx
+import { jsx as jsx71, jsxs as jsxs60 } from "react/jsx-runtime";
+var ArtifactClientDiffConfirm = ({
+  data,
+  onInteract,
+  language = "en",
+  dir
+}) => {
+  const resolvedDir = dir ?? (language === "ar" ? "rtl" : "ltr");
+  if (!data.rows || data.rows.length === 0) return null;
+  const title = language === "ar" && data.title_ar ? data.title_ar : data.title_en;
+  const confirmLabel = language === "ar" && data.confirm_label_ar ? data.confirm_label_ar : data.confirm_label_en;
+  const cancelLabel = language === "ar" ? "\u0625\u0644\u063A\u0627\u0621" : "Cancel";
+  const oldColLabel = language === "ar" ? "\u0627\u0644\u0642\u062F\u064A\u0645" : "Before";
+  const newColLabel = language === "ar" ? "\u0627\u0644\u062C\u062F\u064A\u062F" : "After";
+  const handleConfirm = () => {
+    onInteract?.({ kind: "confirm_diff", payload: { confirmed: true } });
+  };
+  const handleCancel = () => {
+    onInteract?.({ kind: "confirm_diff", payload: { confirmed: false } });
+  };
+  return /* @__PURE__ */ jsxs60(
+    "div",
+    {
+      className: "rounded-lg border border-border bg-card overflow-hidden",
+      dir: resolvedDir,
+      children: [
+        title && /* @__PURE__ */ jsx71("div", { className: "px-3 py-2 border-b border-border bg-muted/40", children: /* @__PURE__ */ jsx71("p", { className: "text-xs font-semibold text-foreground", dir: "auto", children: title }) }),
+        /* @__PURE__ */ jsxs60("div", { className: "divide-y divide-border", children: [
+          /* @__PURE__ */ jsxs60("div", { className: "grid grid-cols-[1fr_1fr_1fr] gap-2 px-3 py-1.5 bg-muted/20 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide", children: [
+            /* @__PURE__ */ jsx71("span", { children: language === "ar" ? "\u0627\u0644\u062D\u0642\u0644" : "Field" }),
+            /* @__PURE__ */ jsx71("span", { children: oldColLabel }),
+            /* @__PURE__ */ jsx71("span", { className: "text-success", children: newColLabel })
+          ] }),
+          data.rows.map((row) => {
+            const label = language === "ar" && row.label_ar ? row.label_ar : row.label_en;
+            return /* @__PURE__ */ jsxs60(
+              "div",
+              {
+                className: "grid grid-cols-[1fr_1fr_1fr] gap-2 items-start px-3 py-2 text-xs",
+                children: [
+                  /* @__PURE__ */ jsx71("span", { className: "text-muted-foreground font-medium leading-snug", children: label }),
+                  /* @__PURE__ */ jsx71(
+                    "span",
+                    {
+                      className: "text-foreground/50 line-through truncate leading-snug",
+                      "aria-label": oldColLabel,
+                      children: row.old !== void 0 && row.old !== "" ? row.old : "\u2014"
+                    }
+                  ),
+                  /* @__PURE__ */ jsx71(
+                    "span",
+                    {
+                      className: "text-success font-medium truncate leading-snug",
+                      "aria-label": newColLabel,
+                      children: row.new
+                    }
+                  )
+                ]
+              },
+              row.field
+            );
+          })
+        ] }),
+        /* @__PURE__ */ jsxs60(
+          "div",
+          {
+            className: "px-3 py-2.5 border-t border-border bg-muted/20 flex items-center gap-2 justify-end",
+            dir: resolvedDir,
+            children: [
+              /* @__PURE__ */ jsx71(
+                "button",
+                {
+                  type: "button",
+                  onClick: handleCancel,
+                  className: "rounded-md border border-border bg-transparent px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted transition-colors duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
+                  children: cancelLabel
+                }
+              ),
+              /* @__PURE__ */ jsx71(
+                "button",
+                {
+                  type: "button",
+                  onClick: handleConfirm,
+                  className: "rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-primary-foreground hover:bg-primary/90 transition-colors duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
+                  children: confirmLabel
+                }
+              )
+            ]
+          }
+        )
+      ]
+    }
+  );
+};
+ArtifactClientDiffConfirm.displayName = "ArtifactClientDiffConfirm";
+
+// src/components/copilot/artifacts/ArtifactPersonaStarters.tsx
+import { jsx as jsx72 } from "react/jsx-runtime";
+var ArtifactPersonaStarters = ({
+  data,
+  onInteract,
+  language = "en",
+  dir
+}) => {
+  const resolvedDir = dir ?? (language === "ar" ? "rtl" : "ltr");
+  if (!data.starters || data.starters.length === 0) return null;
+  const handleClick = (prompt) => {
+    onInteract?.({ kind: "persona_start", payload: { prompt } });
+  };
+  return /* @__PURE__ */ jsx72(
+    "div",
+    {
+      className: "flex flex-wrap gap-2",
+      dir: resolvedDir,
+      role: "group",
+      "aria-label": language === "ar" ? "\u0623\u0633\u0626\u0644\u0629 \u0627\u0641\u062A\u062A\u0627\u062D\u064A\u0629 \u0645\u0642\u062A\u0631\u062D\u0629" : "Suggested opening questions",
+      children: data.starters.map((starter, idx) => {
+        const label = language === "ar" && starter.label_ar ? starter.label_ar : starter.label_en;
+        return /* @__PURE__ */ jsx72(
+          "button",
+          {
+            type: "button",
+            onClick: () => handleClick(starter.prompt),
+            className: "inline-flex items-center gap-1.5 rounded-full border border-primary/30 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/20 hover:border-primary/50 transition-colors duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
+            "aria-label": label,
+            children: label
+          },
+          idx
+        );
+      })
+    }
+  );
+};
+ArtifactPersonaStarters.displayName = "ArtifactPersonaStarters";
+
+// src/components/copilot/artifacts/ArtifactRenderer.tsx
+import { jsx as jsx73, jsxs as jsxs61 } from "react/jsx-runtime";
+var UnknownArtifact = ({ artifact, language }) => /* @__PURE__ */ jsxs61("details", { className: "rounded-md border border-dashed border-border bg-muted/30 p-3 text-xs", children: [
+  /* @__PURE__ */ jsx73("summary", { className: "cursor-pointer text-muted-foreground font-medium select-none", children: language === "ar" ? `\u0639\u0646\u0635\u0631 \u063A\u064A\u0631 \u0645\u0639\u0631\u0648\u0641: ${artifact.kind}` : `Unknown artifact kind: ${artifact.kind}` }),
+  /* @__PURE__ */ jsx73("pre", { className: "mt-2 text-foreground/70 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(artifact.data, null, 2) })
+] });
+UnknownArtifact.displayName = "UnknownArtifact";
+var ArtifactRenderer = ({
+  artifact,
+  onAction,
+  onInteract,
+  language = "en",
+  dir
+}) => {
+  const resolvedDir = dir ?? (language === "ar" ? "rtl" : "ltr");
+  const titleText = language === "ar" ? artifact.title_ar || artifact.title_en || "" : artifact.title_en || "";
+  const renderBody = () => {
+    switch (artifact.kind) {
+      case "table":
+        return /* @__PURE__ */ jsx73(
+          ArtifactTable,
+          {
+            data: artifact.data,
+            language,
+            dir: resolvedDir
+          }
+        );
+      case "chart":
+        return /* @__PURE__ */ jsx73(
+          ArtifactChart,
+          {
+            data: artifact.data,
+            language,
+            dir: resolvedDir
+          }
+        );
+      case "card":
+        return /* @__PURE__ */ jsx73(
+          ArtifactCard,
+          {
+            data: artifact.data,
+            artifactTitle: titleText,
+            language,
+            dir: resolvedDir
+          }
+        );
+      case "actions":
+        return /* @__PURE__ */ jsx73(
+          ArtifactActions,
+          {
+            data: artifact.data,
+            onAction,
+            language,
+            dir: resolvedDir
+          }
+        );
+      case "markdown":
+        return /* @__PURE__ */ jsx73(
+          ArtifactMarkdown,
+          {
+            data: artifact.data,
+            language,
+            dir: resolvedDir
+          }
+        );
+      case "client_candidates":
+        return /* @__PURE__ */ jsx73(
+          ArtifactClientCandidates,
+          {
+            data: artifact.data,
+            onInteract,
+            language,
+            dir: resolvedDir
+          }
+        );
+      case "client_field_picker":
+        return /* @__PURE__ */ jsx73(
+          ArtifactClientFieldPicker,
+          {
+            data: artifact.data,
+            onInteract,
+            language,
+            dir: resolvedDir
+          }
+        );
+      case "client_diff_confirm":
+        return /* @__PURE__ */ jsx73(
+          ArtifactClientDiffConfirm,
+          {
+            data: artifact.data,
+            onInteract,
+            language,
+            dir: resolvedDir
+          }
+        );
+      case "persona_starters":
+        return /* @__PURE__ */ jsx73(
+          ArtifactPersonaStarters,
+          {
+            data: artifact.data,
+            onInteract,
+            language,
+            dir: resolvedDir
+          }
+        );
+      default:
+        return /* @__PURE__ */ jsx73(UnknownArtifact, { artifact, language });
+    }
+  };
+  return /* @__PURE__ */ jsxs61(
+    "div",
+    {
+      className: "mt-2 space-y-1.5",
+      dir: resolvedDir,
+      "data-artifact-kind": artifact.kind,
+      "data-artifact-version": artifact.version,
+      children: [
+        titleText && artifact.kind !== "card" && /* @__PURE__ */ jsx73("p", { className: "text-xs font-semibold text-foreground/70 leading-none px-0.5", children: titleText }),
+        renderBody()
+      ]
+    }
+  );
+};
+ArtifactRenderer.displayName = "ArtifactRenderer";
+
 // src/components/feedback/FeedbackButton.tsx
 import * as React17 from "react";
 import { MessageSquarePlus } from "lucide-react";
 import { cva as cva3 } from "class-variance-authority";
-import { jsx as jsx62, jsxs as jsxs54 } from "react/jsx-runtime";
+import { jsx as jsx74, jsxs as jsxs62 } from "react/jsx-runtime";
 var feedbackButtonVariants = cva3(
   "inline-flex items-center gap-1.5 font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background",
   {
@@ -10377,7 +11229,7 @@ var FeedbackButton = React17.forwardRef(
       onClick?.(e);
       onOpen?.();
     };
-    return /* @__PURE__ */ jsxs54(
+    return /* @__PURE__ */ jsxs62(
       "button",
       {
         ref,
@@ -10387,9 +11239,9 @@ var FeedbackButton = React17.forwardRef(
         className: cn(feedbackButtonVariants({ variant }), "relative", className),
         ...props,
         children: [
-          /* @__PURE__ */ jsx62(MessageSquarePlus, { size: variant === "inline" ? 15 : 18 }),
-          /* @__PURE__ */ jsx62("span", { className: cn(variant === "inline" && "hidden sm:inline"), children: text }),
-          count && count > 0 ? /* @__PURE__ */ jsx62("span", { className: "ms-1 inline-flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground", children: count > 99 ? "99+" : count }) : null
+          /* @__PURE__ */ jsx74(MessageSquarePlus, { size: variant === "inline" ? 15 : 18 }),
+          /* @__PURE__ */ jsx74("span", { className: cn(variant === "inline" && "hidden sm:inline"), children: text }),
+          count && count > 0 ? /* @__PURE__ */ jsx74("span", { className: "ms-1 inline-flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground", children: count > 99 ? "99+" : count }) : null
         ]
       }
     );
@@ -10436,7 +11288,7 @@ var formatTimestamp = (iso, lang) => new Date(iso).toLocaleString(lang === "ar" 
 });
 
 // src/components/feedback/FeedbackHub.tsx
-import { Fragment as Fragment16, jsx as jsx63, jsxs as jsxs55 } from "react/jsx-runtime";
+import { Fragment as Fragment16, jsx as jsx75, jsxs as jsxs63 } from "react/jsx-runtime";
 var FeedbackHub = ({
   open,
   onOpenChange,
@@ -10452,23 +11304,23 @@ var FeedbackHub = ({
   const heading = title ?? (ar ? "\u0645\u0644\u0627\u062D\u0638\u0627\u062A" : "Feedback");
   const onThisPage = route ? issues.filter((i) => i.route === route) : [];
   const elsewhere = route ? issues.filter((i) => i.route !== route) : issues;
-  return /* @__PURE__ */ jsx63(Sheet, { open, onOpenChange, children: /* @__PURE__ */ jsxs55(SheetContent, { side: "right", className: "flex w-full max-w-md flex-col gap-0 p-0 sm:max-w-md", children: [
-    /* @__PURE__ */ jsx63(SheetHeader, { className: "border-b border-border/50 px-5 py-3 text-start", children: /* @__PURE__ */ jsx63(SheetTitle, { className: "text-sm font-semibold", children: heading }) }),
-    /* @__PURE__ */ jsxs55("div", { className: "flex-1 space-y-4 overflow-y-auto p-4", children: [
-      /* @__PURE__ */ jsxs55(Button, { size: "sm", className: "w-full", onClick: onNewIssue, children: [
-        /* @__PURE__ */ jsx63(Plus2, { size: 14 }),
+  return /* @__PURE__ */ jsx75(Sheet, { open, onOpenChange, children: /* @__PURE__ */ jsxs63(SheetContent, { side: "right", className: "flex w-full max-w-md flex-col gap-0 p-0 sm:max-w-md", children: [
+    /* @__PURE__ */ jsx75(SheetHeader, { className: "border-b border-border/50 px-5 py-3 text-start", children: /* @__PURE__ */ jsx75(SheetTitle, { className: "text-sm font-semibold", children: heading }) }),
+    /* @__PURE__ */ jsxs63("div", { className: "flex-1 space-y-4 overflow-y-auto p-4", children: [
+      /* @__PURE__ */ jsxs63(Button, { size: "sm", className: "w-full", onClick: onNewIssue, children: [
+        /* @__PURE__ */ jsx75(Plus2, { size: 14 }),
         " ",
         ar ? "\u0623\u0628\u0644\u063A \u0639\u0646 \u0634\u064A\u0621 \u062C\u062F\u064A\u062F" : "Report something new"
       ] }),
-      loading ? /* @__PURE__ */ jsx63("div", { className: "space-y-2", children: [0, 1, 2].map((k) => /* @__PURE__ */ jsx63("div", { className: "h-16 animate-pulse rounded-lg bg-secondary" }, k)) }) : issues.length === 0 ? /* @__PURE__ */ jsx63(
+      loading ? /* @__PURE__ */ jsx75("div", { className: "space-y-2", children: [0, 1, 2].map((k) => /* @__PURE__ */ jsx75("div", { className: "h-16 animate-pulse rounded-lg bg-secondary" }, k)) }) : issues.length === 0 ? /* @__PURE__ */ jsx75(
         EmptyState,
         {
-          icon: /* @__PURE__ */ jsx63(MessageSquarePlus2, {}),
+          icon: /* @__PURE__ */ jsx75(MessageSquarePlus2, {}),
           title: ar ? "\u0644\u0627 \u062A\u0648\u062C\u062F \u0645\u0644\u0627\u062D\u0638\u0627\u062A \u0628\u0639\u062F" : "No feedback yet",
           description: ar ? "\u0644\u0645 \u062A\u064F\u0628\u0644\u0650\u0651\u063A \u0639\u0646 \u0623\u064A \u0634\u064A\u0621 \u062D\u062A\u0649 \u0627\u0644\u0622\u0646. \u0627\u0628\u062F\u0623 \u0628\u0627\u0644\u0632\u0631 \u0623\u0639\u0644\u0627\u0647." : "You haven't reported anything yet. Start with the button above."
         }
-      ) : /* @__PURE__ */ jsxs55(Fragment16, { children: [
-        route && onThisPage.length > 0 ? /* @__PURE__ */ jsx63(
+      ) : /* @__PURE__ */ jsxs63(Fragment16, { children: [
+        route && onThisPage.length > 0 ? /* @__PURE__ */ jsx75(
           FeedbackGroup,
           {
             label: ar ? "\u0641\u064A \u0647\u0630\u0647 \u0627\u0644\u0635\u0641\u062D\u0629" : "On this page",
@@ -10477,7 +11329,7 @@ var FeedbackHub = ({
             onSelect: onSelectIssue
           }
         ) : null,
-        elsewhere.length > 0 ? /* @__PURE__ */ jsx63(
+        elsewhere.length > 0 ? /* @__PURE__ */ jsx75(
           FeedbackGroup,
           {
             label: route ? ar ? "\u0641\u064A \u0623\u0645\u0627\u0643\u0646 \u0623\u062E\u0631\u0649" : "Elsewhere" : ar ? "\u0645\u0644\u0627\u062D\u0638\u0627\u062A\u0643" : "Your reports",
@@ -10496,9 +11348,9 @@ var FeedbackGroup = ({
   items,
   language,
   onSelect
-}) => /* @__PURE__ */ jsxs55("div", { children: [
-  /* @__PURE__ */ jsx63("p", { className: "mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground", children: label }),
-  /* @__PURE__ */ jsx63("ul", { className: "space-y-2", children: items.map((issue) => /* @__PURE__ */ jsx63("li", { children: /* @__PURE__ */ jsxs55(
+}) => /* @__PURE__ */ jsxs63("div", { children: [
+  /* @__PURE__ */ jsx75("p", { className: "mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground", children: label }),
+  /* @__PURE__ */ jsx75("ul", { className: "space-y-2", children: items.map((issue) => /* @__PURE__ */ jsx75("li", { children: /* @__PURE__ */ jsxs63(
     "button",
     {
       type: "button",
@@ -10508,16 +11360,16 @@ var FeedbackGroup = ({
         "hover:border-primary/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
       ),
       children: [
-        /* @__PURE__ */ jsxs55("div", { className: "mb-1 flex items-center gap-2", children: [
-          /* @__PURE__ */ jsxs55("span", { className: "font-mono text-xs text-muted-foreground", children: [
+        /* @__PURE__ */ jsxs63("div", { className: "mb-1 flex items-center gap-2", children: [
+          /* @__PURE__ */ jsxs63("span", { className: "font-mono text-xs text-muted-foreground", children: [
             "#",
             issue.number
           ] }),
-          /* @__PURE__ */ jsx63(StatusBadge, { tone: STATUS_TONE[issue.status], className: "text-[10px]", children: statusLabel(issue.status, language) }),
-          /* @__PURE__ */ jsx63("span", { className: "ms-auto text-[10px] uppercase tracking-wider text-muted-foreground", children: typeLabel(issue.type, language) })
+          /* @__PURE__ */ jsx75(StatusBadge, { tone: STATUS_TONE[issue.status], className: "text-[10px]", children: statusLabel(issue.status, language) }),
+          /* @__PURE__ */ jsx75("span", { className: "ms-auto text-[10px] uppercase tracking-wider text-muted-foreground", children: typeLabel(issue.type, language) })
         ] }),
-        /* @__PURE__ */ jsx63("p", { className: "line-clamp-2 text-sm font-medium text-foreground", children: issue.title }),
-        /* @__PURE__ */ jsx63("p", { className: "mt-1 text-[11px] text-muted-foreground", children: formatTimestamp(issue.createdAt, language) })
+        /* @__PURE__ */ jsx75("p", { className: "line-clamp-2 text-sm font-medium text-foreground", children: issue.title }),
+        /* @__PURE__ */ jsx75("p", { className: "mt-1 text-[11px] text-muted-foreground", children: formatTimestamp(issue.createdAt, language) })
       ]
     }
   ) }, issue.id)) })
@@ -10527,7 +11379,7 @@ FeedbackGroup.displayName = "FeedbackHubGroup";
 // src/components/feedback/MotorFeedbackLauncher.tsx
 import * as React18 from "react";
 import { MessageSquarePlus as MessageSquarePlus3 } from "lucide-react";
-import { jsx as jsx64, jsxs as jsxs56 } from "react/jsx-runtime";
+import { jsx as jsx76, jsxs as jsxs64 } from "react/jsx-runtime";
 var FAB_W = 132;
 var FAB_H = 48;
 var DRAG_THRESHOLD = 5;
@@ -10672,7 +11524,7 @@ var MotorFeedbackLauncher = ({
   if (!active) return null;
   const positioned = pos !== null;
   const style = positioned ? { left: pos.left, top: pos.top, right: "auto", bottom: "auto", touchAction: "none" } : { touchAction: "none" };
-  return /* @__PURE__ */ jsxs56(
+  return /* @__PURE__ */ jsxs64(
     "button",
     {
       ref: triggerRef,
@@ -10692,8 +11544,8 @@ var MotorFeedbackLauncher = ({
         !positioned && "bottom-5 end-5"
       ),
       children: [
-        /* @__PURE__ */ jsx64(MessageSquarePlus3, { size: 18 }),
-        /* @__PURE__ */ jsx64("span", { children: text })
+        /* @__PURE__ */ jsx76(MessageSquarePlus3, { size: 18 }),
+        /* @__PURE__ */ jsx76("span", { children: text })
       ]
     }
   );
@@ -10720,7 +11572,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS as CSS3 } from "@dnd-kit/utilities";
 import { GripVertical as GripVertical3, Settings2 as Settings23, Trash2 as Trash24, Plus as Plus3 } from "lucide-react";
-import { Fragment as Fragment17, jsx as jsx65, jsxs as jsxs57 } from "react/jsx-runtime";
+import { Fragment as Fragment17, jsx as jsx77, jsxs as jsxs65 } from "react/jsx-runtime";
 var T2 = {
   en: {
     edit: "Edit section",
@@ -10771,12 +11623,12 @@ function SectionEditor({
     setDraft({ ...draft, settings: Object.fromEntries(next.filter(([k]) => k)) });
   };
   const addSetting = () => setDraft({ ...draft, settings: { ...draft.settings ?? {}, "": "" } });
-  return /* @__PURE__ */ jsx65(Dialog, { open, onOpenChange: (o) => !o && onClose(), children: /* @__PURE__ */ jsxs57(DialogContent, { children: [
-    /* @__PURE__ */ jsx65(DialogHeader, { children: /* @__PURE__ */ jsx65(DialogTitle, { children: draft.title || t2.edit }) }),
-    /* @__PURE__ */ jsxs57("div", { className: "space-y-4", children: [
-      /* @__PURE__ */ jsxs57("div", { className: "space-y-1.5", children: [
-        /* @__PURE__ */ jsx65(Label, { htmlFor: "sec-prompt", children: t2.prompt }),
-        /* @__PURE__ */ jsx65(
+  return /* @__PURE__ */ jsx77(Dialog, { open, onOpenChange: (o) => !o && onClose(), children: /* @__PURE__ */ jsxs65(DialogContent, { children: [
+    /* @__PURE__ */ jsx77(DialogHeader, { children: /* @__PURE__ */ jsx77(DialogTitle, { children: draft.title || t2.edit }) }),
+    /* @__PURE__ */ jsxs65("div", { className: "space-y-4", children: [
+      /* @__PURE__ */ jsxs65("div", { className: "space-y-1.5", children: [
+        /* @__PURE__ */ jsx77(Label, { htmlFor: "sec-prompt", children: t2.prompt }),
+        /* @__PURE__ */ jsx77(
           Textarea,
           {
             id: "sec-prompt",
@@ -10786,31 +11638,31 @@ function SectionEditor({
           }
         )
       ] }),
-      /* @__PURE__ */ jsxs57("div", { className: "space-y-1.5", children: [
-        /* @__PURE__ */ jsx65(Label, { children: t2.model }),
-        /* @__PURE__ */ jsxs57(Select, { value: draft.model ?? "", onValueChange: (v) => setDraft({ ...draft, model: v }), children: [
-          /* @__PURE__ */ jsx65(SelectTrigger, { children: /* @__PURE__ */ jsx65(SelectValue, { placeholder: t2.noModel }) }),
-          /* @__PURE__ */ jsx65(SelectContent, { children: models.map((m) => /* @__PURE__ */ jsx65(SelectItem, { value: m.value, children: m.label ?? m.value }, m.value)) })
+      /* @__PURE__ */ jsxs65("div", { className: "space-y-1.5", children: [
+        /* @__PURE__ */ jsx77(Label, { children: t2.model }),
+        /* @__PURE__ */ jsxs65(Select, { value: draft.model ?? "", onValueChange: (v) => setDraft({ ...draft, model: v }), children: [
+          /* @__PURE__ */ jsx77(SelectTrigger, { children: /* @__PURE__ */ jsx77(SelectValue, { placeholder: t2.noModel }) }),
+          /* @__PURE__ */ jsx77(SelectContent, { children: models.map((m) => /* @__PURE__ */ jsx77(SelectItem, { value: m.value, children: m.label ?? m.value }, m.value)) })
         ] })
       ] }),
-      /* @__PURE__ */ jsxs57("div", { className: "space-y-1.5", children: [
-        /* @__PURE__ */ jsx65(Label, { children: t2.settings }),
-        /* @__PURE__ */ jsxs57("div", { className: "space-y-2", children: [
-          settings.map(([k, v], i) => /* @__PURE__ */ jsxs57("div", { className: "flex gap-2", children: [
-            /* @__PURE__ */ jsx65(Input, { placeholder: t2.key, value: k, onChange: (e) => setSetting(i, e.target.value, v) }),
-            /* @__PURE__ */ jsx65(Input, { placeholder: t2.value, value: v, onChange: (e) => setSetting(i, k, e.target.value) })
+      /* @__PURE__ */ jsxs65("div", { className: "space-y-1.5", children: [
+        /* @__PURE__ */ jsx77(Label, { children: t2.settings }),
+        /* @__PURE__ */ jsxs65("div", { className: "space-y-2", children: [
+          settings.map(([k, v], i) => /* @__PURE__ */ jsxs65("div", { className: "flex gap-2", children: [
+            /* @__PURE__ */ jsx77(Input, { placeholder: t2.key, value: k, onChange: (e) => setSetting(i, e.target.value, v) }),
+            /* @__PURE__ */ jsx77(Input, { placeholder: t2.value, value: v, onChange: (e) => setSetting(i, k, e.target.value) })
           ] }, i)),
-          /* @__PURE__ */ jsxs57(Button, { type: "button", variant: "ghost", size: "sm", onClick: addSetting, children: [
-            /* @__PURE__ */ jsx65(Plus3, { className: "h-3.5 w-3.5" }),
+          /* @__PURE__ */ jsxs65(Button, { type: "button", variant: "ghost", size: "sm", onClick: addSetting, children: [
+            /* @__PURE__ */ jsx77(Plus3, { className: "h-3.5 w-3.5" }),
             " ",
             t2.addSetting
           ] })
         ] })
       ] })
     ] }),
-    /* @__PURE__ */ jsxs57(DialogFooter, { children: [
-      /* @__PURE__ */ jsx65(Button, { variant: "secondary", onClick: onClose, children: t2.cancel }),
-      /* @__PURE__ */ jsx65(Button, { onClick: () => onSave(draft), children: t2.save })
+    /* @__PURE__ */ jsxs65(DialogFooter, { children: [
+      /* @__PURE__ */ jsx77(Button, { variant: "secondary", onClick: onClose, children: t2.cancel }),
+      /* @__PURE__ */ jsx77(Button, { onClick: () => onSave(draft), children: t2.save })
     ] })
   ] }) });
 }
@@ -10826,31 +11678,31 @@ function DynamicSection({
 }) {
   const t2 = T2[language];
   const [editing, setEditing] = React19.useState(false);
-  return /* @__PURE__ */ jsxs57(Card, { className: cn("space-y-3 p-4", className), children: [
-    /* @__PURE__ */ jsxs57("div", { className: "flex items-center gap-2", children: [
-      editMode && /* @__PURE__ */ jsx65(
+  return /* @__PURE__ */ jsxs65(Card, { className: cn("space-y-3 p-4", className), children: [
+    /* @__PURE__ */ jsxs65("div", { className: "flex items-center gap-2", children: [
+      editMode && /* @__PURE__ */ jsx77(
         "button",
         {
           type: "button",
           "aria-label": "Drag to reorder",
           className: "shrink-0 cursor-grab text-muted-foreground hover:text-foreground",
           ...handleProps,
-          children: /* @__PURE__ */ jsx65(GripVertical3, { className: "h-4 w-4" })
+          children: /* @__PURE__ */ jsx77(GripVertical3, { className: "h-4 w-4" })
         }
       ),
-      /* @__PURE__ */ jsx65("h3", { className: "min-w-0 flex-1 truncate text-sm font-semibold", children: section.title }),
-      section.badge && /* @__PURE__ */ jsx65(Badge, { children: section.badge }),
-      editMode && /* @__PURE__ */ jsxs57(Fragment17, { children: [
-        /* @__PURE__ */ jsx65(Button, { variant: "ghost", size: "sm", className: "h-7 w-7 p-0", "aria-label": t2.edit, onClick: () => setEditing(true), children: /* @__PURE__ */ jsx65(Settings23, { className: "h-4 w-4" }) }),
-        onRemove && /* @__PURE__ */ jsx65(Button, { variant: "ghost", size: "sm", className: "h-7 w-7 p-0 text-destructive", "aria-label": "Remove", onClick: onRemove, children: /* @__PURE__ */ jsx65(Trash24, { className: "h-4 w-4" }) })
+      /* @__PURE__ */ jsx77("h3", { className: "min-w-0 flex-1 truncate text-sm font-semibold", children: section.title }),
+      section.badge && /* @__PURE__ */ jsx77(Badge, { children: section.badge }),
+      editMode && /* @__PURE__ */ jsxs65(Fragment17, { children: [
+        /* @__PURE__ */ jsx77(Button, { variant: "ghost", size: "sm", className: "h-7 w-7 p-0", "aria-label": t2.edit, onClick: () => setEditing(true), children: /* @__PURE__ */ jsx77(Settings23, { className: "h-4 w-4" }) }),
+        onRemove && /* @__PURE__ */ jsx77(Button, { variant: "ghost", size: "sm", className: "h-7 w-7 p-0 text-destructive", "aria-label": "Remove", onClick: onRemove, children: /* @__PURE__ */ jsx77(Trash24, { className: "h-4 w-4" }) })
       ] })
     ] }),
-    /* @__PURE__ */ jsx65("div", { className: "text-sm text-muted-foreground", children: section.content ?? /* @__PURE__ */ jsx65("span", { className: "italic opacity-70", children: t2.empty }) }),
-    editMode && (section.model || section.prompt) && /* @__PURE__ */ jsxs57("div", { className: "flex flex-wrap items-center gap-2 border-t border-border pt-2 text-[11px] text-muted-foreground", children: [
-      section.model && /* @__PURE__ */ jsx65(Badge, { variant: "outline", children: section.model }),
-      section.prompt && /* @__PURE__ */ jsx65("span", { className: "line-clamp-1 flex-1 font-mono opacity-70", children: section.prompt })
+    /* @__PURE__ */ jsx77("div", { className: "text-sm text-muted-foreground", children: section.content ?? /* @__PURE__ */ jsx77("span", { className: "italic opacity-70", children: t2.empty }) }),
+    editMode && (section.model || section.prompt) && /* @__PURE__ */ jsxs65("div", { className: "flex flex-wrap items-center gap-2 border-t border-border pt-2 text-[11px] text-muted-foreground", children: [
+      section.model && /* @__PURE__ */ jsx77(Badge, { variant: "outline", children: section.model }),
+      section.prompt && /* @__PURE__ */ jsx77("span", { className: "line-clamp-1 flex-1 font-mono opacity-70", children: section.prompt })
     ] }),
-    /* @__PURE__ */ jsx65(
+    /* @__PURE__ */ jsx77(
       SectionEditor,
       {
         open: editing,
@@ -10869,7 +11721,7 @@ function DynamicSection({
 function SortableSection(props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable3({ id: props.id });
   const style = { transform: CSS3.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
-  return /* @__PURE__ */ jsx65("div", { ref: setNodeRef, style, children: /* @__PURE__ */ jsx65(DynamicSection, { ...props, handleProps: { ...attributes, ...listeners } }) });
+  return /* @__PURE__ */ jsx77("div", { ref: setNodeRef, style, children: /* @__PURE__ */ jsx77(DynamicSection, { ...props, handleProps: { ...attributes, ...listeners } }) });
 }
 function SectionBoard({
   sections,
@@ -10902,10 +11754,10 @@ function SectionBoard({
   const grid = cn("grid gap-3", columns === 2 ? "sm:grid-cols-2" : "grid-cols-1");
   const active = sections.find((s) => s.id === activeId);
   if (!editMode) {
-    return /* @__PURE__ */ jsx65("div", { dir: isRTL ? "rtl" : "ltr", className: cn(grid, className), children: sections.map((s) => /* @__PURE__ */ jsx65(DynamicSection, { section: s, language, models }, s.id)) });
+    return /* @__PURE__ */ jsx77("div", { dir: isRTL ? "rtl" : "ltr", className: cn(grid, className), children: sections.map((s) => /* @__PURE__ */ jsx77(DynamicSection, { section: s, language, models }, s.id)) });
   }
-  return /* @__PURE__ */ jsxs57("div", { dir: isRTL ? "rtl" : "ltr", className: cn("space-y-3", className), children: [
-    /* @__PURE__ */ jsxs57(
+  return /* @__PURE__ */ jsxs65("div", { dir: isRTL ? "rtl" : "ltr", className: cn("space-y-3", className), children: [
+    /* @__PURE__ */ jsxs65(
       DndContext3,
       {
         sensors,
@@ -10914,7 +11766,7 @@ function SectionBoard({
         onDragEnd,
         onDragCancel: () => setActiveId(null),
         children: [
-          /* @__PURE__ */ jsx65(SortableContext3, { items: sections.map((s) => s.id), strategy: verticalListSortingStrategy3, children: /* @__PURE__ */ jsx65("div", { className: grid, children: sections.map((s) => /* @__PURE__ */ jsx65(
+          /* @__PURE__ */ jsx77(SortableContext3, { items: sections.map((s) => s.id), strategy: verticalListSortingStrategy3, children: /* @__PURE__ */ jsx77("div", { className: grid, children: sections.map((s) => /* @__PURE__ */ jsx77(
             SortableSection,
             {
               id: s.id,
@@ -10927,22 +11779,2914 @@ function SectionBoard({
             },
             s.id
           )) }) }),
-          /* @__PURE__ */ jsx65(DragOverlay2, { children: active ? /* @__PURE__ */ jsx65(DynamicSection, { section: active, editMode: true, models, language, className: "shadow-lg" }) : null })
+          /* @__PURE__ */ jsx77(DragOverlay2, { children: active ? /* @__PURE__ */ jsx77(DynamicSection, { section: active, editMode: true, models, language, className: "shadow-lg" }) : null })
         ]
       }
     ),
-    onAddSection && /* @__PURE__ */ jsxs57(Button, { variant: "outline", className: "w-full border-dashed", onClick: onAddSection, children: [
-      /* @__PURE__ */ jsx65(Plus3, { className: "h-4 w-4" }),
+    onAddSection && /* @__PURE__ */ jsxs65(Button, { variant: "outline", className: "w-full border-dashed", onClick: onAddSection, children: [
+      /* @__PURE__ */ jsx77(Plus3, { className: "h-4 w-4" }),
       " ",
       t2.addSection
     ] })
   ] });
 }
+
+// src/components/copilot/CopilotProvider.tsx
+import {
+  createContext as createContext3,
+  useCallback as useCallback15,
+  useContext as useContext3,
+  useEffect as useEffect25,
+  useRef as useRef15,
+  useState as useState42
+} from "react";
+
+// src/components/copilot/UnifiedCopilotDock.tsx
+import { useState as useState41, useRef as useRef14, useEffect as useEffect24, useCallback as useCallback14, useMemo as useMemo11 } from "react";
+import {
+  Send,
+  Sparkles as Sparkles7,
+  User,
+  Loader2 as Loader29,
+  X as X5,
+  ChevronUp as ChevronUp4,
+  Clock as Clock4,
+  Plus as Plus5,
+  Maximize2,
+  Users,
+  AlertTriangle as AlertTriangle3,
+  ExternalLink as ExternalLink5,
+  MoreVertical,
+  Brain as Brain3,
+  Zap as Zap2,
+  Lightbulb,
+  PanelLeft,
+  PanelRight,
+  PanelBottom,
+  Check as Check5,
+  Copy,
+  Share2,
+  Wrench,
+  ChevronDown as ChevronDown10,
+  AtSign,
+  Terminal as Terminal2,
+  Trash2 as Trash25
+} from "lucide-react";
+
+// src/components/copilot/AgentSteps.tsx
+import { useState as useState37, useMemo as useMemo10 } from "react";
+import {
+  Search as Search7,
+  Database as Database4,
+  Globe as Globe4,
+  Sparkles as Sparkles6,
+  Check as Check3,
+  ChevronDown as ChevronDown8,
+  ExternalLink as ExternalLink4,
+  Brain,
+  Microscope,
+  Newspaper,
+  FileText as FileText2,
+  Clock as Clock3,
+  X as XIcon,
+  CircleDot as CircleDot3
+} from "lucide-react";
+import { jsx as jsx78, jsxs as jsxs66 } from "react/jsx-runtime";
+var STEP_MSG_AR = {
+  "Searching internal knowledge...": "\u0627\u0644\u0628\u062D\u062B \u0641\u064A \u0642\u0627\u0639\u062F\u0629 \u0627\u0644\u0645\u0639\u0631\u0641\u0629 \u0627\u0644\u062F\u0627\u062E\u0644\u064A\u0629...",
+  "No internal matches found": "\u0644\u0627 \u062A\u0648\u062C\u062F \u0646\u062A\u0627\u0626\u062C \u062F\u0627\u062E\u0644\u064A\u0629",
+  "Searching the web...": "\u0627\u0644\u0628\u062D\u062B \u0641\u064A \u0627\u0644\u0648\u064A\u0628...",
+  "No web results found": "\u0644\u0627 \u062A\u0648\u062C\u062F \u0646\u062A\u0627\u0626\u062C \u0648\u064A\u0628",
+  "Searching X/Twitter for public discourse...": "\u0627\u0644\u0628\u062D\u062B \u0641\u064A \u0645\u0646\u0635\u0629 X \u0639\u0646 \u0627\u0644\u062E\u0637\u0627\u0628 \u0627\u0644\u0639\u0627\u0645...",
+  "No social posts found": "\u0644\u0627 \u062A\u0648\u062C\u062F \u0645\u0646\u0634\u0648\u0631\u0627\u062A",
+  "Searching latest news...": "\u0627\u0644\u0628\u062D\u062B \u0641\u064A \u0627\u0644\u0623\u062E\u0628\u0627\u0631 \u0627\u0644\u0623\u062E\u064A\u0631\u0629...",
+  "No news results found": "\u0644\u0627 \u062A\u0648\u062C\u062F \u0646\u062A\u0627\u0626\u062C \u0625\u062E\u0628\u0627\u0631\u064A\u0629",
+  "Composing response...": "\u0635\u064A\u0627\u063A\u0629 \u0627\u0644\u0631\u062F...",
+  "Formulating response...": "\u0623\u0635\u0648\u063A \u0627\u0644\u0631\u062F...",
+  "Answering from screen context...": "\u0627\u0644\u0625\u062C\u0627\u0628\u0629 \u0645\u0646 \u0633\u064A\u0627\u0642 \u0627\u0644\u0634\u0627\u0634\u0629...",
+  "Files processed": "\u062A\u0645 \u0645\u0639\u0627\u0644\u062C\u0629 \u0627\u0644\u0645\u0644\u0641\u0627\u062A",
+  "Documents loaded": "\u062A\u0645 \u0642\u0631\u0627\u0621\u0629 \u0627\u0644\u0645\u0633\u062A\u0646\u062F\u0627\u062A",
+  "Recalling from memory...": "\u0623\u0633\u062A\u062D\u0636\u0631 \u0645\u0646 \u0627\u0644\u0630\u0627\u0643\u0631\u0629...",
+  "Profile recalled": "\u062A\u0645 \u0627\u0633\u062A\u062D\u0636\u0627\u0631 \u0627\u0644\u0645\u0644\u0641 \u0627\u0644\u0634\u062E\u0635\u064A",
+  "Reflecting on public record...": "\u0623\u062A\u0623\u0645\u0644 \u0641\u064A \u0627\u0644\u0633\u062C\u0644 \u0627\u0644\u0639\u0627\u0645...",
+  "No additional context needed": "\u0644\u0627 \u062A\u0648\u062C\u062F \u0645\u0639\u0644\u0648\u0645\u0627\u062A \u0625\u0636\u0627\u0641\u064A\u0629",
+  "Deep research in progress...": "\u0628\u062D\u062B \u0639\u0645\u064A\u0642 \u0642\u064A\u062F \u0627\u0644\u062A\u0646\u0641\u064A\u0630...",
+  "No deep research results found": "\u0644\u0645 \u064A\u062A\u0645 \u0627\u0644\u0639\u062B\u0648\u0631 \u0639\u0644\u0649 \u0646\u062A\u0627\u0626\u062C",
+  "Entity already exists": "\u0627\u0644\u062C\u0647\u0629 \u0645\u0648\u062C\u0648\u062F\u0629 \u0628\u0627\u0644\u0641\u0639\u0644",
+  "New entity created": "\u062A\u0645 \u0625\u0646\u0634\u0627\u0621 \u062C\u0647\u0629 \u062C\u062F\u064A\u062F\u0629",
+  "Narrative already exists": "\u0627\u0644\u0631\u0648\u0627\u064A\u0629 \u0645\u0648\u062C\u0648\u062F\u0629 \u0628\u0627\u0644\u0641\u0639\u0644",
+  "New narrative added": "\u062A\u0645\u062A \u0625\u0636\u0627\u0641\u0629 \u0631\u0648\u0627\u064A\u0629 \u062C\u062F\u064A\u062F\u0629",
+  "Narrative enhanced": "\u062A\u0645 \u062A\u062D\u0633\u064A\u0646 \u0627\u0644\u0631\u0648\u0627\u064A\u0629",
+  "Narrative not found": "\u0627\u0644\u0631\u0648\u0627\u064A\u0629 \u063A\u064A\u0631 \u0645\u0648\u062C\u0648\u062F\u0629",
+  "Analysis complete": "\u0627\u0643\u062A\u0645\u0644 \u0627\u0644\u062A\u062D\u0644\u064A\u0644"
+};
+var STEP_MSG_AR_PATTERNS = [
+  { pattern: /^Found (\d+) web sources?$/, replace: (m) => `\u062A\u0645 \u0627\u0644\u0639\u062B\u0648\u0631 \u0639\u0644\u0649 ${m[1]} \u0645\u0635\u062F\u0631` },
+  { pattern: /^Found (\d+) social posts?$/, replace: (m) => `\u062A\u0645 \u0627\u0644\u0639\u062B\u0648\u0631 \u0639\u0644\u0649 ${m[1]} \u0645\u0646\u0634\u0648\u0631` },
+  { pattern: /^Found (\d+) news sources?$/, replace: (m) => `\u062A\u0645 \u0627\u0644\u0639\u062B\u0648\u0631 \u0639\u0644\u0649 ${m[1]} \u0645\u0635\u062F\u0631 \u0625\u062E\u0628\u0627\u0631\u064A` },
+  { pattern: /^Reviewed (\d+) sources?$/, replace: (m) => `\u062A\u0645 \u0645\u0631\u0627\u062C\u0639\u0629 ${m[1]} \u0645\u0635\u0627\u062F\u0631` },
+  { pattern: /^(\d+) high-relevance.*$/, replace: (m) => `${m[1]} \u0646\u062A\u064A\u062C\u0629 \u0639\u0627\u0644\u064A\u0629 \u0627\u0644\u0635\u0644\u0629` },
+  { pattern: /^Synthesizing from (\d+) sources?\.\.\.$/, replace: (m) => `\u062A\u062C\u0645\u064A\u0639 \u0645\u0646 ${m[1]} \u0645\u0635\u062F\u0631...` },
+  { pattern: /^Processing (\d+) attached files?\.\.\.$/, replace: (m) => `\u0645\u0639\u0627\u0644\u062C\u0629 ${m[1]} \u0645\u0644\u0641 \u0645\u0631\u0641\u0642...` },
+  { pattern: /^Reading (\d+) documents?\.\.\.$/, replace: (m) => `\u0642\u0631\u0627\u0621\u0629 ${m[1]} \u0645\u0633\u062A\u0646\u062F...` },
+  { pattern: /^Profiling "(.+)" as (.+)\.\.\.$/, replace: (m) => `\u062C\u0627\u0631\u064D \u062A\u0633\u062C\u064A\u0644 "${m[1]}" \u0643\u0640 ${m[2]}...` },
+  { pattern: /^Adding narrative "(.+)"\.\.\.$/, replace: (m) => `\u062C\u0627\u0631\u064D \u0625\u0636\u0627\u0641\u0629 \u0627\u0644\u0631\u0648\u0627\u064A\u0629 "${m[1]}"...` },
+  { pattern: /^Enhancing narrative\.\.\.$/, replace: () => "\u062C\u0627\u0631\u064D \u062A\u062D\u0633\u064A\u0646 \u0627\u0644\u0631\u0648\u0627\u064A\u0629..." },
+  { pattern: /^Deep research complete: (\d+) sources? \((.+)\)$/, replace: (m) => `\u0628\u062D\u062B \u0639\u0645\u064A\u0642 \u0645\u0643\u062A\u0645\u0644: ${m[1]} \u0645\u0635\u062F\u0631 (${m[2]})` },
+  { pattern: /^Scanned (\d+) social posts/, replace: (m) => `\u062A\u0645 \u0645\u0633\u062D ${m[1]} \u0645\u0646\u0634\u0648\u0631 \u0627\u062C\u062A\u0645\u0627\u0639\u064A` },
+  { pattern: /^Re-profiling as (.+)$/, replace: (m) => `\u0625\u0639\u0627\u062F\u0629 \u062A\u0633\u062C\u064A\u0644 \u0643\u0640 ${m[1]}` },
+  { pattern: /^Running (.+)\.\.\.$/, replace: (m) => `\u062C\u0627\u0631\u064D \u062A\u0634\u063A\u064A\u0644 ${m[1]}...` },
+  { pattern: /^(.+) complete$/, replace: (m) => `\u0627\u0643\u062A\u0645\u0644 ${m[1]}` }
+];
+var SOURCE_LABEL_AR = {
+  "Internal Narrative": "\u0633\u0631\u062F\u064A\u0629 \u062F\u0627\u062E\u0644\u064A\u0629",
+  "Alert Record": "\u0633\u062C\u0644 \u0625\u0634\u0627\u0631\u0629",
+  "Entity Profile": "\u0645\u0644\u0641 \u062C\u0647\u0629",
+  "Internal Document": "\u0645\u0633\u062A\u0646\u062F \u062F\u0627\u062E\u0644\u064A"
+};
+function translateStepMessage(message, language) {
+  if (language !== "ar") return message;
+  if (STEP_MSG_AR[message]) return STEP_MSG_AR[message];
+  for (const { pattern, replace } of STEP_MSG_AR_PATTERNS) {
+    const match = message.match(pattern);
+    if (match) return replace(match);
+  }
+  return message;
+}
+function translateSource(source, language) {
+  if (language !== "ar") return source;
+  return SOURCE_LABEL_AR[source] || source;
+}
+var STEP_ICONS2 = {
+  rag_search: { active: Search7, complete: Database4 },
+  rag_results: { active: Database4, complete: Database4 },
+  web_search: { active: Globe4, complete: Globe4 },
+  web_results: { active: Globe4, complete: Globe4 },
+  news_search: { active: Newspaper, complete: Newspaper },
+  news_results: { active: Newspaper, complete: Newspaper },
+  social_search: { active: CircleDot3, complete: CircleDot3 },
+  social_results: { active: CircleDot3, complete: CircleDot3 },
+  deep_research: { active: Microscope, complete: Microscope },
+  deep_research_searching: { active: Search7, complete: Search7 },
+  deep_research_reading: { active: Globe4, complete: Globe4 },
+  deep_research_thinking: { active: Brain, complete: Brain },
+  deep_research_progress: { active: Clock3, complete: Clock3 },
+  deep_research_results: { active: Microscope, complete: Microscope },
+  file_processing: { active: FileText2, complete: FileText2 },
+  tool_check: { active: Search7, complete: Check3 },
+  profile_entity: { active: Search7, complete: Search7 },
+  profile_result: { active: Search7, complete: Check3 },
+  track_narrative: { active: Search7, complete: Search7 },
+  narrative_result: { active: Search7, complete: Check3 },
+  composing: { active: Sparkles6, complete: Sparkles6 },
+  twin_recall: { active: Brain, complete: Brain },
+  twin_reflect: { active: Globe4, complete: Globe4 },
+  twin_composing: { active: Sparkles6, complete: Sparkles6 },
+  compare_detect: { active: Search7, complete: Search7 },
+  compare_profiling: { active: Clock3, complete: Check3 },
+  compare_factors: { active: Sparkles6, complete: Sparkles6 },
+  compare_running: { active: Clock3, complete: Clock3 },
+  compare_result: { active: Check3, complete: Check3 },
+  auto_profile: { active: Search7, complete: Check3 },
+  compare_ready: { active: Check3, complete: Check3 }
+};
+function getStepState(step, allSteps, isStreaming) {
+  if (isStreaming === false) return "complete";
+  if (step.step.endsWith("_results") || step.step === "profile_result" || step.step === "narrative_result" || step.step === "deep_research_results") return "complete";
+  if (step.step === "rag_search" && allSteps.some((s) => s.step === "rag_results")) return "complete";
+  if (step.step === "web_search" && allSteps.some((s) => s.step === "web_results")) return "complete";
+  if (step.step === "news_search" && allSteps.some((s) => s.step === "news_results")) return "complete";
+  if (step.step === "social_search" && allSteps.some((s) => s.step === "social_results")) return "complete";
+  if (step.step === "deep_research" && allSteps.some((s) => s.step === "deep_research_results")) return "complete";
+  if (["deep_research_searching", "deep_research_reading", "deep_research_thinking", "deep_research_progress"].includes(step.step)) {
+    const idx = allSteps.indexOf(step);
+    if (allSteps.slice(idx + 1).some((s) => s.step.startsWith("deep_research_"))) return "complete";
+  }
+  if (step.step === "tool_check" && allSteps.some((s) => s.step === "composing" || s.step === "profile_entity" || s.step === "track_narrative")) return "complete";
+  if (step.step === "profile_entity" && allSteps.some((s) => s.step === "profile_result")) return "complete";
+  if (step.step === "track_narrative" && allSteps.some((s) => s.step === "narrative_result")) return "complete";
+  if ((step.step === "twin_recall" || step.step === "twin_reflect" || step.step === "twin_composing" || step.step === "composing" || step.step === "auto_profile" || step.step === "file_processing") && step.done) return "complete";
+  if (step.step === "compare_factors" || step.step === "compare_result") return "complete";
+  if (step.step === "compare_detect" && allSteps.some((s) => s.step === "compare_factors" || s.step === "compare_ready")) return "complete";
+  if (step.step === "compare_profiling" && allSteps.some((s) => s.step === "compare_factors")) return "complete";
+  if (step.step === "compare_running" && allSteps.some((s) => s.step === "compare_result")) return "complete";
+  if (step.done) return "complete";
+  return "active";
+}
+function StepIndicator({ state, step }) {
+  const icons = STEP_ICONS2[step] || { active: Sparkles6, complete: Sparkles6 };
+  if (state === "error") return /* @__PURE__ */ jsx78(XIcon, { className: "w-3 h-3 text-destructive" });
+  if (state === "complete") {
+    return /* @__PURE__ */ jsx78(Check3, { className: "w-3 h-3 text-emerald-400" });
+  }
+  const Icon = icons.active;
+  return /* @__PURE__ */ jsxs66("span", { className: "relative flex h-3 w-3 items-center justify-center", children: [
+    /* @__PURE__ */ jsx78("span", { className: "absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/40" }),
+    /* @__PURE__ */ jsx78(Icon, { className: "relative w-2.5 h-2.5 text-emerald-400" })
+  ] });
+}
+function TimingBadge({ ms }) {
+  if (!ms) return null;
+  const display = ms >= 1e3 ? `${(ms / 1e3).toFixed(1)}s` : `${ms}ms`;
+  return /* @__PURE__ */ jsxs66("span", { className: "text-[10px] text-muted-foreground/60 tabular-nums ms-1", children: [
+    "(",
+    display,
+    ")"
+  ] });
+}
+function SourcePills({ sources, language }) {
+  if (!sources || sources.length === 0) return null;
+  return /* @__PURE__ */ jsx78("div", { className: "flex flex-wrap gap-1 mt-1", children: sources.slice(0, 4).map((s, i) => /* @__PURE__ */ jsx78("span", { className: "inline-flex items-center px-1.5 py-0.5 bg-muted/50 rounded text-[10px] text-muted-foreground leading-tight", children: translateSource(s, language) }, i)) });
+}
+function DomainPills({ domains, citations }) {
+  if (!domains || domains.length === 0) return null;
+  return /* @__PURE__ */ jsx78("div", { className: "flex flex-wrap gap-1 mt-1", children: domains.slice(0, 4).map((domain, i) => {
+    const url = citations?.[i];
+    return /* @__PURE__ */ jsxs66(
+      "a",
+      {
+        href: url || "#",
+        target: "_blank",
+        rel: "noopener noreferrer",
+        className: "inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-muted/50 rounded text-[10px] text-muted-foreground hover:text-foreground transition-colors duration-fast ease-standard leading-tight",
+        children: [
+          /* @__PURE__ */ jsx78(ExternalLink4, { className: "w-2 h-2" }),
+          domain
+        ]
+      },
+      i
+    );
+  }) });
+}
+function HandlePills({ handles }) {
+  if (!handles || handles.length === 0) return null;
+  return /* @__PURE__ */ jsx78("div", { className: "flex flex-wrap gap-1 mt-1", children: handles.slice(0, 4).map((h, i) => /* @__PURE__ */ jsxs66(
+    "a",
+    {
+      href: `https://x.com/${h}`,
+      target: "_blank",
+      rel: "noopener noreferrer",
+      className: "inline-flex items-center px-1.5 py-0.5 bg-muted/50 rounded text-[10px] text-muted-foreground hover:text-foreground transition-colors duration-fast ease-standard leading-tight",
+      children: [
+        "@",
+        h
+      ]
+    },
+    i
+  )) });
+}
+function StepLine({
+  step,
+  allSteps,
+  isRTL,
+  isStreaming,
+  language
+}) {
+  const state = getStepState(step, allSteps, isStreaming);
+  const isComplete = state === "complete";
+  return /* @__PURE__ */ jsxs66("div", { className: `flex items-start gap-2 text-xs transition-opacity duration-300 ${isComplete ? "text-muted-foreground/70" : "text-muted-foreground"}`, children: [
+    /* @__PURE__ */ jsx78("div", { className: "mt-0.5 flex-shrink-0", children: /* @__PURE__ */ jsx78(StepIndicator, { state, step: step.step }) }),
+    /* @__PURE__ */ jsxs66("div", { className: `flex-1 min-w-0 text-start`, children: [
+      /* @__PURE__ */ jsx78("span", { children: translateStepMessage(step.message, language) }),
+      /* @__PURE__ */ jsx78(TimingBadge, { ms: step.duration_ms }),
+      step.query && /* @__PURE__ */ jsxs66("span", { className: `ms-1 text-foreground/50 font-mono text-[10px]`, children: [
+        '"',
+        step.query,
+        '"'
+      ] }),
+      step.subQuery && /* @__PURE__ */ jsxs66("span", { className: `ms-1 text-foreground/50 font-mono text-[10px]`, children: [
+        '"',
+        step.subQuery,
+        '"'
+      ] }),
+      /* @__PURE__ */ jsx78(SourcePills, { sources: step.sources, language }),
+      /* @__PURE__ */ jsx78(DomainPills, { domains: step.domains, citations: step.citations }),
+      /* @__PURE__ */ jsx78(HandlePills, { handles: step.handles })
+    ] })
+  ] });
+}
+var AgentSteps = ({ steps, isStreaming, language = "en", dir }) => {
+  const [isExpanded, setIsExpanded] = useState37(true);
+  const isAr = language === "ar";
+  const isRTL = dir === "rtl" || dir === void 0 && isAr;
+  const displaySteps = useMemo10(() => {
+    const resultTypes = new Set(steps.filter((s) => s.step.endsWith("_results")).map((s) => s.step.replace("_results", "_search")));
+    const hasDeepResults = steps.some((s) => s.step === "deep_research_results");
+    return steps.filter((s) => {
+      if (s.step.endsWith("_search") && !s.step.startsWith("deep_research_") && resultTypes.has(s.step)) return false;
+      if (s.step === "deep_research" && steps.some((ss) => ss.step.startsWith("deep_research_") && ss.step !== "deep_research" && ss.step !== "deep_research_results")) return false;
+      if (hasDeepResults && ["deep_research_searching", "deep_research_reading", "deep_research_thinking", "deep_research_progress"].includes(s.step)) return false;
+      return true;
+    });
+  }, [steps]);
+  if (steps.length === 0) return null;
+  const ragResult = steps.find((s) => s.step === "rag_results");
+  const webResult = steps.find((s) => s.step === "web_results");
+  const socialResult = steps.find((s) => s.step === "social_results");
+  const summaryParts = [];
+  if (ragResult?.count) summaryParts.push(isAr ? `${ragResult.count} \u062F\u0627\u062E\u0644\u064A` : `${ragResult.count} internal`);
+  if (webResult?.count) summaryParts.push(isAr ? `${webResult.count} \u0648\u064A\u0628` : `${webResult.count} web`);
+  if (socialResult?.count) summaryParts.push(isAr ? `${socialResult.count} \u062A\u0648\u0627\u0635\u0644` : `${socialResult.count} social`);
+  const totalDuration = [ragResult, webResult, socialResult].reduce((sum, s) => sum + (s?.duration_ms || 0), 0);
+  const allDone = !isStreaming || steps.some((s) => s.step === "composing" || s.step === "twin_composing");
+  const summary = summaryParts.length > 0 ? isAr ? `\u062A\u0645 \u062A\u062D\u0644\u064A\u0644 ${summaryParts.join("\u060C ")} \u0645\u0635\u0627\u062F\u0631${totalDuration ? ` (${(totalDuration / 1e3).toFixed(1)}\u062B)` : ""}` : `Analyzed ${summaryParts.join(", ")} sources${totalDuration ? ` (${(totalDuration / 1e3).toFixed(1)}s)` : ""}` : allDone ? isAr ? "\u0627\u0643\u062A\u0645\u0644 \u0627\u0644\u062A\u062D\u0644\u064A\u0644" : "Analysis complete" : isAr ? "\u062C\u0627\u0631\u064D \u0627\u0644\u0628\u062D\u062B..." : "Searching...";
+  const triggerIcon = !isStreaming || allDone ? /* @__PURE__ */ jsx78(Check3, { className: "w-3 h-3 text-emerald-400" }) : /* @__PURE__ */ jsxs66("span", { className: "relative flex h-3 w-3 items-center justify-center", children: [
+    /* @__PURE__ */ jsx78("span", { className: "absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/40" }),
+    /* @__PURE__ */ jsx78(Search7, { className: "relative w-2.5 h-2.5 text-emerald-400" })
+  ] });
+  return (
+    // dir set locally so flex order, borders, and text alignment mirror natively
+    // in RTL without manual flex-row-reverse flips (which double-flip when an
+    // ancestor already sets dir="rtl", e.g. inside UnifiedCopilotDock).
+    /* @__PURE__ */ jsxs66(Collapsible, { open: isExpanded, onOpenChange: setIsExpanded, dir: isRTL ? "rtl" : "ltr", children: [
+      /* @__PURE__ */ jsxs66(
+        CollapsibleTrigger,
+        {
+          className: `flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors duration-fast ease-standard cursor-pointer py-1`,
+          children: [
+            triggerIcon,
+            /* @__PURE__ */ jsx78("span", { children: summary }),
+            /* @__PURE__ */ jsx78(ChevronDown8, { className: `w-3 h-3 transition-transform duration-fast ease-standard ${isExpanded ? "rotate-180" : ""}` })
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsx78(CollapsibleContent, { children: /* @__PURE__ */ jsx78("div", { className: `mt-1 space-y-1.5 border-border ps-1 border-s-2 ms-1.5`, children: displaySteps.map((s, i) => /* @__PURE__ */ jsx78(
+        StepLine,
+        {
+          step: s,
+          allSteps: steps,
+          isRTL,
+          isStreaming,
+          language
+        },
+        `${s.step}-${i}`
+      )) }) })
+    ] })
+  );
+};
+AgentSteps.displayName = "AgentSteps";
+var AgentSteps_default = AgentSteps;
+
+// src/components/copilot/StreamErrorBanner.tsx
+import { WifiOff, RefreshCw as RefreshCw2 } from "lucide-react";
+import { Fragment as Fragment18, jsx as jsx79, jsxs as jsxs67 } from "react/jsx-runtime";
+var StreamErrorBanner = ({ onRetry, isRetrying = false, language = "en", dir }) => {
+  const isAR = language === "ar";
+  const resolvedDir = dir ?? (isAR ? "rtl" : "ltr");
+  const handleRetry = () => {
+    if (!isRetrying) onRetry();
+  };
+  return /* @__PURE__ */ jsxs67(
+    "div",
+    {
+      className: "flex items-start gap-3 px-3 py-2.5 rounded-xl bg-destructive/10 border border-destructive/30 text-sm",
+      dir: resolvedDir,
+      role: "alert",
+      "aria-live": "polite",
+      children: [
+        /* @__PURE__ */ jsx79(WifiOff, { className: "w-4 h-4 text-destructive shrink-0 mt-0.5", "aria-hidden": "true" }),
+        /* @__PURE__ */ jsxs67("div", { className: "flex-1 min-w-0 space-y-2", children: [
+          /* @__PURE__ */ jsx79("p", { className: "text-destructive font-medium text-xs leading-snug", children: isAR ? "\u0627\u0646\u0642\u0637\u0639 \u0627\u0644\u0627\u062A\u0635\u0627\u0644 \u0623\u062B\u0646\u0627\u0621 \u0627\u0633\u062A\u062C\u0627\u0628\u0629 \u0627\u0644\u0645\u0633\u0627\u0639\u062F" : "Connection interrupted during response" }),
+          /* @__PURE__ */ jsx79("p", { className: "text-muted-foreground text-[11px] leading-snug", children: isAR ? "\u0627\u0646\u0642\u0637\u0639\u062A \u0627\u0644\u0628\u062B \u0628\u0633\u0628\u0628 \u0645\u0634\u0643\u0644\u0629 \u0641\u064A \u0627\u0644\u0634\u0628\u0643\u0629. \u064A\u0645\u0643\u0646\u0643 \u0625\u0639\u0627\u062F\u0629 \u0627\u0644\u0645\u062D\u0627\u0648\u0644\u0629 \u0644\u0627\u0633\u062A\u0626\u0646\u0627\u0641 \u0627\u0644\u0645\u062D\u0627\u062F\u062B\u0629." : "The stream was interrupted due to a network issue. Retry to continue the conversation." }),
+          /* @__PURE__ */ jsx79(
+            Button,
+            {
+              type: "button",
+              variant: "outline",
+              size: "sm",
+              className: "h-7 text-xs border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive",
+              onClick: handleRetry,
+              disabled: isRetrying,
+              children: isRetrying ? /* @__PURE__ */ jsxs67(Fragment18, { children: [
+                /* @__PURE__ */ jsx79(RefreshCw2, { className: "w-3 h-3 animate-spin me-1.5", "aria-hidden": "true" }),
+                isAR ? "\u062C\u0627\u0631\u064D \u0627\u0644\u0645\u062D\u0627\u0648\u0644\u0629..." : "Retrying..."
+              ] }) : /* @__PURE__ */ jsxs67(Fragment18, { children: [
+                /* @__PURE__ */ jsx79(RefreshCw2, { className: "w-3 h-3 me-1.5", "aria-hidden": "true" }),
+                isAR ? "\u0625\u0639\u0627\u062F\u0629 \u0627\u0644\u0645\u062D\u0627\u0648\u0644\u0629" : "Retry"
+              ] })
+            }
+          )
+        ] })
+      ]
+    }
+  );
+};
+StreamErrorBanner.displayName = "StreamErrorBanner";
+var StreamErrorBanner_default = StreamErrorBanner;
+
+// src/components/chat/ChatToolbar.tsx
+import { useState as useState38, useRef as useRef13, useCallback as useCallback12, useEffect as useEffect22 } from "react";
+import { Globe as Globe5, Newspaper as Newspaper2, Microscope as Microscope2, Paperclip, ChevronDown as ChevronDown9, Brain as Brain2, Zap } from "lucide-react";
+
+// src/components/chat/FilePreviewChip.tsx
+import { X as X3, FileText as FileText3, Image, File } from "lucide-react";
+import { jsx as jsx80, jsxs as jsxs68 } from "react/jsx-runtime";
+function getFileIcon(type) {
+  if (type.startsWith("image/")) return Image;
+  if (type === "application/pdf" || type.startsWith("text/")) return FileText3;
+  return File;
+}
+var FilePreviewChip = ({ attachment, onRemove, language = "en" }) => {
+  const Icon = getFileIcon(attachment.type);
+  const isImage = attachment.type.startsWith("image/");
+  const previewSrc = attachment.data || attachment.url || "";
+  return /* @__PURE__ */ jsxs68("div", { className: "inline-flex items-center gap-1.5 px-2 py-1 bg-muted border border-border rounded-lg text-xs max-w-[180px] group", children: [
+    isImage ? (
+      // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
+      /* @__PURE__ */ jsx80("img", { src: previewSrc, alt: attachment.name, className: "w-5 h-5 rounded object-cover shrink-0" })
+    ) : /* @__PURE__ */ jsx80(Icon, { className: "w-3.5 h-3.5 text-muted-foreground shrink-0" }),
+    /* @__PURE__ */ jsx80("span", { className: "truncate text-foreground", children: attachment.name }),
+    /* @__PURE__ */ jsx80(
+      "button",
+      {
+        onClick: onRemove,
+        className: "ms-auto shrink-0 p-0.5 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors duration-fast ease-standard",
+        "aria-label": language === "ar" ? "\u0625\u0632\u0627\u0644\u0629" : "Remove",
+        children: /* @__PURE__ */ jsx80(X3, { className: "w-3 h-3" })
+      }
+    )
+  ] });
+};
+FilePreviewChip.displayName = "FilePreviewChip";
+var FilePreviewChip_default = FilePreviewChip;
+
+// src/components/chat/ChatToolbar.tsx
+import { jsx as jsx81, jsxs as jsxs69 } from "react/jsx-runtime";
+function XIcon2({ className }) {
+  return /* @__PURE__ */ jsx81("svg", { viewBox: "0 0 24 24", className, fill: "currentColor", children: /* @__PURE__ */ jsx81("path", { d: "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" }) });
+}
+var ALLOWED_ATTACHMENT_MIMES = /* @__PURE__ */ new Set([
+  "image/png",
+  "image/jpeg",
+  "image/webp",
+  "image/gif",
+  "image/heic",
+  "image/heif",
+  "application/pdf"
+]);
+var SEARCH_SOURCES = [
+  { id: "web", label: "Web", labelAr: "\u0648\u064A\u0628", icon: Globe5 },
+  { id: "news", label: "News", labelAr: "\u0623\u062E\u0628\u0627\u0631", icon: Newspaper2 },
+  { id: "social", label: "Social", labelAr: "\u0627\u062C\u062A\u0645\u0627\u0639\u064A", icon: XIcon2 }
+];
+var ChatToolbar = ({
+  forcedTools,
+  onForcedToolsChange,
+  attachments,
+  onAttachmentsChange,
+  thinkingMode,
+  onThinkingModeChange,
+  disabled,
+  language = "en",
+  onUploadReady
+}) => {
+  const fileInputRef = useRef13(null);
+  const [uploading, setUploading] = useState38(false);
+  const [uploadError, setUploadError] = useState38(null);
+  const isAr = language === "ar";
+  const isSearchActive = !!forcedTools.search;
+  const isDeepResearchActive = !!forcedTools.deep_research;
+  const toggleSearch = () => {
+    if (isSearchActive) {
+      onForcedToolsChange({ ...forcedTools, search: false, search_sources: void 0 });
+    } else {
+      onForcedToolsChange({ search: true, search_sources: ["web"], deep_research: false });
+    }
+  };
+  const toggleDeepResearch = () => {
+    if (isDeepResearchActive) {
+      onForcedToolsChange({ ...forcedTools, deep_research: false });
+    } else {
+      onForcedToolsChange({ search: false, search_sources: void 0, deep_research: true });
+    }
+  };
+  const toggleSource = (sourceId) => {
+    const current = forcedTools.search_sources || ["web"];
+    const isActive = current.includes(sourceId);
+    let next;
+    if (isActive) {
+      next = current.filter((s) => s !== sourceId);
+      if (next.length === 0) next = ["web"];
+    } else {
+      next = [...current, sourceId];
+    }
+    onForcedToolsChange({ ...forcedTools, search_sources: next });
+  };
+  const uploadFiles = useCallback12(async (files) => {
+    if (files.length === 0) return;
+    setUploading(true);
+    setUploadError(null);
+    const newAttachments = [];
+    for (const file of files) {
+      if (file.size > 10 * 1024 * 1024) {
+        setUploadError(isAr ? "\u0627\u0644\u0645\u0644\u0641 \u0643\u0628\u064A\u0631 \u062C\u062F\u0627\u064B (\u0627\u0644\u062D\u062F 10 \u0645\u064A\u063A\u0627\u0628\u0627\u064A\u062A)" : "File too large (10MB limit)");
+        continue;
+      }
+      const mimeType = file.type || "application/octet-stream";
+      if (!ALLOWED_ATTACHMENT_MIMES.has(mimeType)) {
+        setUploadError(isAr ? `\u0646\u0648\u0639 \u0627\u0644\u0645\u0644\u0641 \u063A\u064A\u0631 \u0645\u062F\u0639\u0648\u0645: ${mimeType}` : `Unsupported file type: ${mimeType}`);
+        continue;
+      }
+      try {
+        const data = await new Promise((resolve, reject) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve(reader.result);
+          reader.onerror = () => reject(reader.error);
+          reader.readAsDataURL(file);
+        });
+        newAttachments.push({ data, name: file.name, type: mimeType, size: file.size });
+      } catch (err) {
+        console.error("[ChatToolbar]", "File encode error", { file: file.name, err });
+        setUploadError(isAr ? "\u0641\u0634\u0644 \u062A\u062D\u0645\u064A\u0644 \u0627\u0644\u0645\u0644\u0641" : "Failed to load file");
+      }
+    }
+    if (newAttachments.length > 0) {
+      onAttachmentsChange([...attachments, ...newAttachments]);
+    }
+    setUploading(false);
+    if (fileInputRef.current) fileInputRef.current.value = "";
+  }, [attachments, onAttachmentsChange, isAr]);
+  const handleFileSelect = useCallback12(async (e) => {
+    const files = e.target.files;
+    if (!files || files.length === 0) return;
+    await uploadFiles(Array.from(files));
+  }, [uploadFiles]);
+  useEffect22(() => {
+    onUploadReady?.(uploadFiles);
+  }, [uploadFiles, onUploadReady]);
+  const removeAttachment = (index) => {
+    onAttachmentsChange(attachments.filter((_, i) => i !== index));
+  };
+  const activeSources = forcedTools.search_sources || ["web"];
+  return /* @__PURE__ */ jsxs69("div", { className: "space-y-2", children: [
+    uploadError && /* @__PURE__ */ jsx81("p", { className: "text-xs text-destructive px-1", children: uploadError }),
+    attachments.length > 0 && /* @__PURE__ */ jsx81("div", { className: "flex flex-wrap gap-1.5", children: attachments.map((att, i) => /* @__PURE__ */ jsx81(
+      FilePreviewChip_default,
+      {
+        attachment: att,
+        onRemove: () => removeAttachment(i),
+        language
+      },
+      i
+    )) }),
+    isSearchActive && /* @__PURE__ */ jsxs69("div", { className: "flex items-center gap-1.5 px-1", children: [
+      /* @__PURE__ */ jsx81("span", { className: "text-[10px] text-muted-foreground font-medium uppercase tracking-wider shrink-0", children: isAr ? "\u0645\u0635\u0627\u062F\u0631" : "Sources" }),
+      SEARCH_SOURCES.map((source) => {
+        const isActive = activeSources.includes(source.id);
+        const Icon = source.icon;
+        return /* @__PURE__ */ jsxs69(
+          "button",
+          {
+            onClick: () => toggleSource(source.id),
+            disabled,
+            className: `inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-all duration-fast ease-standard border ${isActive ? "bg-primary/15 text-primary border-primary/30" : "bg-transparent text-muted-foreground border-transparent hover:bg-muted hover:border-border"}`,
+            children: [
+              /* @__PURE__ */ jsx81(Icon, { className: "w-3 h-3" }),
+              isAr ? source.labelAr : source.label
+            ]
+          },
+          source.id
+        );
+      })
+    ] }),
+    /* @__PURE__ */ jsxs69("div", { className: "flex items-center gap-1.5", children: [
+      /* @__PURE__ */ jsxs69(
+        "button",
+        {
+          onClick: () => onThinkingModeChange(!thinkingMode),
+          disabled,
+          className: `inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-fast ease-standard border ${thinkingMode ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : "bg-cyan-500/15 text-cyan-400 border-cyan-500/30"}`,
+          title: thinkingMode ? isAr ? "\u0648\u0636\u0639 \u0627\u0644\u062A\u0641\u0643\u064A\u0631 \u0627\u0644\u0639\u0645\u064A\u0642" : "Thinking mode \u2014 deeper analysis" : isAr ? "\u0627\u0644\u0648\u0636\u0639 \u0627\u0644\u0633\u0631\u064A\u0639" : "Fast mode \u2014 quicker responses",
+          children: [
+            thinkingMode ? /* @__PURE__ */ jsx81(Brain2, { className: "w-3.5 h-3.5" }) : /* @__PURE__ */ jsx81(Zap, { className: "w-3.5 h-3.5" }),
+            thinkingMode ? isAr ? "\u062A\u0641\u0643\u064A\u0631" : "Thinking" : isAr ? "\u0633\u0631\u064A\u0639" : "Fast"
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsxs69(
+        "button",
+        {
+          onClick: toggleSearch,
+          disabled,
+          className: `inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-fast ease-standard border ${isSearchActive ? "bg-primary/15 text-primary border-primary/30" : "bg-transparent text-muted-foreground border-border hover:bg-muted hover:text-foreground"}`,
+          children: [
+            /* @__PURE__ */ jsx81(Globe5, { className: "w-3.5 h-3.5" }),
+            isAr ? "\u0628\u062D\u062B" : "Search",
+            isSearchActive && /* @__PURE__ */ jsx81(ChevronDown9, { className: "w-3 h-3 rotate-180" })
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsxs69(
+        "button",
+        {
+          onClick: toggleDeepResearch,
+          disabled,
+          className: `inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-fast ease-standard border ${isDeepResearchActive ? "bg-violet-500/15 text-violet-400 border-violet-500/30" : "bg-transparent text-muted-foreground border-border hover:bg-muted hover:text-foreground"}`,
+          children: [
+            /* @__PURE__ */ jsx81(Microscope2, { className: "w-3.5 h-3.5" }),
+            isAr ? "\u0628\u062D\u062B \u0639\u0645\u064A\u0642" : "Deep Research"
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsxs69(
+        "button",
+        {
+          onClick: () => fileInputRef.current?.click(),
+          disabled: disabled || uploading,
+          className: "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-fast ease-standard border bg-transparent text-muted-foreground border-border hover:bg-muted hover:text-foreground",
+          children: [
+            /* @__PURE__ */ jsx81(Paperclip, { className: `w-3.5 h-3.5 ${uploading ? "animate-spin" : ""}` }),
+            attachments.length > 0 ? `${attachments.length}` : isAr ? "\u0625\u0631\u0641\u0627\u0642" : "Attach"
+          ]
+        }
+      ),
+      /* @__PURE__ */ jsx81(
+        "input",
+        {
+          ref: fileInputRef,
+          type: "file",
+          multiple: true,
+          accept: "image/png,image/jpeg,image/webp,image/gif,image/heic,image/heif,.pdf",
+          className: "hidden",
+          onChange: handleFileSelect
+        }
+      )
+    ] })
+  ] });
+};
+ChatToolbar.displayName = "ChatToolbar";
+var ChatToolbar_default = ChatToolbar;
+
+// src/components/chat/CompareFactorsCard.tsx
+import { useState as useState39, useCallback as useCallback13 } from "react";
+import { Scale, Plus as Plus4, X as X4, Check as Check4 } from "lucide-react";
+import { jsx as jsx82, jsxs as jsxs70 } from "react/jsx-runtime";
+var CompareFactorsCard = ({
+  data,
+  onAccept,
+  disabled = false,
+  language = "en"
+}) => {
+  const isAR = language === "ar";
+  const [factors, setFactors] = useState39(data.factors);
+  const [newFactorLabel, setNewFactorLabel] = useState39("");
+  const [showAddInput, setShowAddInput] = useState39(false);
+  const toggleFactor = useCallback13((id) => {
+    if (disabled) return;
+    setFactors((prev) => prev.map((f) => f.id === id ? { ...f, enabled: !f.enabled } : f));
+  }, [disabled]);
+  const updateWeight = useCallback13((id, weight) => {
+    if (disabled) return;
+    setFactors((prev) => prev.map((f) => f.id === id ? { ...f, weight } : f));
+  }, [disabled]);
+  const removeFactor = useCallback13((id) => {
+    if (disabled) return;
+    setFactors((prev) => prev.filter((f) => f.id !== id));
+  }, [disabled]);
+  const addCustomFactor = useCallback13(() => {
+    if (!newFactorLabel.trim() || disabled) return;
+    const id = `custom-${Date.now()}`;
+    setFactors((prev) => [...prev, {
+      id,
+      label: newFactorLabel.trim(),
+      description: "Custom factor",
+      weight: "medium",
+      enabled: true
+    }]);
+    setNewFactorLabel("");
+    setShowAddInput(false);
+  }, [newFactorLabel, disabled]);
+  const weightLabel = (w) => {
+    const labels = {
+      high: { en: "High", ar: "\u0639\u0627\u0644\u064A" },
+      medium: { en: "Medium", ar: "\u0645\u062A\u0648\u0633\u0637" },
+      low: { en: "Low", ar: "\u0645\u0646\u062E\u0641\u0636" }
+    };
+    return labels[w]?.[isAR ? "ar" : "en"] || w;
+  };
+  const enabledCount = factors.filter((f) => f.enabled).length;
+  return /* @__PURE__ */ jsxs70("div", { className: `mt-3 rounded-lg border border-border bg-card/80 overflow-hidden ${disabled ? "opacity-60 pointer-events-none" : ""}`, children: [
+    /* @__PURE__ */ jsxs70("div", { className: "px-3 py-2.5 bg-muted/50 border-b border-border flex items-center gap-2", children: [
+      /* @__PURE__ */ jsx82(Scale, { className: "w-4 h-4 text-primary shrink-0" }),
+      /* @__PURE__ */ jsxs70("div", { className: "flex-1 min-w-0", children: [
+        /* @__PURE__ */ jsxs70("p", { className: "text-xs font-semibold text-foreground truncate", children: [
+          data.subjectA.title,
+          " ",
+          /* @__PURE__ */ jsx82("span", { className: "text-muted-foreground font-normal", children: "vs" }),
+          " ",
+          data.subjectB.title
+        ] }),
+        /* @__PURE__ */ jsx82("p", { className: "text-[10px] text-muted-foreground", children: isAR ? `${enabledCount} \u0639\u0627\u0645\u0644 \u0645\u062D\u062F\u062F` : `${enabledCount} factors selected` })
+      ] }),
+      disabled && /* @__PURE__ */ jsx82(Check4, { className: "w-4 h-4 text-emerald-500 shrink-0" })
+    ] }),
+    /* @__PURE__ */ jsx82("div", { className: "divide-y divide-border/50", children: factors.map((factor) => /* @__PURE__ */ jsxs70("div", { className: "px-3 py-2 flex items-center gap-2 hover:bg-muted/30 transition-colors duration-fast ease-standard", children: [
+      /* @__PURE__ */ jsx82(
+        Checkbox,
+        {
+          checked: factor.enabled,
+          onCheckedChange: () => toggleFactor(factor.id),
+          className: "shrink-0"
+        }
+      ),
+      /* @__PURE__ */ jsxs70("div", { className: "flex-1 min-w-0", children: [
+        /* @__PURE__ */ jsx82("p", { className: `text-xs font-medium ${factor.enabled ? "text-foreground" : "text-muted-foreground line-through"}`, children: factor.label }),
+        factor.description && factor.description !== "Custom factor" && /* @__PURE__ */ jsx82("p", { className: "text-[10px] text-muted-foreground truncate", children: factor.description })
+      ] }),
+      /* @__PURE__ */ jsxs70(
+        Select,
+        {
+          value: factor.weight,
+          onValueChange: (v) => updateWeight(factor.id, v),
+          children: [
+            /* @__PURE__ */ jsx82(SelectTrigger, { className: "h-6 w-[80px] text-[10px] border-border/50", children: /* @__PURE__ */ jsx82(SelectValue, {}) }),
+            /* @__PURE__ */ jsxs70(SelectContent, { children: [
+              /* @__PURE__ */ jsx82(SelectItem, { value: "high", className: "text-xs", children: weightLabel("high") }),
+              /* @__PURE__ */ jsx82(SelectItem, { value: "medium", className: "text-xs", children: weightLabel("medium") }),
+              /* @__PURE__ */ jsx82(SelectItem, { value: "low", className: "text-xs", children: weightLabel("low") })
+            ] })
+          ]
+        }
+      ),
+      factor.id.startsWith("custom-") && /* @__PURE__ */ jsx82(
+        "button",
+        {
+          onClick: () => removeFactor(factor.id),
+          className: "text-muted-foreground hover:text-destructive transition-colors duration-fast ease-standard",
+          "aria-label": isAR ? "\u0625\u0632\u0627\u0644\u0629" : "Remove",
+          children: /* @__PURE__ */ jsx82(X4, { className: "w-3 h-3" })
+        }
+      )
+    ] }, factor.id)) }),
+    /* @__PURE__ */ jsx82("div", { className: "px-3 py-2 border-t border-border/50", children: showAddInput ? /* @__PURE__ */ jsxs70("div", { className: "flex items-center gap-2", children: [
+      /* @__PURE__ */ jsx82(
+        Input,
+        {
+          value: newFactorLabel,
+          onChange: (e) => setNewFactorLabel(e.target.value),
+          onKeyDown: (e) => {
+            if (e.key === "Enter") addCustomFactor();
+            if (e.key === "Escape") setShowAddInput(false);
+          },
+          placeholder: isAR ? "\u0627\u0633\u0645 \u0627\u0644\u0639\u0627\u0645\u0644..." : "Factor name...",
+          className: "h-7 text-xs flex-1",
+          autoFocus: true
+        }
+      ),
+      /* @__PURE__ */ jsx82(Button, { size: "sm", variant: "ghost", className: "h-7 px-2", onClick: addCustomFactor, children: /* @__PURE__ */ jsx82(Check4, { className: "w-3 h-3" }) }),
+      /* @__PURE__ */ jsx82(
+        Button,
+        {
+          size: "sm",
+          variant: "ghost",
+          className: "h-7 px-2",
+          onClick: () => {
+            setShowAddInput(false);
+            setNewFactorLabel("");
+          },
+          children: /* @__PURE__ */ jsx82(X4, { className: "w-3 h-3" })
+        }
+      )
+    ] }) : /* @__PURE__ */ jsxs70(
+      "button",
+      {
+        onClick: () => setShowAddInput(true),
+        className: "flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors duration-fast ease-standard",
+        children: [
+          /* @__PURE__ */ jsx82(Plus4, { className: "w-3 h-3" }),
+          isAR ? "\u0625\u0636\u0627\u0641\u0629 \u0639\u0627\u0645\u0644 \u0645\u062E\u0635\u0635" : "Add custom factor"
+        ]
+      }
+    ) }),
+    !disabled && /* @__PURE__ */ jsx82("div", { className: "px-3 py-2.5 border-t border-border bg-muted/30", children: /* @__PURE__ */ jsxs70(
+      Button,
+      {
+        size: "sm",
+        className: "w-full h-8 text-xs gap-1.5",
+        onClick: () => onAccept(factors),
+        disabled: enabledCount === 0,
+        children: [
+          /* @__PURE__ */ jsx82(Scale, { className: "w-3.5 h-3.5" }),
+          isAR ? "\u0642\u0628\u0648\u0644 \u0648\u062A\u0634\u063A\u064A\u0644 \u0627\u0644\u0645\u0642\u0627\u0631\u0646\u0629" : "Accept & Run Comparison"
+        ]
+      }
+    ) })
+  ] });
+};
+CompareFactorsCard.displayName = "CompareFactorsCard";
+var CompareFactorsCard_default = CompareFactorsCard;
+
+// src/components/chat/ChatStructuredData.tsx
+import { useState as useState40, useEffect as useEffect23 } from "react";
+import {
+  Globe as Globe6,
+  AlertTriangle as AlertTriangle2,
+  TrendingUp,
+  BookOpen,
+  Calendar as Calendar2,
+  ChevronRight as ChevronRight7,
+  Shield as Shield3,
+  Building2,
+  User as UserIcon,
+  ArrowUpRight,
+  ArrowDownRight,
+  ArrowRight as ArrowRight2
+} from "lucide-react";
+import { jsx as jsx83, jsxs as jsxs71 } from "react/jsx-runtime";
+function tryParseStructured(json) {
+  try {
+    const obj = JSON.parse(json);
+    if (typeof obj !== "object" || obj === null || Array.isArray(obj)) return null;
+    const knownKeys = ["entities", "alerts", "narratives", "events", "themes", "briefing", "relationships", "new_emerging_entities", "sentiment_analysis"];
+    if (!knownKeys.some((k) => k in obj)) return null;
+    return obj;
+  } catch {
+    return null;
+  }
+}
+function extractStructuredBlocks(content) {
+  const jsonBlockRegex = /```json\s*\n([\s\S]*?)```/g;
+  const blocks = [];
+  let cleaned = content;
+  const matches = [];
+  let match;
+  while ((match = jsonBlockRegex.exec(content)) !== null) {
+    matches.push({ full: match[0], body: match[1] });
+  }
+  for (const m of matches) {
+    const parsed = tryParseStructured(m.body.trim());
+    if (parsed) {
+      blocks.push(parsed);
+      cleaned = cleaned.replace(m.full, "");
+    }
+  }
+  if (blocks.length === 0) return { markdown: content, structured: null };
+  const merged = {};
+  for (const b of blocks) {
+    if (b.entities?.length) merged.entities = [...merged.entities || [], ...b.entities];
+    if (b.alerts?.length) merged.alerts = [...merged.alerts || [], ...b.alerts];
+    if (b.narratives?.length) merged.narratives = [...merged.narratives || [], ...b.narratives];
+    if (b.events?.length) merged.events = [...merged.events || [], ...b.events];
+    if (b.themes?.length) merged.themes = [...merged.themes || [], ...b.themes];
+    if (b.new_emerging_entities?.length) merged.entities = [...merged.entities || [], ...b.new_emerging_entities];
+    if (b.briefing && !merged.briefing) merged.briefing = b.briefing;
+  }
+  if (merged.entities) {
+    const seen = /* @__PURE__ */ new Set();
+    merged.entities = merged.entities.filter((e) => {
+      const key = e.slug || e.name_en || e.name || "";
+      if (!key || seen.has(key)) return false;
+      seen.add(key);
+      return true;
+    });
+  }
+  return { markdown: cleaned.trim(), structured: merged };
+}
+var ENTITY_TYPE_CONFIG = {
+  government: { icon: Shield3, color: "bg-blue-500/15 text-blue-400 border-blue-500/20" },
+  institution: { icon: Building2, color: "bg-emerald-500/15 text-emerald-400 border-emerald-500/20" },
+  individual: { icon: UserIcon, color: "bg-violet-500/15 text-violet-400 border-violet-500/20" },
+  media: { icon: Globe6, color: "bg-amber-500/15 text-amber-400 border-amber-500/20" }
+};
+var SEVERITY_CONFIG = {
+  high: { color: "text-red-400", bg: "bg-red-500/10 border-red-500/20" },
+  medium: { color: "text-amber-400", bg: "bg-amber-500/10 border-amber-500/20" },
+  low: { color: "text-blue-400", bg: "bg-blue-500/10 border-blue-500/20" }
+};
+var TREND_ICON = {
+  rising: { icon: ArrowUpRight, color: "text-emerald-400" },
+  declining: { icon: ArrowDownRight, color: "text-red-400" },
+  stable: { icon: ArrowRight2, color: "text-muted-foreground" }
+};
+var EntityChip = ({
+  entity,
+  lang,
+  onNavigate
+}) => {
+  const name = lang === "ar" ? entity.name_ar || entity.name_en || entity.name || "?" : entity.name_en || entity.name || entity.name_ar || "?";
+  const slug = entity.slug;
+  const typeConf = ENTITY_TYPE_CONFIG[entity.type || ""] || ENTITY_TYPE_CONFIG.institution;
+  const Icon = typeConf.icon;
+  const handleClick = () => {
+    if (slug && onNavigate) onNavigate(`/entity/${slug}`);
+  };
+  return /* @__PURE__ */ jsxs71(
+    "button",
+    {
+      onClick: handleClick,
+      disabled: !slug || !onNavigate,
+      className: cn(
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border text-xs font-medium transition-all duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+        typeConf.color,
+        slug && onNavigate ? "cursor-pointer hover:brightness-125" : "cursor-default opacity-70"
+      ),
+      children: [
+        /* @__PURE__ */ jsx83(Icon, { className: "w-3 h-3 shrink-0" }),
+        /* @__PURE__ */ jsx83("span", { className: "truncate max-w-[140px]", children: name }),
+        slug && onNavigate && /* @__PURE__ */ jsx83(ChevronRight7, { className: "w-3 h-3 shrink-0 opacity-50 rtl:rotate-180" })
+      ]
+    }
+  );
+};
+EntityChip.displayName = "EntityChip";
+var AlertCard = ({
+  alert,
+  lang,
+  onNavigate
+}) => {
+  const title = lang === "ar" ? alert.title_ar || alert.title_en || "" : alert.title_en || alert.title_ar || "";
+  const desc = lang === "ar" ? alert.description_ar || alert.description_en || "" : alert.description_en || alert.description_ar || "";
+  const sev = SEVERITY_CONFIG[alert.severity || "low"] || SEVERITY_CONFIG.low;
+  return /* @__PURE__ */ jsx83(
+    "button",
+    {
+      onClick: () => alert.slug && onNavigate?.(`/alert/${alert.slug}`),
+      disabled: !alert.slug || !onNavigate,
+      className: cn(
+        "w-full text-start rounded-lg border p-2.5 transition-all duration-fast ease-standard group",
+        sev.bg,
+        alert.slug && onNavigate ? "cursor-pointer hover:brightness-110" : "cursor-default"
+      ),
+      children: /* @__PURE__ */ jsxs71("div", { className: "flex items-start gap-2", children: [
+        /* @__PURE__ */ jsx83(AlertTriangle2, { className: cn("w-3.5 h-3.5 shrink-0 mt-0.5", sev.color) }),
+        /* @__PURE__ */ jsxs71("div", { className: "min-w-0 flex-1", children: [
+          /* @__PURE__ */ jsx83("div", { className: "flex items-center gap-2", children: /* @__PURE__ */ jsx83("span", { className: cn("text-[10px] font-semibold uppercase tracking-wider", sev.color), children: alert.severity }) }),
+          /* @__PURE__ */ jsx83("p", { className: "text-xs font-medium text-foreground mt-0.5 line-clamp-2", children: title }),
+          desc && /* @__PURE__ */ jsx83("p", { className: "text-[11px] text-muted-foreground mt-1 line-clamp-2", children: desc })
+        ] })
+      ] })
+    }
+  );
+};
+AlertCard.displayName = "AlertCard";
+var NarrativeCard = ({
+  narrative,
+  lang,
+  onNavigate
+}) => {
+  const title = lang === "ar" ? narrative.title_ar || narrative.title_en || narrative.dominant_narratives || "" : narrative.title_en || narrative.dominant_narratives || narrative.title_ar || "";
+  const slug = narrative.slug;
+  return /* @__PURE__ */ jsx83(
+    "button",
+    {
+      onClick: () => slug && onNavigate?.(`/narrative/${slug}`),
+      className: cn(
+        "w-full text-start rounded-lg border border-amber-500/20 bg-amber-500/5 p-2.5 transition-all duration-fast ease-standard group",
+        "cursor-pointer hover:bg-amber-500/10"
+      ),
+      children: /* @__PURE__ */ jsxs71("div", { className: "flex items-start gap-2", children: [
+        /* @__PURE__ */ jsx83(BookOpen, { className: "w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" }),
+        /* @__PURE__ */ jsx83("div", { className: "min-w-0 flex-1", children: /* @__PURE__ */ jsx83("p", { className: "text-xs font-medium text-foreground line-clamp-2", children: title }) }),
+        /* @__PURE__ */ jsx83(ChevronRight7, { className: "w-3.5 h-3.5 text-amber-400/50 shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-fast ease-standard rtl:rotate-180" })
+      ] })
+    }
+  );
+};
+NarrativeCard.displayName = "NarrativeCard";
+var EventChip = ({
+  event,
+  lang,
+  onNavigate
+}) => {
+  const title = lang === "ar" ? event.title_ar || event.title_en || "" : event.title_en || event.title_ar || "";
+  const slug = event.slug;
+  return /* @__PURE__ */ jsxs71(
+    "button",
+    {
+      onClick: () => slug && onNavigate?.(`/event/${slug}`),
+      disabled: !slug || !onNavigate,
+      className: cn(
+        "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-purple-500/20 bg-purple-500/10 text-purple-400 text-xs font-medium transition-all duration-fast ease-standard",
+        slug && onNavigate ? "cursor-pointer hover:brightness-125" : "cursor-default"
+      ),
+      children: [
+        /* @__PURE__ */ jsx83(Calendar2, { className: "w-3 h-3 shrink-0" }),
+        /* @__PURE__ */ jsx83("span", { className: "truncate max-w-[200px]", children: title }),
+        slug && onNavigate && /* @__PURE__ */ jsx83(ChevronRight7, { className: "w-3 h-3 shrink-0 opacity-50 rtl:rotate-180" })
+      ]
+    }
+  );
+};
+EventChip.displayName = "EventChip";
+var ThemeChip = ({ theme, lang }) => {
+  const name = lang === "ar" ? theme.name_ar || theme.name_en || "" : theme.name_en || theme.name_ar || "";
+  const trendConf = TREND_ICON[theme.trend || "stable"] || TREND_ICON.stable;
+  const TrendIcon = trendConf.icon;
+  return /* @__PURE__ */ jsxs71("span", { className: "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border bg-muted/50 text-xs font-medium text-foreground", children: [
+    /* @__PURE__ */ jsx83(TrendIcon, { className: cn("w-3 h-3 shrink-0", trendConf.color) }),
+    /* @__PURE__ */ jsx83("span", { className: "truncate max-w-[180px]", children: name })
+  ] });
+};
+ThemeChip.displayName = "ThemeChip";
+function useExistingSlugs(data, onCheckSlugs) {
+  const [existing, setExisting] = useState40(/* @__PURE__ */ new Set());
+  useEffect23(() => {
+    if (!onCheckSlugs) {
+      const all = /* @__PURE__ */ new Set();
+      (data.entities || []).forEach((e) => {
+        if (e.slug) all.add(`entities:${e.slug}`);
+      });
+      (data.alerts || []).forEach((a) => {
+        if (a.slug) all.add(`alerts:${a.slug}`);
+      });
+      (data.narratives || []).forEach((n) => {
+        if (n.slug) all.add(`narratives:${n.slug}`);
+      });
+      (data.events || []).forEach((e) => {
+        if (e.slug) all.add(`events:${e.slug}`);
+      });
+      setExisting(all);
+      return;
+    }
+    const checks = [];
+    const entitySlugs = (data.entities || []).map((e) => e.slug).filter(Boolean);
+    if (entitySlugs.length) checks.push({ table: "entities", slugs: entitySlugs });
+    const alertSlugs = (data.alerts || []).map((a) => a.slug).filter(Boolean);
+    if (alertSlugs.length) checks.push({ table: "alerts", slugs: alertSlugs });
+    const narrativeSlugs = (data.narratives || []).map((n) => n.slug).filter(Boolean);
+    if (narrativeSlugs.length) checks.push({ table: "narratives", slugs: narrativeSlugs });
+    const eventSlugs = (data.events || []).map((e) => e.slug).filter(Boolean);
+    if (eventSlugs.length) checks.push({ table: "events", slugs: eventSlugs });
+    if (checks.length === 0) return;
+    let cancelled = false;
+    Promise.all(
+      checks.map(async ({ table, slugs }) => {
+        const found = await onCheckSlugs(table, slugs).catch(() => []);
+        return found.map((slug) => `${table}:${slug}`);
+      })
+    ).then((results) => {
+      if (cancelled) return;
+      setExisting(new Set(results.flat()));
+    });
+    return () => {
+      cancelled = true;
+    };
+  }, [data, onCheckSlugs]);
+  return existing;
+}
+var ChatStructuredData = ({
+  data,
+  language = "en",
+  dir,
+  onNavigate,
+  onCheckSlugs
+}) => {
+  const lang = language;
+  const isRTL = lang === "ar";
+  const resolvedDir = dir ?? (isRTL ? "rtl" : "ltr");
+  const existingSlugs = useExistingSlugs(data, onCheckSlugs);
+  const validEntities = (data.entities || []).filter((e) => e.slug && existingSlugs.has(`entities:${e.slug}`));
+  const validAlerts = (data.alerts || []).filter((a) => a.slug && existingSlugs.has(`alerts:${a.slug}`));
+  const validNarratives = (data.narratives || []).filter((n) => n.slug && existingSlugs.has(`narratives:${n.slug}`));
+  const validEvents = (data.events || []).filter((e) => e.slug && existingSlugs.has(`events:${e.slug}`));
+  const themes = data.themes || [];
+  const hasEntities = validEntities.length > 0;
+  const hasAlerts = validAlerts.length > 0;
+  const hasNarratives = validNarratives.length > 0;
+  const hasEvents = validEvents.length > 0;
+  const hasThemes = themes.length > 0;
+  if (!hasEntities && !hasAlerts && !hasNarratives && !hasEvents && !hasThemes) return null;
+  return /* @__PURE__ */ jsxs71("div", { className: "mt-3 space-y-3 not-prose", dir: resolvedDir, children: [
+    hasEntities && /* @__PURE__ */ jsxs71("div", { children: [
+      /* @__PURE__ */ jsxs71("div", { className: "flex items-center gap-1.5 mb-2", children: [
+        /* @__PURE__ */ jsx83(Globe6, { className: "w-3.5 h-3.5 text-emerald-400" }),
+        /* @__PURE__ */ jsx83("span", { className: "text-[11px] font-semibold text-muted-foreground uppercase tracking-wider", children: isRTL ? "\u0627\u0644\u062C\u0647\u0627\u062A \u0627\u0644\u0645\u0630\u0643\u0648\u0631\u0629" : "Mentioned Entities" })
+      ] }),
+      /* @__PURE__ */ jsx83("div", { className: "flex flex-wrap gap-1.5", children: validEntities.map((e, i) => /* @__PURE__ */ jsx83(EntityChip, { entity: e, lang, onNavigate }, e.slug || i)) })
+    ] }),
+    hasAlerts && /* @__PURE__ */ jsxs71("div", { children: [
+      /* @__PURE__ */ jsxs71("div", { className: "flex items-center gap-1.5 mb-2", children: [
+        /* @__PURE__ */ jsx83(AlertTriangle2, { className: "w-3.5 h-3.5 text-red-400" }),
+        /* @__PURE__ */ jsx83("span", { className: "text-[11px] font-semibold text-muted-foreground uppercase tracking-wider", children: isRTL ? "\u0625\u0634\u0627\u0631\u0627\u062A" : "Alerts" })
+      ] }),
+      /* @__PURE__ */ jsx83("div", { className: "space-y-1.5", children: validAlerts.map((a, i) => /* @__PURE__ */ jsx83(AlertCard, { alert: a, lang, onNavigate }, a.slug || i)) })
+    ] }),
+    hasNarratives && /* @__PURE__ */ jsxs71("div", { children: [
+      /* @__PURE__ */ jsxs71("div", { className: "flex items-center gap-1.5 mb-2", children: [
+        /* @__PURE__ */ jsx83(BookOpen, { className: "w-3.5 h-3.5 text-amber-400" }),
+        /* @__PURE__ */ jsx83("span", { className: "text-[11px] font-semibold text-muted-foreground uppercase tracking-wider", children: isRTL ? "\u0627\u0644\u0633\u0631\u062F\u064A\u0627\u062A" : "Narratives" })
+      ] }),
+      /* @__PURE__ */ jsx83("div", { className: "space-y-1.5", children: validNarratives.map((n, i) => /* @__PURE__ */ jsx83(NarrativeCard, { narrative: n, lang, onNavigate }, i)) })
+    ] }),
+    hasEvents && /* @__PURE__ */ jsxs71("div", { children: [
+      /* @__PURE__ */ jsxs71("div", { className: "flex items-center gap-1.5 mb-2", children: [
+        /* @__PURE__ */ jsx83(Calendar2, { className: "w-3.5 h-3.5 text-purple-400" }),
+        /* @__PURE__ */ jsx83("span", { className: "text-[11px] font-semibold text-muted-foreground uppercase tracking-wider", children: isRTL ? "\u0627\u0644\u0623\u062D\u062F\u0627\u062B" : "Events" })
+      ] }),
+      /* @__PURE__ */ jsx83("div", { className: "flex flex-wrap gap-1.5", children: validEvents.map((e, i) => /* @__PURE__ */ jsx83(EventChip, { event: e, lang, onNavigate }, e.slug || i)) })
+    ] }),
+    hasThemes && /* @__PURE__ */ jsxs71("div", { children: [
+      /* @__PURE__ */ jsxs71("div", { className: "flex items-center gap-1.5 mb-2", children: [
+        /* @__PURE__ */ jsx83(TrendingUp, { className: "w-3.5 h-3.5 text-foreground/60" }),
+        /* @__PURE__ */ jsx83("span", { className: "text-[11px] font-semibold text-muted-foreground uppercase tracking-wider", children: isRTL ? "\u0627\u0644\u0645\u0648\u0627\u0636\u064A\u0639" : "Themes" })
+      ] }),
+      /* @__PURE__ */ jsx83("div", { className: "flex flex-wrap gap-1.5", children: themes.map((th, i) => /* @__PURE__ */ jsx83(ThemeChip, { theme: th, lang }, i)) })
+    ] })
+  ] });
+};
+ChatStructuredData.displayName = "ChatStructuredData";
+var ChatStructuredData_default = ChatStructuredData;
+
+// src/components/copilot/UnifiedCopilotDock.tsx
+import { Fragment as Fragment19, jsx as jsx84, jsxs as jsxs72 } from "react/jsx-runtime";
+function useSafeT() {
+  try {
+    return useT2();
+  } catch {
+    return null;
+  }
+}
+var SHOW_TOOLS_PANEL = false;
+var PERSONAS = [
+  { id: "analyst", label: "Analyst", labelAr: "\u0645\u062D\u0644\u0644", icon: "\u{1F52C}" },
+  { id: "strategist", label: "Strategist", labelAr: "\u0627\u0633\u062A\u0631\u0627\u062A\u064A\u062C\u064A", icon: "\u265F\uFE0F" },
+  { id: "advisor", label: "Advisor", labelAr: "\u0645\u0633\u062A\u0634\u0627\u0631", icon: "\u{1F4BC}" }
+];
+var PersonaPicker = ({
+  value,
+  onChange,
+  disabled,
+  language = "en",
+  personas: personasProp
+}) => {
+  const list = personasProp && personasProp.length > 0 ? personasProp : PERSONAS;
+  return /* @__PURE__ */ jsx84("div", { className: "flex items-center gap-1 flex-wrap", children: list.map((p) => /* @__PURE__ */ jsxs72(
+    "button",
+    {
+      onClick: () => !disabled && onChange(p.id),
+      disabled,
+      className: `inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-all duration-fast ease-standard border ${value === p.id ? "bg-primary/15 text-primary border-primary/30" : "bg-transparent text-muted-foreground border-border hover:bg-muted hover:text-foreground"}`,
+      children: [
+        p.icon && /* @__PURE__ */ jsx84("span", { children: p.icon }),
+        language === "ar" ? p.labelAr : p.label
+      ]
+    },
+    p.id
+  )) });
+};
+PersonaPicker.displayName = "PersonaPicker";
+var CONTEXT_BADGES = {
+  dashboard: { label: "Dashboard", labelAr: "\u0644\u0648\u062D\u0629 \u0627\u0644\u062A\u062D\u0643\u0645", color: "bg-blue-500/20 text-blue-400" },
+  narrative: { label: "Narrative", labelAr: "\u0633\u0631\u062F\u064A\u0629", color: "bg-amber-500/20 text-amber-400" },
+  entity: { label: "Entity", labelAr: "\u062C\u0647\u0629", color: "bg-emerald-500/20 text-emerald-400" },
+  alert: { label: "Alert", labelAr: "\u0625\u0634\u0627\u0631\u0629", color: "bg-red-500/20 text-red-400" },
+  task: { label: "Task", labelAr: "\u0645\u0647\u0645\u0629", color: "bg-purple-500/20 text-purple-400" },
+  task_detail: { label: "Task", labelAr: "\u0645\u0647\u0645\u0629", color: "bg-purple-500/20 text-purple-400" },
+  tasks: { label: "Tasks", labelAr: "\u0627\u0644\u0645\u0647\u0627\u0645", color: "bg-purple-500/20 text-purple-400" },
+  digital_twin: { label: "Digital Twin", labelAr: "\u062A\u0648\u0623\u0645 \u0631\u0642\u0645\u064A", color: "bg-violet-500/20 text-violet-400" },
+  breaking_news: { label: "Breaking News", labelAr: "\u062E\u0628\u0631 \u0639\u0627\u062C\u0644", color: "bg-orange-500/20 text-orange-400" }
+};
+function sanitizeAgentEmptyState(content, emptyMessage) {
+  if (!content) return content;
+  let stripped = content.replace(/```json[\s\S]*?```/g, "").trim();
+  const reduced = stripped.replace(/NO_DATA_AVAILABLE/gi, "").replace(/\[\s*\]/g, "").replace(/[\s.,;:!?-]+/g, " ").trim();
+  if (reduced.length === 0) return emptyMessage;
+  return content;
+}
+var UnifiedCopilotDock = ({
+  chatState,
+  context,
+  language: languageProp = "en",
+  onNavigate,
+  onCheckSlugs,
+  onExpandToFullPage,
+  pendingMessage,
+  pendingAutoSend,
+  onPendingMessageConsumed,
+  followUpChips,
+  defaultExpanded,
+  seedGreeting,
+  onClose,
+  personas,
+  allowedTools,
+  allowedSkills,
+  branding,
+  uiConfig,
+  pageContext: _pageContext,
+  onArtifactAction,
+  onArtifactInteract
+}) => {
+  const langCtx = useSafeT();
+  const language = langCtx ? langCtx.language : languageProp;
+  const t2 = langCtx ? langCtx.t : (key) => key;
+  const isRTL = language === "ar";
+  const handleArtifactAction = useCallback14(
+    (item) => {
+      if (onArtifactAction) {
+        onArtifactAction(item);
+        return;
+      }
+      if (item.prompt) {
+        chatState.onSend(item.prompt);
+      }
+    },
+    [onArtifactAction, chatState]
+  );
+  const handleArtifactInteract = useCallback14(
+    (interaction) => {
+      if (onArtifactInteract) {
+        onArtifactInteract(interaction);
+        return;
+      }
+      const text = `[interaction:${interaction.kind}]`;
+      chatState.onSend(text, { hideUserMessage: true, interaction });
+    },
+    [onArtifactInteract, chatState]
+  );
+  const [isExpanded, setIsExpanded] = useState41(defaultExpanded ?? false);
+  const [forcedTools, setForcedTools] = useState41({});
+  const [attachments, setAttachments] = useState41([]);
+  const [thinkingMode, setThinkingMode] = useState41(false);
+  const [isDragging, setIsDragging] = useState41(false);
+  const [persona, setPersona] = useState41("analyst");
+  const [historyOpen, setHistoryOpen] = useState41(false);
+  const [historyItems, setHistoryItems] = useState41([]);
+  const [insightTriggered, setInsightTriggered] = useState41(false);
+  const [snapshottedChips, setSnapshottedChips] = useState41();
+  const [slashMenuOpen, setSlashMenuOpen] = useState41(false);
+  const [atMenuOpen, setAtMenuOpen] = useState41(false);
+  const [slashQuery, setSlashQuery] = useState41("");
+  const [atQuery, setAtQuery] = useState41("");
+  const slashMenuRef = useRef14(null);
+  const atMenuRef = useRef14(null);
+  const [toolsPanelOpen, setToolsPanelOpen] = useState41(false);
+  const prevIsStreamingRef = useRef14(false);
+  const messagesEndRef = useRef14(null);
+  const inputRef = useRef14(null);
+  const pendingAutoSendRef = useRef14(null);
+  const dragCounterRef = useRef14(0);
+  const toolbarUploadRef = useRef14(null);
+  const getInitialDockPosition = () => {
+    try {
+      const saved = localStorage.getItem("sentra-copilot-dock-position");
+      if (saved === "left" || saved === "right" || saved === "bottom") return saved;
+    } catch {
+    }
+    return "bottom";
+  };
+  const [dockPosition, setDockPosition] = useState41(getInitialDockPosition);
+  const handleDockPositionChange = (pos) => {
+    setDockPosition(pos);
+    try {
+      localStorage.setItem("sentra-copilot-dock-position", pos);
+    } catch {
+    }
+  };
+  const effectiveDockPosition = useMemo11(() => {
+    if (typeof window !== "undefined" && window.innerWidth < 640) return "bottom";
+    return dockPosition;
+  }, [dockPosition]);
+  const dockClasses = useMemo11(() => {
+    if (!isExpanded) return "fixed bottom-0 left-0 right-0 z-50 h-14 transition-all duration-300";
+    switch (effectiveDockPosition) {
+      case "left":
+        return "fixed top-[3.5rem] left-0 bottom-0 w-full sm:w-[420px] z-50 transition-all duration-300";
+      case "right":
+        return "fixed top-[3.5rem] right-0 bottom-0 w-full sm:w-[420px] z-50 transition-all duration-300";
+      case "bottom":
+      default:
+        return "fixed bottom-0 left-0 right-0 z-50 h-[calc(100vh-3.5rem)] sm:h-[60vh] transition-all duration-300";
+    }
+  }, [isExpanded, effectiveDockPosition]);
+  const expandedBorderClass = useMemo11(() => {
+    switch (effectiveDockPosition) {
+      case "left":
+        return "border-e";
+      case "right":
+        return "border-s";
+      default:
+        return "border-t";
+    }
+  }, [effectiveDockPosition]);
+  const expandedShadowClass = useMemo11(() => {
+    switch (effectiveDockPosition) {
+      case "left":
+        return "shadow-[4px_0_15px_rgba(0,0,0,0.12)]";
+      case "right":
+        return "shadow-[-4px_0_15px_rgba(0,0,0,0.12)]";
+      default:
+        return "shadow-2xl";
+    }
+  }, [effectiveDockPosition]);
+  useEffect24(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [chatState.messages, chatState.agentSteps]);
+  useEffect24(() => {
+    if (pendingMessage) {
+      if (pendingAutoSend) {
+        pendingAutoSendRef.current = pendingMessage;
+        setInsightTriggered(true);
+        setSnapshottedChips(followUpChips);
+        chatState.onNewConversation();
+        setIsExpanded(true);
+        onPendingMessageConsumed?.();
+      } else {
+        chatState.onInputChange(pendingMessage);
+        setIsExpanded(true);
+        onPendingMessageConsumed?.();
+        setTimeout(() => inputRef.current?.focus(), 300);
+      }
+    }
+  }, [pendingMessage, onPendingMessageConsumed]);
+  useEffect24(() => {
+    if (chatState.messages.length === 0) {
+      if (pendingAutoSendRef.current && !chatState.isLoading) {
+        const msg = pendingAutoSendRef.current;
+        pendingAutoSendRef.current = null;
+        chatState.onSend(msg, { thinkingMode, insight: true, hideUserMessage: true });
+      } else if (!pendingAutoSendRef.current) {
+        setInsightTriggered(false);
+        setSnapshottedChips(void 0);
+      }
+    }
+  }, [chatState.messages, chatState.isLoading]);
+  useEffect24(() => {
+    if (historyOpen && chatState.onFetchHistory) {
+      chatState.onFetchHistory().then(setHistoryItems);
+    } else if (historyOpen && chatState.conversationHistory) {
+      setHistoryItems(chatState.conversationHistory);
+    }
+  }, [historyOpen, chatState]);
+  useEffect24(() => {
+    if (!isExpanded) return;
+    const handleEscape = (e) => {
+      if (e.key === "Escape") {
+        setIsExpanded(false);
+        onClose?.();
+      }
+    };
+    window.addEventListener("keydown", handleEscape);
+    return () => window.removeEventListener("keydown", handleEscape);
+  }, [isExpanded, onClose]);
+  useEffect24(() => {
+    const wasStreaming = prevIsStreamingRef.current;
+    prevIsStreamingRef.current = chatState.isStreaming;
+    if (wasStreaming && !chatState.isStreaming && isExpanded && !slashMenuOpen && !atMenuOpen) {
+      requestAnimationFrame(() => inputRef.current?.focus());
+    }
+  }, [chatState.isStreaming, isExpanded, slashMenuOpen, atMenuOpen]);
+  const isTwin = chatState.effectiveMode === "digital_twin";
+  const twinImg = context.entityImageUrl;
+  const twinInitials = (context.title || "??").slice(0, 2).toUpperCase();
+  const brandPlaceholder = isRTL ? branding?.placeholderAr : branding?.placeholder;
+  const brandTitle = isRTL ? branding?.titleAr || branding?.title : branding?.title;
+  const showTools = uiConfig?.showTools !== false;
+  const showSkills = uiConfig?.showSkills !== false;
+  const showAgents = uiConfig?.showAgents !== false;
+  const effAllowedTools = showTools ? allowedTools : void 0;
+  const effAllowedSkills = showSkills ? allowedSkills : void 0;
+  const placeholder = brandPlaceholder ? brandPlaceholder : isTwin ? t2("copilot:placeholderAsk").replace("{{name}}", context.title) : t2("copilot:placeholder");
+  const aiName = isTwin ? context.title : brandTitle || t2("copilot:aiName");
+  const twinBadge = isTwin ? t2("copilot:digitalTwin") : null;
+  const dockContextType = chatState.loadedContextType || context.type;
+  const dockContextLabel = chatState.loadedContextLabel || context.title;
+  const dockContextBadge = isTwin ? CONTEXT_BADGES["digital_twin"] : CONTEXT_BADGES[dockContextType] || null;
+  const autoResize = (el) => {
+    el.style.height = "auto";
+    el.style.height = Math.min(el.scrollHeight, 120) + "px";
+  };
+  const handleExpand = () => {
+    setIsExpanded(true);
+    setTimeout(() => inputRef.current?.focus(), 300);
+  };
+  const handleSend = useCallback14(() => {
+    if (!chatState.inputValue.trim()) return;
+    const hasTools = Object.values(forcedTools).some(Boolean);
+    const atts = attachments.length > 0 ? attachments.map((a) => ({ url: a.url, data: a.data, name: a.name, type: a.type })) : void 0;
+    const opts = {
+      thinkingMode,
+      forcedTools: hasTools ? forcedTools : void 0,
+      attachments: atts
+    };
+    setSlashMenuOpen(false);
+    setAtMenuOpen(false);
+    chatState.onSend(chatState.inputValue, opts);
+    setAttachments([]);
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }, [chatState, forcedTools, attachments, thinkingMode]);
+  const handleKeyDown = (e) => {
+    if (e.key === "Escape" && (slashMenuOpen || atMenuOpen)) {
+      e.stopPropagation();
+      setSlashMenuOpen(false);
+      setAtMenuOpen(false);
+      return;
+    }
+    if ((slashMenuOpen || atMenuOpen) && (e.key === "ArrowDown" || e.key === "ArrowUp" || e.key === "Enter" || e.key === "Home" || e.key === "End")) {
+      if (e.key === "Enter" && e.shiftKey) {
+      } else {
+        const wrap = slashMenuOpen ? slashMenuRef.current : atMenuRef.current;
+        const target = wrap?.querySelector("[cmdk-input]") ?? wrap?.querySelector("[cmdk-root]");
+        if (target) {
+          e.preventDefault();
+          e.stopPropagation();
+          target.dispatchEvent(new KeyboardEvent("keydown", { key: e.key, bubbles: true, cancelable: true }));
+          return;
+        }
+      }
+    }
+    if (e.key === "Enter" && !e.shiftKey && (slashMenuOpen || atMenuOpen)) {
+      return;
+    }
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      if (chatState.inputValue.trim()) handleSend();
+    }
+  };
+  const handleInputChange = useCallback14((value) => {
+    chatState.onInputChange(value);
+    const hasSlashItems = effAllowedTools && effAllowedTools.length > 0 || effAllowedSkills && effAllowedSkills.length > 0;
+    if (hasSlashItems) {
+      const slashMatch = value.match(/(?:^|\s)\/([^\s]*)$/);
+      if (slashMatch) {
+        setSlashQuery(slashMatch[1] ?? "");
+        setSlashMenuOpen(true);
+        setAtMenuOpen(false);
+        return;
+      }
+    }
+    const hasAtItems = showAgents && (personas !== void 0 && personas.length > 0 || personas === void 0);
+    if (hasAtItems) {
+      const atMatch = value.match(/(?:^|\s)@([^\s]*)$/);
+      if (atMatch) {
+        setAtQuery(atMatch[1] ?? "");
+        setAtMenuOpen(true);
+        setSlashMenuOpen(false);
+        return;
+      }
+    }
+    if (slashMenuOpen) setSlashMenuOpen(false);
+    if (atMenuOpen) setAtMenuOpen(false);
+  }, [chatState, effAllowedTools, effAllowedSkills, personas, showAgents, slashMenuOpen, atMenuOpen]);
+  const handleSlashSelect = useCallback14((command) => {
+    const value = chatState.inputValue;
+    const updated = value.replace(/(?:^|\s)\/[^\s]*$/, (match) => {
+      const prefix = match.startsWith(" ") ? " " : "";
+      return `${prefix}/${command} `;
+    });
+    chatState.onInputChange(updated);
+    setSlashMenuOpen(false);
+    setSlashQuery("");
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }, [chatState]);
+  const handleAtSelect = useCallback14((name) => {
+    const value = chatState.inputValue;
+    const updated = value.replace(/(?:^|\s)@[^\s]*$/, (match) => {
+      const prefix = match.startsWith(" ") ? " " : "";
+      return `${prefix}@${name} `;
+    });
+    chatState.onInputChange(updated);
+    setAtMenuOpen(false);
+    setAtQuery("");
+    requestAnimationFrame(() => inputRef.current?.focus());
+  }, [chatState]);
+  const handleDroppedFiles = useCallback14(async (files) => {
+    const newAttachments = await Promise.all(
+      files.map(
+        (file) => new Promise((resolve) => {
+          const reader = new FileReader();
+          reader.onload = (ev) => {
+            resolve({ data: ev.target?.result, name: file.name, type: file.type, size: file.size });
+          };
+          reader.onerror = () => {
+            resolve({ name: file.name, type: file.type, size: file.size });
+          };
+          reader.readAsDataURL(file);
+        })
+      )
+    );
+    setAttachments((prev) => [...prev, ...newAttachments]);
+  }, []);
+  const handleLoadConversation = (id) => {
+    chatState.onLoadConversation?.(id);
+    setHistoryOpen(false);
+    setInsightTriggered(false);
+    setSnapshottedChips(void 0);
+  };
+  const handleDeleteConversation = async (id) => {
+    if (!chatState.onDeleteConversation) return;
+    setHistoryItems((prev) => prev.filter((c) => c.id !== id));
+    if (id === chatState.conversationId) {
+      chatState.onNewConversation();
+    }
+    try {
+      await chatState.onDeleteConversation(id);
+    } catch {
+      if (chatState.onFetchHistory) chatState.onFetchHistory().then(setHistoryItems);
+    }
+  };
+  const TwinAvatar = ({ size = "sm" }) => {
+    const sizeClasses = size === "lg" ? "w-12 h-12" : size === "md" ? "w-8 h-8" : "w-6 h-6";
+    const textSize = size === "lg" ? "text-sm" : size === "md" ? "text-[10px]" : "text-[8px]";
+    const iconSize = size === "lg" ? "w-6 h-6" : size === "md" ? "w-4 h-4" : "w-3 h-3";
+    const borderRadius = size === "lg" ? "rounded-xl" : size === "md" ? "rounded-lg" : "rounded-md";
+    if (isTwin && twinImg) {
+      return /* @__PURE__ */ jsxs72(Avatar, { className: `${sizeClasses} shrink-0`, children: [
+        /* @__PURE__ */ jsx84(AvatarImage, { src: twinImg, alt: context.title }),
+        /* @__PURE__ */ jsx84(AvatarFallback, { className: `bg-gradient-to-br from-violet-500 to-indigo-600 text-white ${textSize} font-bold`, children: twinInitials })
+      ] });
+    }
+    if (isTwin) {
+      return /* @__PURE__ */ jsx84("div", { className: `${sizeClasses} ${borderRadius} flex items-center justify-center shrink-0 bg-gradient-to-br from-violet-500 to-indigo-600`, children: /* @__PURE__ */ jsx84(Users, { className: `${iconSize} text-white` }) });
+    }
+    return /* @__PURE__ */ jsx84("div", { className: `${sizeClasses} ${borderRadius} flex items-center justify-center shrink-0 bg-gradient-to-br from-primary to-primary/70`, children: /* @__PURE__ */ jsx84(Sparkles7, { className: `${iconSize} text-primary-foreground` }) });
+  };
+  const emptyMessage = t2("copilot:noDataAvailable");
+  return /* @__PURE__ */ jsxs72(Fragment19, { children: [
+    /* @__PURE__ */ jsx84("div", { className: "h-16 w-full shrink-0", "aria-hidden": "true" }),
+    /* @__PURE__ */ jsxs72(
+      "div",
+      {
+        className: dockClasses,
+        dir: isRTL ? "rtl" : "ltr",
+        style: branding?.primaryColor ? { ["--primary"]: branding.primaryColor } : void 0,
+        children: [
+          !isExpanded && /* @__PURE__ */ jsxs72(
+            "div",
+            {
+              className: "h-full bg-card/95 backdrop-blur-lg border-t border-border shadow-lg flex items-center gap-3 px-4 cursor-pointer hover:bg-accent/30 transition-colors duration-fast ease-standard",
+              onClick: handleExpand,
+              children: [
+                /* @__PURE__ */ jsx84(TwinAvatar, { size: "md" }),
+                /* @__PURE__ */ jsx84("div", { className: "flex-1 min-w-0", children: /* @__PURE__ */ jsx84(
+                  "input",
+                  {
+                    type: "text",
+                    value: chatState.inputValue,
+                    onChange: (e) => {
+                      e.stopPropagation();
+                      chatState.onInputChange(e.target.value);
+                    },
+                    onClick: (e) => {
+                      e.stopPropagation();
+                      handleExpand();
+                    },
+                    onKeyDown: (e) => {
+                      if (e.key === "Enter" && chatState.inputValue.trim()) {
+                        e.preventDefault();
+                        e.stopPropagation();
+                        handleExpand();
+                        handleSend();
+                      }
+                    },
+                    placeholder,
+                    className: "w-full bg-transparent text-base md:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
+                  }
+                ) }),
+                /* @__PURE__ */ jsx84(ChevronUp4, { className: "w-4 h-4 text-muted-foreground shrink-0" })
+              ]
+            }
+          ),
+          isExpanded && /* @__PURE__ */ jsxs72("div", { className: `h-full bg-card/95 backdrop-blur-lg ${expandedBorderClass} border-border ${expandedShadowClass} flex flex-col`, children: [
+            /* @__PURE__ */ jsxs72("div", { className: "px-4 py-2.5 border-b border-border flex items-center justify-between shrink-0 bg-background/50", children: [
+              /* @__PURE__ */ jsxs72("div", { className: "flex items-center gap-2.5", children: [
+                /* @__PURE__ */ jsx84(TwinAvatar, { size: "md" }),
+                /* @__PURE__ */ jsxs72("div", { children: [
+                  /* @__PURE__ */ jsxs72("div", { className: "flex items-center gap-2", children: [
+                    /* @__PURE__ */ jsx84("h3", { className: "text-sm font-semibold text-foreground", children: chatState.conversationTitle || aiName }),
+                    twinBadge && /* @__PURE__ */ jsx84("span", { className: "text-[9px] px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-400 font-medium", children: twinBadge }),
+                    /* @__PURE__ */ jsxs72("span", { className: `text-[9px] px-1.5 py-0.5 rounded-full font-medium shrink-0 inline-flex items-center gap-0.5 ${thinkingMode ? "bg-amber-500/20 text-amber-400" : "bg-cyan-500/20 text-cyan-400"}`, children: [
+                      thinkingMode ? /* @__PURE__ */ jsx84(Brain3, { className: "w-2.5 h-2.5" }) : /* @__PURE__ */ jsx84(Zap2, { className: "w-2.5 h-2.5" }),
+                      thinkingMode ? t2("copilot:thinking") : t2("copilot:fast")
+                    ] })
+                  ] }),
+                  /* @__PURE__ */ jsx84("p", { className: "text-[10px] text-muted-foreground line-clamp-2", children: isTwin ? t2("copilot:aiPersonaSimulation") : dockContextLabel || context.title }),
+                  dockContextBadge && /* @__PURE__ */ jsxs72(
+                    "button",
+                    {
+                      onClick: dockContextBadge && onNavigate ? () => {
+                        const ref = chatState.loadedContextRef || context.contextRef;
+                        const type = chatState.loadedContextType || context.type;
+                        onNavigate?.(`/${type}/${ref}`);
+                      } : void 0,
+                      className: `inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full mt-0.5 transition-all duration-fast ease-standard border ${dockContextBadge.color} ${onNavigate ? "hover:brightness-125 cursor-pointer border-current/20" : "opacity-60 cursor-default border-transparent"}`,
+                      children: [
+                        onNavigate && /* @__PURE__ */ jsx84(ExternalLink5, { className: "w-2.5 h-2.5 shrink-0" }),
+                        /* @__PURE__ */ jsxs72("span", { className: "truncate max-w-[150px] font-medium", children: [
+                          language === "ar" ? dockContextBadge.labelAr : dockContextBadge.label,
+                          dockContextLabel ? ` \xB7 ${dockContextLabel}` : ""
+                        ] })
+                      ]
+                    }
+                  )
+                ] })
+              ] }),
+              /* @__PURE__ */ jsxs72("div", { className: "flex items-center gap-1", children: [
+                /* @__PURE__ */ jsxs72(DropdownMenu, { dir: isRTL ? "rtl" : "ltr", children: [
+                  /* @__PURE__ */ jsx84(DropdownMenuTrigger, { asChild: true, children: /* @__PURE__ */ jsx84(
+                    Button,
+                    {
+                      variant: "ghost",
+                      size: "icon",
+                      className: "h-7 w-7",
+                      "aria-label": language === "ar" ? "\u0645\u0648\u0636\u0639 \u0627\u0644\u0646\u0627\u0641\u0630\u0629" : "Dock position",
+                      children: /* @__PURE__ */ jsx84(MoreVertical, { className: "w-3.5 h-3.5", "aria-hidden": "true" })
+                    }
+                  ) }),
+                  /* @__PURE__ */ jsxs72(DropdownMenuContent, { align: "end", className: "w-52", children: [
+                    /* @__PURE__ */ jsx84(DropdownMenuLabel, { className: "text-[10px] text-muted-foreground font-normal", dir: isRTL ? "rtl" : "ltr", children: t2("copilot:dockPosition") }),
+                    /* @__PURE__ */ jsxs72(
+                      DropdownMenuItem,
+                      {
+                        onClick: () => handleDockPositionChange("left"),
+                        dir: isRTL ? "rtl" : "ltr",
+                        className: dockPosition === "left" ? "text-primary" : "",
+                        children: [
+                          /* @__PURE__ */ jsx84(PanelLeft, { className: `w-3.5 h-3.5 me-2` }),
+                          t2("copilot:dockLeft"),
+                          dockPosition === "left" && /* @__PURE__ */ jsx84(Check5, { className: `w-3 h-3 ms-auto text-primary` })
+                        ]
+                      }
+                    ),
+                    /* @__PURE__ */ jsxs72(
+                      DropdownMenuItem,
+                      {
+                        onClick: () => handleDockPositionChange("right"),
+                        dir: isRTL ? "rtl" : "ltr",
+                        className: dockPosition === "right" ? "text-primary" : "",
+                        children: [
+                          /* @__PURE__ */ jsx84(PanelRight, { className: `w-3.5 h-3.5 me-2` }),
+                          t2("copilot:dockRight"),
+                          dockPosition === "right" && /* @__PURE__ */ jsx84(Check5, { className: `w-3 h-3 ms-auto text-primary` })
+                        ]
+                      }
+                    ),
+                    /* @__PURE__ */ jsxs72(
+                      DropdownMenuItem,
+                      {
+                        onClick: () => handleDockPositionChange("bottom"),
+                        dir: isRTL ? "rtl" : "ltr",
+                        className: dockPosition === "bottom" ? "text-primary" : "",
+                        children: [
+                          /* @__PURE__ */ jsx84(PanelBottom, { className: `w-3.5 h-3.5 me-2` }),
+                          t2("copilot:dockBottom"),
+                          dockPosition === "bottom" && /* @__PURE__ */ jsx84(Check5, { className: `w-3 h-3 ms-auto text-primary` })
+                        ]
+                      }
+                    )
+                  ] })
+                ] }),
+                (chatState.onFetchHistory || chatState.conversationHistory) && /* @__PURE__ */ jsxs72(Popover, { open: historyOpen, onOpenChange: setHistoryOpen, children: [
+                  /* @__PURE__ */ jsx84(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsx84(Button, { variant: "ghost", size: "icon", className: "h-7 w-7", title: t2("copilot:history"), children: /* @__PURE__ */ jsx84(Clock4, { className: "w-3.5 h-3.5" }) }) }),
+                  /* @__PURE__ */ jsxs72(PopoverContent, { align: "end", className: "w-72 p-0", dir: isRTL ? "rtl" : "ltr", children: [
+                    /* @__PURE__ */ jsx84("div", { className: "p-3 border-b border-border", children: /* @__PURE__ */ jsx84("p", { className: "text-xs font-medium text-foreground", children: t2("copilot:conversationHistory") }) }),
+                    /* @__PURE__ */ jsx84(ScrollArea, { className: "max-h-64", children: /* @__PURE__ */ jsx84("div", { className: "p-2 space-y-0.5", children: historyItems.length === 0 ? /* @__PURE__ */ jsx84("p", { className: "text-xs text-muted-foreground text-center py-4", children: t2("copilot:noPreviousConversations") }) : historyItems.map((conv) => /* @__PURE__ */ jsxs72(
+                      "div",
+                      {
+                        className: `group flex items-center gap-1 rounded-lg transition-colors duration-fast ease-standard hover:bg-muted ${conv.id === chatState.conversationId ? "bg-primary/10" : ""}`,
+                        children: [
+                          /* @__PURE__ */ jsxs72(
+                            "button",
+                            {
+                              onClick: () => handleLoadConversation(conv.id),
+                              className: `flex-1 min-w-0 text-start px-2.5 py-2 text-xs`,
+                              children: [
+                                /* @__PURE__ */ jsx84("p", { className: "font-medium text-foreground line-clamp-1", children: conv.title || conv.context_label || "Untitled" }),
+                                /* @__PURE__ */ jsx84("p", { className: "text-[10px] text-muted-foreground mt-0.5", children: new Date(conv.updated_at).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US") })
+                              ]
+                            }
+                          ),
+                          chatState.onDeleteConversation && /* @__PURE__ */ jsx84(
+                            "button",
+                            {
+                              onClick: () => handleDeleteConversation(conv.id),
+                              className: "shrink-0 me-1.5 p-1 rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all duration-fast ease-standard",
+                              title: t2("copilot:deleteConversation"),
+                              "aria-label": t2("copilot:deleteConversation"),
+                              children: /* @__PURE__ */ jsx84(Trash25, { className: "w-3 h-3" })
+                            }
+                          )
+                        ]
+                      },
+                      conv.id
+                    )) }) })
+                  ] })
+                ] }),
+                /* @__PURE__ */ jsx84(
+                  Button,
+                  {
+                    variant: "ghost",
+                    size: "icon",
+                    className: "h-7 w-7",
+                    onClick: () => {
+                      chatState.onNewConversation();
+                      setThinkingMode(false);
+                    },
+                    title: t2("copilot:newChat"),
+                    children: /* @__PURE__ */ jsx84(Plus5, { className: "w-3.5 h-3.5" })
+                  }
+                ),
+                onExpandToFullPage && /* @__PURE__ */ jsx84(
+                  Button,
+                  {
+                    variant: "ghost",
+                    size: "icon",
+                    className: "h-7 w-7",
+                    onClick: onExpandToFullPage,
+                    title: t2("copilot:fullView"),
+                    children: /* @__PURE__ */ jsx84(Maximize2, { className: "w-3.5 h-3.5" })
+                  }
+                ),
+                /* @__PURE__ */ jsx84(
+                  Button,
+                  {
+                    variant: "ghost",
+                    size: "icon",
+                    className: "h-7 w-7",
+                    "aria-label": t2("common:close"),
+                    onClick: () => {
+                      setIsExpanded(false);
+                      onClose?.();
+                    },
+                    children: /* @__PURE__ */ jsx84(X5, { className: "w-4 h-4", "aria-hidden": "true" })
+                  }
+                )
+              ] })
+            ] }),
+            /* @__PURE__ */ jsx84(ScrollArea, { className: "flex-1 px-4 py-3", dir: isRTL ? "rtl" : "ltr", children: /* @__PURE__ */ jsxs72("div", { className: "space-y-3", children: [
+              isTwin && chatState.messages.length === 0 && /* @__PURE__ */ jsxs72("div", { className: "mx-auto max-w-md mb-3 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-start gap-2", children: [
+                /* @__PURE__ */ jsx84(AlertTriangle3, { className: "w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" }),
+                /* @__PURE__ */ jsx84("p", { className: "text-[11px] text-amber-500/90", children: t2("copilot:twinDisclaimer") })
+              ] }),
+              chatState.messages.length === 0 && !chatState.isLoading && /* @__PURE__ */ jsxs72("div", { className: "text-center py-6", children: [
+                /* @__PURE__ */ jsx84("div", { className: "mx-auto mb-3 flex justify-center", children: /* @__PURE__ */ jsx84(TwinAvatar, { size: "lg" }) }),
+                seedGreeting ? /* @__PURE__ */ jsx84("div", { className: "max-w-md mx-auto mb-4 p-3 bg-muted rounded-xl border border-border text-start", children: /* @__PURE__ */ jsx84("p", { className: "text-sm text-foreground", dir: "auto", children: seedGreeting }) }) : /* @__PURE__ */ jsx84("p", { className: "text-sm text-muted-foreground mb-4", children: placeholder }),
+                /* @__PURE__ */ jsx84("div", { className: "flex flex-wrap justify-center gap-2 max-w-md mx-auto", children: context.suggestions.map((suggestion, i) => {
+                  const text = typeof suggestion === "string" ? suggestion : language === "ar" ? suggestion.ar : suggestion.en;
+                  return /* @__PURE__ */ jsx84(
+                    "button",
+                    {
+                      onClick: () => chatState.onSend(text, { thinkingMode }),
+                      className: "text-xs px-3 py-1.5 bg-muted hover:bg-accent text-muted-foreground hover:text-foreground rounded-full transition-colors duration-fast ease-standard border border-border hover:border-primary/30",
+                      children: text
+                    },
+                    i
+                  );
+                }) })
+              ] }),
+              chatState.messages.map((message, msgIdx) => {
+                const isLastAssistant = message.role === "assistant" && msgIdx === chatState.messages.length - 1;
+                const compareFactorsStep = message.steps?.find(
+                  (s) => s.step === "compare_factors" && s["factors"]
+                );
+                const compareFactorsData = compareFactorsStep ? {
+                  factors: compareFactorsStep["factors"],
+                  subjectA: compareFactorsStep["subjectA"],
+                  subjectB: compareFactorsStep["subjectB"],
+                  type: compareFactorsStep["type"]
+                } : null;
+                const handleAcceptFactors = (factors) => {
+                  if (!compareFactorsData) return;
+                  const payload = JSON.stringify({
+                    factors,
+                    type: compareFactorsData.type,
+                    slugA: compareFactorsData.subjectA.slug,
+                    slugB: compareFactorsData.subjectB.slug
+                  });
+                  chatState.onSend(`[COMPARE_ACCEPT]${payload}`, { thinkingMode });
+                };
+                const strippedContent = message.role === "assistant" ? message.content.replace(/\[COMPARE_FACTORS_STATE\][\s\S]*?\[\/COMPARE_FACTORS_STATE\]/g, "").trim() : message.content;
+                const { markdown: cleanMarkdown, structured: structuredData } = message.role === "assistant" ? extractStructuredBlocks(strippedContent) : { markdown: strippedContent, structured: null };
+                const renderedMarkdown = message.role === "assistant" ? sanitizeAgentEmptyState(cleanMarkdown, emptyMessage) : cleanMarkdown;
+                const displayContent = message.role === "user" && message.content.startsWith("[COMPARE_ACCEPT]") ? t2("copilot:comparisonFactorsAccepted") : renderedMarkdown;
+                if (message.hidden && message.role === "user") {
+                  const insightText = message.content.match(/"([^"]+)"/)?.[1] || t2("copilot:insightFromDashboard");
+                  return /* @__PURE__ */ jsx84("div", { className: "flex justify-center py-1", children: /* @__PURE__ */ jsxs72("div", { className: "inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/5 border border-primary/20 rounded-full text-[11px] text-primary/70 max-w-[90%]", children: [
+                    /* @__PURE__ */ jsx84(Lightbulb, { className: "w-3 h-3 shrink-0" }),
+                    /* @__PURE__ */ jsx84("span", { className: "truncate", dir: "auto", children: insightText })
+                  ] }) }, message.id);
+                }
+                return /* @__PURE__ */ jsxs72("div", { children: [
+                  message.role === "assistant" && message.steps && message.steps.length > 0 && /* @__PURE__ */ jsxs72("div", { className: "flex gap-2 mb-1 justify-start", children: [
+                    /* @__PURE__ */ jsx84("div", { className: "mt-1 shrink-0", children: /* @__PURE__ */ jsx84(TwinAvatar, { size: "sm" }) }),
+                    /* @__PURE__ */ jsx84("div", { className: "min-w-0 flex-1 max-w-[calc(85%-2rem)]", children: /* @__PURE__ */ jsx84(
+                      AgentSteps_default,
+                      {
+                        steps: message.steps,
+                        isStreaming: chatState.isStreaming && msgIdx === chatState.messages.length - 1,
+                        language,
+                        dir: isRTL ? "rtl" : "ltr"
+                      }
+                    ) })
+                  ] }),
+                  /* @__PURE__ */ jsxs72("div", { className: `flex gap-2 ${message.role === "user" ? "justify-end" : "justify-start"}`, children: [
+                    message.role === "assistant" && /* @__PURE__ */ jsx84("div", { className: "mt-1 shrink-0", children: /* @__PURE__ */ jsx84(TwinAvatar, { size: "sm" }) }),
+                    /* @__PURE__ */ jsx84("div", { className: `max-w-[85%] rounded-xl px-3 py-2 text-sm ${message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground border border-border"}`, children: message.role === "assistant" ? /* @__PURE__ */ jsxs72("div", { className: "max-w-none break-words", dir: isRTL ? "rtl" : "ltr", children: [
+                      /* @__PURE__ */ jsx84(MarkdownContent_default, { content: displayContent, dir: isRTL ? "rtl" : "ltr" }),
+                      structuredData && /* @__PURE__ */ jsx84(
+                        ChatStructuredData_default,
+                        {
+                          data: structuredData,
+                          language,
+                          dir: isRTL ? "rtl" : "ltr",
+                          onNavigate,
+                          onCheckSlugs
+                        }
+                      ),
+                      message.briefing && /* @__PURE__ */ jsx84(
+                        ChatStructuredData_default,
+                        {
+                          data: message.briefing,
+                          language,
+                          dir: isRTL ? "rtl" : "ltr",
+                          onNavigate,
+                          onCheckSlugs
+                        }
+                      ),
+                      compareFactorsData && /* @__PURE__ */ jsx84(
+                        CompareFactorsCard_default,
+                        {
+                          data: compareFactorsData,
+                          onAccept: handleAcceptFactors,
+                          disabled: !isLastAssistant || chatState.isLoading,
+                          language
+                        }
+                      ),
+                      message.citations && message.citations.length > 0 && /* @__PURE__ */ jsx84("div", { className: "mt-2 pt-2 border-t border-border/50 flex flex-wrap gap-1", dir: isRTL ? "rtl" : "ltr", children: message.citations.map((c) => /* @__PURE__ */ jsxs72(
+                        "button",
+                        {
+                          type: "button",
+                          onClick: () => onNavigate?.(`/${c.type}/${c.slug}`),
+                          className: "inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary text-[10px] font-medium transition-colors duration-fast ease-standard border border-primary/20",
+                          title: c.description || c.title,
+                          children: [
+                            /* @__PURE__ */ jsx84("span", { className: "inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-primary/20 text-primary text-[8px] font-bold", children: c.number }),
+                            /* @__PURE__ */ jsx84("span", { className: "truncate max-w-[120px]", children: c.title })
+                          ]
+                        },
+                        c.number
+                      )) }),
+                      message.a2uiArtifacts && message.a2uiArtifacts.length > 0 && /* @__PURE__ */ jsx84("div", { className: "mt-2 space-y-2", dir: isRTL ? "rtl" : "ltr", children: message.a2uiArtifacts.map((artifact, artIdx) => /* @__PURE__ */ jsx84(
+                        ArtifactRenderer,
+                        {
+                          artifact,
+                          onAction: handleArtifactAction,
+                          onInteract: handleArtifactInteract,
+                          language,
+                          dir: isRTL ? "rtl" : "ltr"
+                        },
+                        artIdx
+                      )) })
+                    ] }) : displayContent }),
+                    message.role === "user" && /* @__PURE__ */ jsx84("div", { className: "w-6 h-6 rounded-md bg-muted flex items-center justify-center shrink-0 mt-1", children: /* @__PURE__ */ jsx84(User, { className: "w-3 h-3 text-muted-foreground" }) })
+                  ] }),
+                  message.role === "assistant" && !message.id.startsWith("streaming-") && renderedMarkdown && /* @__PURE__ */ jsxs72("div", { className: "flex items-center gap-1 mt-1 justify-start ps-8", children: [
+                    /* @__PURE__ */ jsxs72(
+                      "button",
+                      {
+                        type: "button",
+                        title: t2("copilot:copyResponse"),
+                        onClick: () => navigator.clipboard.writeText(renderedMarkdown).catch(() => {
+                        }),
+                        className: "flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors duration-fast ease-standard",
+                        children: [
+                          /* @__PURE__ */ jsx84(Copy, { className: "w-3 h-3" }),
+                          /* @__PURE__ */ jsx84("span", { children: t2("copilot:copyResponse") })
+                        ]
+                      }
+                    ),
+                    typeof navigator !== "undefined" && "share" in navigator && /* @__PURE__ */ jsxs72(
+                      "button",
+                      {
+                        type: "button",
+                        title: t2("copilot:shareResponse"),
+                        onClick: () => navigator.share({ title: "Copilot Response", text: renderedMarkdown }).catch(() => {
+                        }),
+                        className: "flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors duration-fast ease-standard",
+                        children: [
+                          /* @__PURE__ */ jsx84(Share2, { className: "w-3 h-3" }),
+                          /* @__PURE__ */ jsx84("span", { children: t2("copilot:shareResponse") })
+                        ]
+                      }
+                    )
+                  ] })
+                ] }, message.id);
+              }),
+              chatState.streamError && /* @__PURE__ */ jsxs72("div", { className: "flex gap-2 justify-start", children: [
+                /* @__PURE__ */ jsx84("div", { className: "mt-1 shrink-0", children: /* @__PURE__ */ jsx84(TwinAvatar, { size: "sm" }) }),
+                /* @__PURE__ */ jsx84("div", { className: "min-w-0 flex-1 max-w-[calc(85%-2rem)]", children: /* @__PURE__ */ jsx84(
+                  StreamErrorBanner_default,
+                  {
+                    onRetry: chatState.onRetry,
+                    isRetrying: chatState.isLoading,
+                    language
+                  }
+                ) })
+              ] }),
+              snapshottedChips && snapshottedChips.length > 0 && insightTriggered && chatState.messages.length === 2 && !chatState.isLoading && chatState.messages[1]?.role === "assistant" && /* @__PURE__ */ jsx84("div", { className: "flex flex-wrap justify-center gap-2 max-w-md mx-auto py-2", children: snapshottedChips.map((chip, i) => /* @__PURE__ */ jsx84(
+                "button",
+                {
+                  onClick: () => {
+                    chatState.onSend(chip, { thinkingMode });
+                    setSnapshottedChips(void 0);
+                    setInsightTriggered(false);
+                  },
+                  className: "text-xs px-3 py-1.5 bg-primary/10 hover:bg-primary/20 text-primary rounded-full transition-colors duration-fast ease-standard border border-primary/20",
+                  children: chip
+                },
+                i
+              )) }),
+              (chatState.isLoading || chatState.isStreaming) && !chatState.isReceiving && chatState.agentSteps.length > 0 && /* @__PURE__ */ jsxs72("div", { className: "flex gap-2 justify-start", children: [
+                /* @__PURE__ */ jsx84("div", { className: "mt-1 shrink-0", children: /* @__PURE__ */ jsx84(TwinAvatar, { size: "sm" }) }),
+                /* @__PURE__ */ jsx84("div", { className: "min-w-0 flex-1 max-w-[calc(85%-2rem)]", children: /* @__PURE__ */ jsx84(AgentSteps_default, { steps: chatState.agentSteps, isStreaming: true, language, dir: isRTL ? "rtl" : "ltr" }) })
+              ] }),
+              (chatState.isLoading || chatState.isStreaming) && !chatState.isReceiving && chatState.agentSteps.length === 0 && /* @__PURE__ */ jsxs72("div", { className: "flex gap-2 justify-start", children: [
+                /* @__PURE__ */ jsx84("div", { className: "w-6 h-6 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0", children: /* @__PURE__ */ jsx84(Loader29, { className: "w-3 h-3 text-primary-foreground animate-spin" }) }),
+                /* @__PURE__ */ jsx84("div", { className: "bg-muted rounded-xl px-3 py-2 border border-border", children: /* @__PURE__ */ jsx84("span", { className: "text-xs text-muted-foreground animate-pulse", children: t2("copilot:thinkingIndicator") }) })
+              ] }),
+              /* @__PURE__ */ jsx84("div", { dir: isRTL ? "rtl" : "ltr", ref: messagesEndRef })
+            ] }) }),
+            /* @__PURE__ */ jsxs72(
+              "div",
+              {
+                className: "px-4 py-2.5 border-t border-border bg-background/50 shrink-0 space-y-2 relative",
+                dir: isRTL ? "rtl" : "ltr",
+                onDragEnter: (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  dragCounterRef.current++;
+                  setIsDragging(true);
+                },
+                onDragOver: (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                },
+                onDragLeave: (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  dragCounterRef.current--;
+                  if (dragCounterRef.current <= 0) {
+                    setIsDragging(false);
+                    dragCounterRef.current = 0;
+                  }
+                },
+                onDrop: (e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  setIsDragging(false);
+                  dragCounterRef.current = 0;
+                  const files = Array.from(e.dataTransfer.files);
+                  if (files.length > 0) {
+                    void handleDroppedFiles(files);
+                    if (toolbarUploadRef.current) toolbarUploadRef.current(files);
+                  }
+                },
+                children: [
+                  isDragging && /* @__PURE__ */ jsx84("div", { className: "absolute inset-0 z-10 flex items-center justify-center bg-primary/5 border-2 border-dashed border-primary/40 rounded-lg backdrop-blur-sm", children: /* @__PURE__ */ jsx84("p", { className: "text-xs font-medium text-primary", children: t2("copilot:dropFiles") }) }),
+                  /* @__PURE__ */ jsx84(
+                    ChatToolbar_default,
+                    {
+                      forcedTools,
+                      onForcedToolsChange: setForcedTools,
+                      attachments,
+                      onAttachmentsChange: setAttachments,
+                      thinkingMode,
+                      onThinkingModeChange: (enabled) => {
+                        setThinkingMode(enabled);
+                        try {
+                          localStorage.setItem("sentra-thinking-mode", String(enabled));
+                        } catch {
+                        }
+                      },
+                      disabled: chatState.isLoading,
+                      language,
+                      onUploadReady: (fn) => {
+                        toolbarUploadRef.current = fn;
+                      }
+                    }
+                  ),
+                  !isTwin && (personas === void 0 || (personas ?? PERSONAS).length > 0) && /* @__PURE__ */ jsx84(
+                    PersonaPicker,
+                    {
+                      value: persona,
+                      onChange: setPersona,
+                      disabled: chatState.isLoading,
+                      language,
+                      personas
+                    }
+                  ),
+                  SHOW_TOOLS_PANEL && /* @__PURE__ */ jsxs72(Collapsible, { open: toolsPanelOpen, onOpenChange: setToolsPanelOpen, children: [
+                    /* @__PURE__ */ jsx84(CollapsibleTrigger, { asChild: true, children: /* @__PURE__ */ jsxs72(
+                      "button",
+                      {
+                        type: "button",
+                        className: "flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors duration-fast ease-standard",
+                        "aria-expanded": toolsPanelOpen,
+                        children: [
+                          /* @__PURE__ */ jsx84(Wrench, { className: "w-3 h-3 shrink-0" }),
+                          /* @__PURE__ */ jsx84("span", { children: language === "ar" ? "\u0627\u0644\u0623\u062F\u0648\u0627\u062A \u0648\u0627\u0644\u0645\u0647\u0627\u0631\u0627\u062A" : "Tools & Skills" }),
+                          /* @__PURE__ */ jsx84(ChevronDown10, { className: `w-3 h-3 transition-transform duration-fast ease-standard ${toolsPanelOpen ? "rotate-180" : ""}` })
+                        ]
+                      }
+                    ) }),
+                    /* @__PURE__ */ jsx84(CollapsibleContent, { children: /* @__PURE__ */ jsxs72("div", { className: "mt-1.5 rounded-lg border border-border bg-muted/40 p-2 space-y-1", children: [
+                      effAllowedTools && effAllowedTools.map((tool) => /* @__PURE__ */ jsxs72(
+                        "div",
+                        {
+                          className: "flex items-center justify-between gap-2 rounded-md px-2 py-1 hover:bg-muted transition-colors duration-fast ease-standard",
+                          children: [
+                            /* @__PURE__ */ jsxs72("div", { className: "flex items-center gap-1.5 min-w-0", children: [
+                              /* @__PURE__ */ jsx84(Terminal2, { className: "w-3 h-3 shrink-0 text-blue-400" }),
+                              /* @__PURE__ */ jsx84("span", { className: "text-xs text-foreground truncate", children: tool.name })
+                            ] }),
+                            /* @__PURE__ */ jsx84(
+                              "button",
+                              {
+                                type: "button",
+                                onClick: () => {
+                                  const cmd = `/${tool.function_name ?? tool.slug} `;
+                                  chatState.onInputChange(chatState.inputValue + cmd);
+                                  setToolsPanelOpen(false);
+                                  requestAnimationFrame(() => inputRef.current?.focus());
+                                },
+                                className: "shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-primary/10 text-primary hover:bg-primary/20 transition-colors duration-fast ease-standard",
+                                title: language === "ar" ? "\u0623\u062F\u0631\u062C" : "Insert",
+                                children: language === "ar" ? "\u0623\u062F\u0631\u062C" : "Insert"
+                              }
+                            )
+                          ]
+                        },
+                        tool.slug
+                      )),
+                      effAllowedSkills && effAllowedSkills.map((skill) => /* @__PURE__ */ jsxs72(
+                        "div",
+                        {
+                          className: "flex items-center justify-between gap-2 rounded-md px-2 py-1 hover:bg-muted transition-colors duration-fast ease-standard",
+                          children: [
+                            /* @__PURE__ */ jsxs72("div", { className: "flex items-center gap-1.5 min-w-0", children: [
+                              /* @__PURE__ */ jsx84(Zap2, { className: "w-3 h-3 shrink-0 text-amber-400" }),
+                              /* @__PURE__ */ jsx84("span", { className: "text-xs text-foreground truncate", children: skill.name })
+                            ] }),
+                            /* @__PURE__ */ jsx84(
+                              "button",
+                              {
+                                type: "button",
+                                onClick: () => {
+                                  const cmd = `/skill ${skill.slug} `;
+                                  chatState.onInputChange(chatState.inputValue + cmd);
+                                  setToolsPanelOpen(false);
+                                  requestAnimationFrame(() => inputRef.current?.focus());
+                                },
+                                className: "shrink-0 text-[10px] px-1.5 py-0.5 rounded bg-amber-500/10 text-amber-400 hover:bg-amber-500/20 transition-colors duration-fast ease-standard",
+                                title: language === "ar" ? "\u0623\u062F\u0631\u062C" : "Insert",
+                                children: language === "ar" ? "\u0623\u062F\u0631\u062C" : "Insert"
+                              }
+                            )
+                          ]
+                        },
+                        skill.slug
+                      ))
+                    ] }) })
+                  ] }),
+                  attachments.length > 0 && /* @__PURE__ */ jsx84("div", { className: "flex flex-wrap gap-1.5", children: attachments.map((att, i) => /* @__PURE__ */ jsxs72(
+                    "div",
+                    {
+                      className: "inline-flex items-center gap-1.5 px-2 py-1 bg-muted border border-border rounded-md text-[11px] text-foreground max-w-[160px]",
+                      children: [
+                        /* @__PURE__ */ jsx84("span", { className: "truncate font-medium", children: att.name }),
+                        /* @__PURE__ */ jsx84(
+                          "button",
+                          {
+                            type: "button",
+                            onClick: () => setAttachments((prev) => prev.filter((_, idx) => idx !== i)),
+                            className: "shrink-0 text-muted-foreground hover:text-foreground transition-colors duration-fast ease-standard",
+                            "aria-label": language === "ar" ? `\u0625\u0632\u0627\u0644\u0629 ${att.name}` : `Remove ${att.name}`,
+                            children: /* @__PURE__ */ jsx84(X5, { className: "w-3 h-3" })
+                          }
+                        )
+                      ]
+                    },
+                    `${att.name}-${i}`
+                  )) }),
+                  /* @__PURE__ */ jsxs72("div", { className: "relative", children: [
+                    slashMenuOpen && /* @__PURE__ */ jsx84(
+                      "div",
+                      {
+                        ref: slashMenuRef,
+                        className: "absolute bottom-full mb-1 start-0 w-72 z-50 rounded-lg border border-border bg-popover shadow-md overflow-hidden",
+                        dir: isRTL ? "rtl" : "ltr",
+                        children: /* @__PURE__ */ jsxs72(Command, { shouldFilter: false, children: [
+                          /* @__PURE__ */ jsx84(
+                            CommandInput,
+                            {
+                              value: slashQuery,
+                              onValueChange: setSlashQuery,
+                              placeholder: language === "ar" ? "\u0627\u0628\u062D\u062B \u0641\u064A \u0627\u0644\u0623\u0648\u0627\u0645\u0631\u2026" : "Search commands\u2026",
+                              className: "h-8 text-xs",
+                              autoFocus: false
+                            }
+                          ),
+                          /* @__PURE__ */ jsxs72(CommandList, { className: "max-h-52", children: [
+                            /* @__PURE__ */ jsx84(CommandEmpty, { className: "text-xs py-3", children: language === "ar" ? "\u0644\u0627 \u062A\u0648\u062C\u062F \u0623\u0648\u0627\u0645\u0631" : "No commands found" }),
+                            effAllowedTools && effAllowedTools.length > 0 && /* @__PURE__ */ jsx84(CommandGroup, { heading: language === "ar" ? "\u0623\u062F\u0648\u0627\u062A" : "Tools", children: effAllowedTools.filter(
+                              (t3) => !slashQuery || (t3.function_name ?? t3.slug).toLowerCase().includes(slashQuery.toLowerCase()) || t3.name.toLowerCase().includes(slashQuery.toLowerCase())
+                            ).map((tool) => /* @__PURE__ */ jsxs72(
+                              CommandItem,
+                              {
+                                value: tool.function_name ?? tool.slug,
+                                onSelect: () => handleSlashSelect(tool.function_name ?? tool.slug),
+                                className: "text-xs cursor-pointer",
+                                children: [
+                                  /* @__PURE__ */ jsx84(Terminal2, { className: "w-3 h-3 me-2 shrink-0 text-blue-400" }),
+                                  /* @__PURE__ */ jsxs72("span", { className: "font-mono text-primary me-1.5", children: [
+                                    "/",
+                                    tool.function_name ?? tool.slug
+                                  ] }),
+                                  /* @__PURE__ */ jsx84("span", { className: "text-muted-foreground truncate", children: tool.name })
+                                ]
+                              },
+                              tool.slug
+                            )) }),
+                            effAllowedSkills && effAllowedSkills.length > 0 && /* @__PURE__ */ jsx84(CommandGroup, { heading: language === "ar" ? "\u0645\u0647\u0627\u0631\u0627\u062A" : "Skills", children: effAllowedSkills.filter(
+                              (s) => !slashQuery || s.slug.toLowerCase().includes(slashQuery.toLowerCase()) || s.name.toLowerCase().includes(slashQuery.toLowerCase())
+                            ).map((skill) => /* @__PURE__ */ jsxs72(
+                              CommandItem,
+                              {
+                                value: `skill-${skill.slug}`,
+                                onSelect: () => handleSlashSelect(`skill ${skill.slug}`),
+                                className: "text-xs cursor-pointer",
+                                children: [
+                                  /* @__PURE__ */ jsx84(Zap2, { className: "w-3 h-3 me-2 shrink-0 text-amber-400" }),
+                                  /* @__PURE__ */ jsxs72("span", { className: "font-mono text-primary me-1.5", children: [
+                                    "/skill ",
+                                    skill.slug
+                                  ] }),
+                                  /* @__PURE__ */ jsx84("span", { className: "text-muted-foreground truncate", children: skill.name })
+                                ]
+                              },
+                              skill.slug
+                            )) })
+                          ] })
+                        ] })
+                      }
+                    ),
+                    atMenuOpen && showAgents && /* @__PURE__ */ jsx84(
+                      "div",
+                      {
+                        ref: atMenuRef,
+                        className: "absolute bottom-full mb-1 start-0 w-64 z-50 rounded-lg border border-border bg-popover shadow-md overflow-hidden",
+                        dir: isRTL ? "rtl" : "ltr",
+                        children: /* @__PURE__ */ jsxs72(Command, { shouldFilter: false, children: [
+                          /* @__PURE__ */ jsx84(
+                            CommandInput,
+                            {
+                              value: atQuery,
+                              onValueChange: setAtQuery,
+                              placeholder: language === "ar" ? "\u0627\u0628\u062D\u062B \u0641\u064A \u0627\u0644\u0648\u0643\u0644\u0627\u0621\u2026" : "Search agents\u2026",
+                              className: "h-8 text-xs",
+                              autoFocus: false
+                            }
+                          ),
+                          /* @__PURE__ */ jsxs72(CommandList, { className: "max-h-48", children: [
+                            /* @__PURE__ */ jsx84(CommandEmpty, { className: "text-xs py-3", children: language === "ar" ? "\u0644\u0627 \u064A\u0648\u062C\u062F \u0648\u0643\u0644\u0627\u0621" : "No agents found" }),
+                            /* @__PURE__ */ jsx84(CommandGroup, { heading: language === "ar" ? "\u0627\u0644\u0648\u0643\u0644\u0627\u0621" : "Agents", children: (personas ?? PERSONAS).filter(
+                              (p) => !atQuery || p.label.toLowerCase().includes(atQuery.toLowerCase()) || p.id.toLowerCase().includes(atQuery.toLowerCase())
+                            ).map((p) => /* @__PURE__ */ jsxs72(
+                              CommandItem,
+                              {
+                                value: p.id,
+                                onSelect: () => handleAtSelect(p.label),
+                                className: "text-xs cursor-pointer",
+                                children: [
+                                  p.icon ? /* @__PURE__ */ jsx84("span", { className: "me-2 text-sm", children: p.icon }) : /* @__PURE__ */ jsx84(AtSign, { className: "w-3 h-3 me-2 shrink-0 text-emerald-400" }),
+                                  /* @__PURE__ */ jsx84("span", { className: "text-foreground", children: p.label })
+                                ]
+                              },
+                              p.id
+                            )) })
+                          ] })
+                        ] })
+                      }
+                    ),
+                    /* @__PURE__ */ jsxs72(
+                      "form",
+                      {
+                        onSubmit: (e) => {
+                          e.preventDefault();
+                          handleSend();
+                        },
+                        className: "flex items-end gap-2",
+                        children: [
+                          /* @__PURE__ */ jsx84(
+                            Textarea,
+                            {
+                              ref: inputRef,
+                              value: chatState.inputValue,
+                              onChange: (e) => {
+                                handleInputChange(e.target.value);
+                                autoResize(e.target);
+                              },
+                              onKeyDown: handleKeyDown,
+                              placeholder,
+                              disabled: chatState.isLoading,
+                              rows: 1,
+                              className: "flex-1 min-h-[36px] max-h-[120px] resize-none text-sm py-2"
+                            }
+                          ),
+                          /* @__PURE__ */ jsx84(
+                            Button,
+                            {
+                              type: "submit",
+                              size: "icon",
+                              disabled: chatState.isLoading || !chatState.inputValue.trim(),
+                              className: "h-9 w-9 shrink-0",
+                              "aria-label": language === "ar" ? "\u0625\u0631\u0633\u0627\u0644" : "Send",
+                              children: /* @__PURE__ */ jsx84(Send, { className: "w-4 h-4", "aria-hidden": "true" })
+                            }
+                          )
+                        ]
+                      }
+                    )
+                  ] })
+                ]
+              }
+            )
+          ] })
+        ]
+      }
+    )
+  ] });
+};
+UnifiedCopilotDock.displayName = "UnifiedCopilotDock";
+var UnifiedCopilotDock_default = UnifiedCopilotDock;
+
+// src/components/copilot/CopilotProvider.tsx
+import { jsx as jsx85, jsxs as jsxs73 } from "react/jsx-runtime";
+function useSafeLanguage() {
+  try {
+    const ctx = useT2();
+    return { language: ctx.language, isRTL: ctx.isRTL };
+  } catch {
+    return { language: "en", isRTL: false };
+  }
+}
+function genId() {
+  return `${Date.now()}-${Math.random().toString(36).slice(2, 9)}`;
+}
+function stripA2UI(text) {
+  let out = text.replace(/```a2ui[\s\S]*?```/g, "");
+  const open = out.indexOf("```a2ui");
+  if (open !== -1) out = out.slice(0, open);
+  return out.trim();
+}
+function genUUID() {
+  if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+    return crypto.randomUUID();
+  }
+  return "xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx".replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0;
+    const v = c === "x" ? r : r & 3 | 8;
+    return v.toString(16);
+  });
+}
+var AGENT_AR_NAMES = {
+  "agent-persona-analyst": "\u0645\u062D\u0644\u0644 \u0627\u0644\u0627\u0633\u062A\u062E\u0628\u0627\u0631\u0627\u062A",
+  "agent-persona-media": "\u0645\u062D\u0644\u0644 \u0627\u0644\u0625\u0639\u0644\u0627\u0645",
+  "agent-persona-diplomat": "\u0627\u0644\u062F\u0628\u0644\u0648\u0645\u0627\u0633\u064A",
+  "agent-persona-osint": "\u0628\u0627\u062D\u062B OSINT"
+};
+var CopilotContext = createContext3(null);
+var DEFAULT_CONTEXT = {
+  type: "global",
+  contextRef: "",
+  title: "Copilot",
+  mode: "global",
+  suggestions: [
+    { en: "Summarise recent alerts", ar: "\u0644\u062E\u0651\u0635 \u0627\u0644\u062A\u0646\u0628\u064A\u0647\u0627\u062A \u0627\u0644\u0623\u062E\u064A\u0631\u0629" },
+    { en: "What are the key narratives this week?", ar: "\u0645\u0627 \u0623\u0628\u0631\u0632 \u0627\u0644\u0633\u0631\u062F\u064A\u0627\u062A \u0647\u0630\u0627 \u0627\u0644\u0623\u0633\u0628\u0648\u0639\u061F" },
+    { en: "Show top entities by coverage", ar: "\u0627\u0639\u0631\u0636 \u0623\u0628\u0631\u0632 \u0627\u0644\u0643\u064A\u0627\u0646\u0627\u062A \u062D\u0633\u0628 \u0627\u0644\u062A\u063A\u0637\u064A\u0629" }
+  ]
+};
+var CopilotProvider = ({
+  children,
+  baseUrl = "/api/v1",
+  token,
+  context = DEFAULT_CONTEXT,
+  defaultOpen = false,
+  pageContext,
+  client: injectedClient
+}) => {
+  const { language } = useSafeLanguage();
+  const [isOpen, setIsOpen] = useState42(defaultOpen);
+  const [pendingMessage, setPendingMessage] = useState42(null);
+  const [pendingAutoSend, setPendingAutoSend] = useState42(false);
+  const [config, setConfig] = useState42(null);
+  const [messages, setMessages] = useState42([]);
+  const [inputValue, setInputValue] = useState42("");
+  const [isLoading, setIsLoading] = useState42(false);
+  const [isStreaming, setIsStreaming] = useState42(false);
+  const [isReceiving, setIsReceiving] = useState42(false);
+  const [streamingText, setStreamingText] = useState42("");
+  const [agentSteps, setAgentSteps] = useState42([]);
+  const [streamError, setStreamError] = useState42(null);
+  const [sessionId, setSessionId] = useState42(null);
+  const [sessionTitle, setSessionTitle] = useState42(void 0);
+  const lastPayloadRef = useRef15(null);
+  const abortRef = useRef15(null);
+  const clientRef = useRef15(injectedClient ?? null);
+  clientRef.current = injectedClient ?? null;
+  useEffect25(() => {
+    let cancelled = false;
+    const fetchConfig = async () => {
+      try {
+        const configUrl = baseUrl.endsWith("/") ? `${baseUrl}copilot/config` : `${baseUrl}/copilot/config`;
+        const headers = { "Content-Type": "application/json" };
+        if (token) headers["Authorization"] = `Bearer ${token}`;
+        const res = await fetch(configUrl, {
+          method: "GET",
+          headers,
+          credentials: "include"
+        });
+        if (!res.ok || cancelled) return;
+        const data = await res.json();
+        if (!cancelled) setConfig(data);
+      } catch {
+      }
+    };
+    void fetchConfig();
+    return () => {
+      cancelled = true;
+    };
+  }, [baseUrl, token]);
+  const mapStep = (s) => ({
+    step: s.step,
+    message: s.message,
+    done: s.done,
+    count: s.count,
+    duration_ms: s.duration_ms,
+    sources: s.sources,
+    domains: s.domains,
+    handles: s.handles,
+    query: s.query
+  });
+  const handleSend = useCallback15(
+    async (text, opts) => {
+      if (!text.trim()) return;
+      abortRef.current?.abort();
+      const abort = new AbortController();
+      abortRef.current = abort;
+      lastPayloadRef.current = { text, opts };
+      let activeSession = sessionId;
+      if (!activeSession) {
+        activeSession = genUUID();
+        setSessionId(activeSession);
+      }
+      const userMsg = {
+        id: genId(),
+        role: "user",
+        content: text,
+        hidden: opts?.hideUserMessage
+      };
+      setMessages((prev) => [...prev, userMsg]);
+      setInputValue("");
+      setStreamError(null);
+      setIsLoading(true);
+      setIsStreaming(false);
+      setIsReceiving(false);
+      setAgentSteps([]);
+      setStreamingText("");
+      const assistantId = `streaming-${genId()}`;
+      let accumulated = "";
+      let finalSteps = [];
+      let finalArtifacts = [];
+      try {
+        const client = clientRef.current;
+        if (!client) {
+          throw new Error("No CopilotClient provided");
+        }
+        const intelligenceCtx = pageContext ? { data_summary: pageContext } : void 0;
+        const req = {
+          messages: [
+            // Pass the full history so the model has conversation context
+            ...messages.map((m) => ({
+              role: m.role,
+              content: m.content
+            })),
+            { role: "user", content: text }
+          ],
+          language,
+          mode: context.mode,
+          thinking_mode: opts?.thinkingMode,
+          forced_tools: opts?.forcedTools ? {
+            deep_research: opts.forcedTools.deep_research ?? false,
+            search_sources: opts.forcedTools.search_sources ?? []
+          } : void 0,
+          attachments: opts?.attachments,
+          intelligenceContext: intelligenceCtx,
+          // Wave D: persist this turn to the active session (backend upserts + auto-titles).
+          session_id: activeSession,
+          // Phase-3: structured interaction post-back from an interactive artifact.
+          // Forwarded when handleArtifactInteract is the caller; absent for normal sends.
+          interaction: opts?.interaction
+        };
+        if (!sessionTitle && messages.length === 0) {
+          const t2 = text.length > 50 ? `${text.slice(0, 50)}\u2026` : text;
+          setSessionTitle(t2);
+        }
+        for await (const event of client.copilotDispatch(req, { signal: abort.signal })) {
+          if (abort.signal.aborted) break;
+          switch (event.type) {
+            case "delta": {
+              accumulated += event.text;
+              setIsStreaming(true);
+              setIsReceiving(true);
+              setStreamingText(stripA2UI(accumulated));
+              break;
+            }
+            case "step": {
+              const step = mapStep(event.step);
+              finalSteps = [...finalSteps, step];
+              setAgentSteps([...finalSteps]);
+              setIsStreaming(true);
+              break;
+            }
+            case "citations": {
+              break;
+            }
+            case "artifact": {
+              finalArtifacts = [...finalArtifacts, event.artifact];
+              break;
+            }
+            case "done": {
+              break;
+            }
+            default:
+              break;
+          }
+        }
+        const cleanContent = stripA2UI(accumulated);
+        if (!abort.signal.aborted && (cleanContent || finalArtifacts.length > 0)) {
+          const assistantMsg = {
+            id: assistantId,
+            role: "assistant",
+            content: cleanContent,
+            steps: finalSteps.length > 0 ? finalSteps : void 0,
+            a2uiArtifacts: finalArtifacts.length > 0 ? finalArtifacts : void 0
+          };
+          setMessages((prev) => [...prev, assistantMsg]);
+        }
+      } catch (err) {
+        if (abort.signal.aborted) {
+          return;
+        }
+        console.error("[CopilotProvider]", "Stream error", err);
+        const msg = err instanceof Error ? err.message : "Cortex is unreachable. Please try again.";
+        setStreamError(msg);
+      } finally {
+        setIsLoading(false);
+        setIsStreaming(false);
+        setIsReceiving(false);
+        setStreamingText("");
+        setAgentSteps([]);
+      }
+    },
+    // messages is included so each turn picks up the current history correctly.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [messages, language, context.mode, baseUrl, token, pageContext, sessionId, sessionTitle]
+  );
+  const handleRetry = useCallback15(() => {
+    if (!lastPayloadRef.current) return;
+    const { text, opts } = lastPayloadRef.current;
+    setMessages(
+      (prev) => prev.filter((m) => m.role !== "assistant" || prev.indexOf(m) < prev.length - 1)
+    );
+    setStreamError(null);
+    void handleSend(text, opts);
+  }, [handleSend]);
+  const handleNewConversation = useCallback15(() => {
+    abortRef.current?.abort();
+    setMessages([]);
+    setInputValue("");
+    setStreamError(null);
+    setIsLoading(false);
+    setIsStreaming(false);
+    setIsReceiving(false);
+    setStreamingText("");
+    setAgentSteps([]);
+    lastPayloadRef.current = null;
+    setSessionId(null);
+    setSessionTitle(void 0);
+  }, []);
+  const handleFetchHistory = useCallback15(async () => {
+    try {
+      const url = baseUrl.endsWith("/") ? `${baseUrl}copilot/sessions` : `${baseUrl}/copilot/sessions`;
+      const res = await fetch(url, {
+        credentials: "include",
+        headers: token ? { Authorization: `Bearer ${token}` } : void 0
+      });
+      if (!res.ok) return [];
+      const data = await res.json();
+      return (data.sessions ?? []).map((s) => ({
+        id: s.id,
+        title: s.title || "New chat",
+        // dock expects an ISO/string updated_at; convert epoch-ms when present.
+        updated_at: s.last_message_at ? new Date(s.last_message_at).toISOString() : s.created_at ? new Date(s.created_at).toISOString() : ""
+      }));
+    } catch {
+      return [];
+    }
+  }, [baseUrl, token]);
+  const handleDeleteConversation = useCallback15(
+    async (id) => {
+      const url = baseUrl.endsWith("/") ? `${baseUrl}copilot/sessions/${id}` : `${baseUrl}/copilot/sessions/${id}`;
+      const res = await fetch(url, {
+        method: "DELETE",
+        credentials: "include",
+        headers: token ? { Authorization: `Bearer ${token}` } : void 0
+      });
+      if (!res.ok && res.status !== 404) {
+        throw new Error(`delete session failed: ${res.status}`);
+      }
+    },
+    [baseUrl, token]
+  );
+  const handleLoadConversation = useCallback15(
+    async (id) => {
+      abortRef.current?.abort();
+      try {
+        const url = baseUrl.endsWith("/") ? `${baseUrl}copilot/sessions/${id}/messages` : `${baseUrl}/copilot/sessions/${id}/messages`;
+        const res = await fetch(url, {
+          credentials: "include",
+          headers: token ? { Authorization: `Bearer ${token}` } : void 0
+        });
+        if (!res.ok) return;
+        const data = await res.json();
+        const loaded = (data.messages ?? []).filter((m) => m.role === "user" || m.role === "assistant").map((m) => ({
+          id: genId(),
+          role: m.role,
+          content: m.content
+        }));
+        setMessages(loaded);
+        setSessionId(id);
+        setSessionTitle(data.title);
+        setStreamError(null);
+        setStreamingText("");
+        setAgentSteps([]);
+        setInputValue("");
+      } catch {
+      }
+    },
+    [baseUrl, token]
+  );
+  const handleStop = useCallback15(() => {
+    abortRef.current?.abort();
+    setIsLoading(false);
+    setIsStreaming(false);
+    setIsReceiving(false);
+  }, []);
+  const chatState = {
+    messages,
+    streamingText,
+    isReceiving,
+    isLoading,
+    isStreaming,
+    agentSteps,
+    streamError,
+    inputValue,
+    onInputChange: setInputValue,
+    onSend: (text, opts) => {
+      void handleSend(text, opts);
+    },
+    onStop: handleStop,
+    onRetry: handleRetry,
+    onNewConversation: handleNewConversation,
+    // Wave D: session management — activates the dock's history popover.
+    conversationId: sessionId ?? void 0,
+    conversationTitle: sessionTitle,
+    onFetchHistory: handleFetchHistory,
+    onLoadConversation: handleLoadConversation,
+    onDeleteConversation: handleDeleteConversation
+  };
+  const dynamicPersonas = config && config.allowed_agents.length > 0 ? config.allowed_agents.map((a) => ({
+    id: a.slug.replace(/^agent-persona-/, ""),
+    label: a.name,
+    // Prefer name_ar from the server payload (when the Go handler emits it),
+    // then fall back to AGENT_AR_NAMES keyed by the full slug, then the EN name.
+    labelAr: a.name_ar || AGENT_AR_NAMES[a.slug] || a.name,
+    icon: void 0
+  })) : void 0;
+  const handleArtifactAction = useCallback15(
+    (item) => {
+      if (!item.prompt) return;
+      setIsOpen(true);
+      void handleSend(item.prompt);
+    },
+    [handleSend]
+  );
+  const handleArtifactInteract = useCallback15(
+    (interaction) => {
+      setIsOpen(true);
+      const text = `[interaction:${interaction.kind}]`;
+      void handleSend(text, {
+        hideUserMessage: true,
+        interaction
+      });
+    },
+    [handleSend]
+  );
+  const handleOpen = useCallback15((opts) => {
+    setIsOpen(true);
+    if (opts?.message) {
+      setPendingMessage(opts.message);
+      setPendingAutoSend(opts.autoSend ?? false);
+    }
+  }, []);
+  const handleClose = useCallback15(() => setIsOpen(false), []);
+  const handlePendingMessageConsumed = useCallback15(() => {
+    setPendingMessage(null);
+    setPendingAutoSend(false);
+  }, []);
+  const contextValue = {
+    open: handleOpen,
+    close: handleClose,
+    isOpen,
+    config
+  };
+  return /* @__PURE__ */ jsxs73(CopilotContext.Provider, { value: contextValue, children: [
+    children,
+    /* @__PURE__ */ jsx85(
+      UnifiedCopilotDock_default,
+      {
+        chatState,
+        context,
+        language,
+        defaultExpanded: isOpen,
+        onClose: handleClose,
+        personas: dynamicPersonas,
+        allowedTools: config?.allowed_tools,
+        allowedSkills: config?.allowed_skills,
+        branding: config?.branding,
+        uiConfig: config?.ui,
+        onArtifactAction: handleArtifactAction,
+        onArtifactInteract: handleArtifactInteract,
+        pendingMessage,
+        pendingAutoSend,
+        onPendingMessageConsumed: handlePendingMessageConsumed
+      }
+    )
+  ] });
+};
+CopilotProvider.displayName = "CopilotProvider";
+var useCopilot = () => {
+  const ctx = useContext3(CopilotContext);
+  if (!ctx) {
+    throw new Error("[useCopilot] Must be used inside <CopilotProvider> from @prism/ui");
+  }
+  return ctx;
+};
+
+// src/components/copilot/CopilotLauncher.tsx
+import { Sparkles as Sparkles8 } from "lucide-react";
+import { jsx as jsx86, jsxs as jsxs74 } from "react/jsx-runtime";
+function useSafeT2() {
+  try {
+    return useT2();
+  } catch {
+    return null;
+  }
+}
+var CopilotLauncher = ({
+  variant = "header",
+  className,
+  label
+}) => {
+  const { open, isOpen } = useCopilot();
+  const ctx = useSafeT2();
+  const language = ctx?.language ?? "en";
+  const t2 = ctx?.t ?? ((key) => key);
+  const resolvedLabel = label ?? t2("nav:copilot");
+  const handleClick = () => {
+    open();
+  };
+  if (variant === "fab") {
+    return /* @__PURE__ */ jsx86(TooltipProvider, { children: /* @__PURE__ */ jsxs74(Tooltip, { children: [
+      /* @__PURE__ */ jsx86(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsx86(
+        "button",
+        {
+          type: "button",
+          onClick: handleClick,
+          "aria-label": resolvedLabel,
+          "data-testid": "copilot-launcher-fab",
+          className: cn(
+            "fixed bottom-20 end-4 z-40",
+            "h-12 w-12 rounded-full",
+            "bg-primary text-primary-foreground shadow-lg",
+            "flex items-center justify-center",
+            "hover:bg-primary/90 transition-colors duration-fast ease-standard",
+            "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2",
+            isOpen && "ring-2 ring-primary/30",
+            className
+          ),
+          children: /* @__PURE__ */ jsx86(Sparkles8, { className: "h-5 w-5", "aria-hidden": "true" })
+        }
+      ) }),
+      /* @__PURE__ */ jsx86(
+        TooltipContent,
+        {
+          side: language === "ar" ? "left" : "right",
+          className: "text-xs",
+          children: resolvedLabel
+        }
+      )
+    ] }) });
+  }
+  return /* @__PURE__ */ jsxs74(
+    Button,
+    {
+      variant: "ghost",
+      size: "sm",
+      onClick: handleClick,
+      "aria-label": resolvedLabel,
+      "aria-pressed": isOpen,
+      "data-testid": "copilot-launcher-header",
+      className: cn(
+        "flex items-center gap-1.5 h-8 px-2 text-xs font-medium text-muted-foreground hover:text-foreground",
+        isOpen && "text-primary hover:text-primary",
+        className
+      ),
+      children: [
+        /* @__PURE__ */ jsx86(Sparkles8, { className: "h-4 w-4", "aria-hidden": "true" }),
+        /* @__PURE__ */ jsx86("span", { className: "hidden sm:inline", children: resolvedLabel })
+      ]
+    }
+  );
+};
+CopilotLauncher.displayName = "CopilotLauncher";
+
+// src/components/copilot/ChatThread.tsx
+import { useRef as useRef16, useEffect as useEffect26 } from "react";
+import { User as User2, Sparkles as Sparkles10 } from "lucide-react";
+
+// src/components/copilot/StreamingMessage.tsx
+import { Loader2 as Loader210, Sparkles as Sparkles9 } from "lucide-react";
+import { jsx as jsx87, jsxs as jsxs75 } from "react/jsx-runtime";
+var StreamingMessage = ({ text, isStreaming, language = "en", dir }) => {
+  const isAR = language === "ar";
+  const resolvedDir = dir ?? (isAR ? "rtl" : "ltr");
+  if (!text && isStreaming) {
+    return /* @__PURE__ */ jsxs75("div", { className: "flex items-center gap-2 px-3 py-2 bg-muted rounded-xl border border-border", children: [
+      /* @__PURE__ */ jsx87(Loader210, { className: "w-3.5 h-3.5 animate-spin text-muted-foreground shrink-0" }),
+      /* @__PURE__ */ jsx87("span", { className: "text-xs text-muted-foreground animate-pulse", children: isAR ? "\u062C\u0627\u0631\u064D \u0627\u0644\u062A\u0641\u0643\u064A\u0631..." : "Thinking..." })
+    ] });
+  }
+  return /* @__PURE__ */ jsxs75(
+    "div",
+    {
+      className: "bg-muted rounded-xl px-3 py-2 border border-border text-sm text-foreground",
+      dir: resolvedDir,
+      children: [
+        /* @__PURE__ */ jsx87(MarkdownContent_default, { content: text, dir: resolvedDir, className: "max-w-none" }),
+        isStreaming && /* @__PURE__ */ jsx87("span", { className: "inline-block w-1.5 h-3.5 bg-primary animate-pulse rounded-sm ms-0.5 align-middle" })
+      ]
+    }
+  );
+};
+StreamingMessage.displayName = "StreamingMessage";
+var StreamingMessage_default = StreamingMessage;
+var StreamingSpinner = ({ language = "en" }) => {
+  return /* @__PURE__ */ jsxs75("div", { className: "flex gap-2 items-start", children: [
+    /* @__PURE__ */ jsx87("div", { className: "w-6 h-6 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 mt-0.5", children: /* @__PURE__ */ jsx87(Sparkles9, { className: "w-3.5 h-3.5 text-primary-foreground" }) }),
+    /* @__PURE__ */ jsx87("div", { className: "bg-muted rounded-xl px-3 py-2 border border-border", children: /* @__PURE__ */ jsx87("span", { className: "text-xs text-muted-foreground animate-pulse", children: language === "ar" ? "\u062C\u0627\u0631\u064D \u0627\u0644\u062A\u062D\u0645\u064A\u0644..." : "Loading..." }) })
+  ] });
+};
+StreamingSpinner.displayName = "StreamingSpinner";
+
+// src/components/copilot/ArtifactViewer.tsx
+import { jsx as jsx88, jsxs as jsxs76 } from "react/jsx-runtime";
+var MapOfEventsArtifact = ({ data, language = "en" }) => /* @__PURE__ */ jsxs76("div", { className: "rounded-lg border border-border bg-muted/40 p-3", children: [
+  /* @__PURE__ */ jsx88("p", { className: "text-xs font-medium text-muted-foreground mb-2", children: language === "ar" ? "\u062E\u0631\u064A\u0637\u0629 \u0627\u0644\u0623\u062D\u062F\u0627\u062B" : "Map of Events" }),
+  /* @__PURE__ */ jsx88("pre", { className: "text-xs text-foreground/80 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
+] });
+MapOfEventsArtifact.displayName = "MapOfEventsArtifact";
+var TimelineArtifact = ({ data, language = "en" }) => /* @__PURE__ */ jsxs76("div", { className: "rounded-lg border border-border bg-muted/40 p-3", children: [
+  /* @__PURE__ */ jsx88("p", { className: "text-xs font-medium text-muted-foreground mb-2", children: language === "ar" ? "\u0627\u0644\u062C\u062F\u0648\u0644 \u0627\u0644\u0632\u0645\u0646\u064A" : "Timeline" }),
+  /* @__PURE__ */ jsx88("pre", { className: "text-xs text-foreground/80 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
+] });
+TimelineArtifact.displayName = "TimelineArtifact";
+var NetworkGraphArtifact = ({ data, language = "en" }) => /* @__PURE__ */ jsxs76("div", { className: "rounded-lg border border-border bg-muted/40 p-3", children: [
+  /* @__PURE__ */ jsx88("p", { className: "text-xs font-medium text-muted-foreground mb-2", children: language === "ar" ? "\u0631\u0633\u0645 \u0627\u0644\u0634\u0628\u0643\u0629" : "Network Graph" }),
+  /* @__PURE__ */ jsx88("pre", { className: "text-xs text-foreground/80 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
+] });
+NetworkGraphArtifact.displayName = "NetworkGraphArtifact";
+var KpiCardArtifact = ({ data, language = "en" }) => /* @__PURE__ */ jsxs76("div", { className: "rounded-lg border border-border bg-muted/40 p-3", children: [
+  /* @__PURE__ */ jsx88("p", { className: "text-xs font-medium text-muted-foreground mb-2", children: language === "ar" ? "\u0645\u0624\u0634\u0631\u0627\u062A \u0627\u0644\u0623\u062F\u0627\u0621" : "KPI Card" }),
+  /* @__PURE__ */ jsx88("pre", { className: "text-xs text-foreground/80 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
+] });
+KpiCardArtifact.displayName = "KpiCardArtifact";
+var FallbackArtifact = ({ slug, data, language = "en" }) => /* @__PURE__ */ jsxs76("div", { className: "rounded-lg border border-dashed border-border bg-muted/30 p-3", children: [
+  /* @__PURE__ */ jsx88("p", { className: "text-xs font-medium text-muted-foreground mb-1", children: language === "ar" ? `\u0645\u0643\u0648\u0651\u0646: ${slug}` : `Artifact: ${slug}` }),
+  /* @__PURE__ */ jsx88("pre", { className: "text-xs text-foreground/70 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
+] });
+FallbackArtifact.displayName = "FallbackArtifact";
+var ArtifactViewer = ({ artifact, language = "en", dir }) => {
+  const resolvedDir = dir ?? (language === "ar" ? "rtl" : "ltr");
+  const title = language === "ar" ? artifact.title_ar || artifact.title || artifact.controller_slug : artifact.title || artifact.controller_slug;
+  return /* @__PURE__ */ jsxs76("div", { className: "space-y-1.5", dir: resolvedDir, children: [
+    title && /* @__PURE__ */ jsx88("p", { className: "text-xs font-semibold text-foreground/70 px-0.5", children: title }),
+    (() => {
+      switch (artifact.controller_slug) {
+        case "map-of-events":
+          return /* @__PURE__ */ jsx88(MapOfEventsArtifact, { data: artifact.data, language });
+        case "timeline":
+          return /* @__PURE__ */ jsx88(TimelineArtifact, { data: artifact.data, language });
+        case "network-graph":
+          return /* @__PURE__ */ jsx88(NetworkGraphArtifact, { data: artifact.data, language });
+        case "kpi-card":
+          return /* @__PURE__ */ jsx88(KpiCardArtifact, { data: artifact.data, language });
+        default:
+          return /* @__PURE__ */ jsx88(FallbackArtifact, { slug: artifact.controller_slug, data: artifact.data, language });
+      }
+    })()
+  ] });
+};
+ArtifactViewer.displayName = "ArtifactViewer";
+var ArtifactViewer_default = ArtifactViewer;
+
+// src/components/copilot/ChatThread.tsx
+import { jsx as jsx89, jsxs as jsxs77 } from "react/jsx-runtime";
+var AssistantAvatar = () => /* @__PURE__ */ jsx89("div", { className: "w-6 h-6 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 mt-1", children: /* @__PURE__ */ jsx89(Sparkles10, { className: "w-3.5 h-3.5 text-primary-foreground" }) });
+AssistantAvatar.displayName = "AssistantAvatar";
+var UserAvatar = () => /* @__PURE__ */ jsx89("div", { className: "w-6 h-6 rounded-md bg-muted flex items-center justify-center shrink-0 mt-1", children: /* @__PURE__ */ jsx89(User2, { className: "w-3.5 h-3.5 text-muted-foreground" }) });
+UserAvatar.displayName = "UserAvatar";
+var ChatThread = ({
+  messages,
+  streamingText = "",
+  isStreaming = false,
+  language = "en",
+  dir
+}) => {
+  const isRTL = dir === "rtl" || dir === void 0 && language === "ar";
+  const bottomRef = useRef16(null);
+  useEffect26(() => {
+    bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages.length, streamingText]);
+  const isEmpty = messages.length === 0 && !isStreaming;
+  return /* @__PURE__ */ jsx89(ScrollArea, { className: "flex-1 px-4 py-3", children: /* @__PURE__ */ jsxs77("div", { className: "space-y-3 min-h-full", dir: isRTL ? "rtl" : "ltr", children: [
+    isEmpty && /* @__PURE__ */ jsxs77("div", { className: "flex flex-col items-center justify-center py-16 gap-3", children: [
+      /* @__PURE__ */ jsx89("div", { className: "w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center", children: /* @__PURE__ */ jsx89(Sparkles10, { className: "w-5 h-5 text-primary-foreground" }) }),
+      /* @__PURE__ */ jsx89("p", { className: "text-sm text-muted-foreground text-center max-w-xs", children: language === "ar" ? "\u0627\u0633\u0623\u0644 \u0627\u0644\u0645\u0633\u0627\u0639\u062F \u0623\u064A \u0633\u0624\u0627\u0644 \u0648\u0633\u064A\u0631\u062F \u0628\u0627\u0644\u0645\u0639\u0644\u0648\u0645\u0627\u062A \u0627\u0644\u062A\u064A \u062A\u062D\u062A\u0627\u062C\u0647\u0627" : "Ask the copilot anything \u2014 it will answer with the information you need" })
+    ] }),
+    messages.map((msg) => {
+      const text = language === "ar" ? msg.text_ar || msg.text_en : msg.text_en;
+      const isUser = msg.role === "user";
+      return /* @__PURE__ */ jsxs77(
+        "div",
+        {
+          className: `flex gap-2 ${isUser ? isRTL ? "justify-start flex-row-reverse" : "justify-end" : isRTL ? "justify-end flex-row-reverse" : "justify-start"}`,
+          children: [
+            !isUser && !isRTL && /* @__PURE__ */ jsx89(AssistantAvatar, {}),
+            isUser && isRTL && /* @__PURE__ */ jsx89(UserAvatar, {}),
+            /* @__PURE__ */ jsxs77("div", { className: "max-w-[85%] space-y-1.5", children: [
+              isUser ? /* @__PURE__ */ jsx89("div", { className: "rounded-xl px-3 py-2 bg-primary text-primary-foreground text-sm", children: text }) : /* @__PURE__ */ jsx89(StreamingMessage_default, { text, isStreaming: false, language, dir: isRTL ? "rtl" : "ltr" }),
+              msg.artifacts && msg.artifacts.length > 0 && /* @__PURE__ */ jsx89("div", { className: "space-y-2", children: msg.artifacts.map((artifact, idx) => /* @__PURE__ */ jsx89(
+                ArtifactViewer_default,
+                {
+                  artifact,
+                  language,
+                  dir: isRTL ? "rtl" : "ltr"
+                },
+                `${msg.id}-artifact-${idx}`
+              )) }),
+              msg.a2uiArtifacts && msg.a2uiArtifacts.length > 0 && /* @__PURE__ */ jsx89("div", { className: "space-y-2", children: msg.a2uiArtifacts.map((artifact, idx) => /* @__PURE__ */ jsx89(
+                ArtifactRenderer,
+                {
+                  artifact,
+                  language,
+                  dir: isRTL ? "rtl" : "ltr"
+                },
+                `${msg.id}-a2ui-${idx}`
+              )) })
+            ] }),
+            !isUser && isRTL && /* @__PURE__ */ jsx89(AssistantAvatar, {}),
+            isUser && !isRTL && /* @__PURE__ */ jsx89(UserAvatar, {})
+          ]
+        },
+        msg.id
+      );
+    }),
+    (isStreaming || streamingText) && /* @__PURE__ */ jsxs77("div", { className: `flex gap-2 ${isRTL ? "justify-end flex-row-reverse" : "justify-start"}`, children: [
+      !isRTL && /* @__PURE__ */ jsx89(AssistantAvatar, {}),
+      /* @__PURE__ */ jsx89("div", { className: "max-w-[85%]", children: /* @__PURE__ */ jsx89(
+        StreamingMessage_default,
+        {
+          text: streamingText,
+          isStreaming,
+          language,
+          dir: isRTL ? "rtl" : "ltr"
+        }
+      ) }),
+      isRTL && /* @__PURE__ */ jsx89(AssistantAvatar, {})
+    ] }),
+    /* @__PURE__ */ jsx89("div", { ref: bottomRef })
+  ] }) });
+};
+ChatThread.displayName = "ChatThread";
+var ChatThread_default = ChatThread;
 export {
   Accordion,
   AccordionContent,
   AccordionItem,
   AccordionTrigger,
+  AgentSteps_default as AgentSteps,
   Alert,
   AlertDescription,
   AlertDialog,
@@ -10959,6 +14703,17 @@ export {
   AlertTitle,
   AppPageShell,
   AppSidebar,
+  ArtifactActions,
+  ArtifactCard,
+  ArtifactChart,
+  ArtifactClientCandidates,
+  ArtifactClientDiffConfirm,
+  ArtifactClientFieldPicker,
+  ArtifactMarkdown,
+  ArtifactPersonaStarters,
+  ArtifactRenderer,
+  ArtifactTable,
+  ArtifactViewer_default as ArtifactViewer,
   AspectRatio,
   AuthCard_default as AuthCard,
   AuthErrorAlert_default as AuthErrorAlert,
@@ -10996,6 +14751,7 @@ export {
   ChartStyle,
   ChartTooltip,
   ChartTooltipContent,
+  ChatThread_default as ChatThread,
   Checkbox,
   Collapsible,
   CollapsibleContent,
@@ -11027,6 +14783,8 @@ export {
   ContextMenuSubTrigger,
   ContextMenuTrigger,
   ContextualSkeleton,
+  CopilotLauncher,
+  CopilotProvider,
   DEFAULT_LAYERS,
   DEFAULT_LEGEND_GROUPS,
   DEFAULT_REGION_PRESETS,
@@ -11108,6 +14866,7 @@ export {
   MapLegend,
   MapPanel,
   MapView,
+  MarkdownContent_default as MarkdownContent,
   Menubar,
   MenubarCheckboxItem,
   MenubarContent,
@@ -11190,6 +14949,7 @@ export {
   Separator,
   ServiceUnavailable,
   SessionExpired,
+  SeverityChip,
   Sheet,
   SheetClose,
   SheetContent,
@@ -11229,6 +14989,7 @@ export {
   StatCard,
   StatusBadge,
   StepOptionsDialog,
+  StreamingMessage_default as StreamingMessage,
   Switch,
   Table,
   TableBody,
@@ -11253,6 +15014,7 @@ export {
   TooltipProvider,
   TooltipTrigger,
   TwoFAForm_default as TwoFAForm,
+  UnifiedCopilotDock_default as UnifiedCopilotDock,
   ViewToggle,
   Workflow,
   WorkflowEditor,
@@ -11278,6 +15040,7 @@ export {
   toast,
   toggleVariants,
   useBrand,
+  useCopilot,
   useFormField,
   useLanguage,
   useOptionalSidebar,
