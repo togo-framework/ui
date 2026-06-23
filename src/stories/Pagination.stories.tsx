@@ -7,7 +7,7 @@ import {
   PaginationPrevious,
   PaginationNext,
   PaginationEllipsis,
-} from "../ui/pagination";
+} from "../components/ui/pagination";
 
 const meta: Meta<typeof Pagination> = {
   title: "Primitives/Pagination",

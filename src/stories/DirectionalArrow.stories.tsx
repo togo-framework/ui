@@ -1,6 +1,6 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { DirectionalArrow } from "../ui/directional-arrow";
-import { Button } from "../ui/button";
+import { DirectionalArrow } from "../components/ui/directional-arrow";
+import { Button } from "../components/ui/button";
 
 const meta: Meta<typeof DirectionalArrow> = {
   title: "Primitives/Directional Arrow",

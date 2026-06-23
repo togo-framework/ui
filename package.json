@@ -78,7 +78,11 @@
     "react-resizable-panels": "^2.1.9",
     "recharts": "^2.15.4",
     "sonner": "^1.7.4",
-    "vaul": "^0.9.9"
+    "vaul": "^0.9.9",
+    "@tanstack/react-table": "^8.21.3",
+    "date-fns": "^3.6.0",
+    "i18next": "^24.2.3",
+    "react-i18next": "^15.7.4"
   },
   "devDependencies": {
     "@storybook/addon-essentials": "^8.4.0",

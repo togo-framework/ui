@@ -337,3 +337,8 @@
   --radius-md: calc(var(--radius, 0.5rem) - 2px);
   --radius-sm: calc(var(--radius, 0.5rem) - 4px);
 }
+
+/* ── togo kit root helper (used by Storybook canvas + optional app wrapper) ── */
+:root { --tg-font: "Lusail", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
+.tg-root { font-family: var(--tg-font); }
+/* RTL: components use logical properties (ps/pe/ms/me/start/end) and flip under [dir="rtl"]. */

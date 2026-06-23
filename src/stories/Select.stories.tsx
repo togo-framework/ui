@@ -7,8 +7,8 @@ import {
   SelectLabel,
   SelectTrigger,
   SelectValue,
-} from "../ui/select";
-import { Label } from "../ui/label";
+} from "../components/ui/select";
+import { Label } from "../components/ui/label";
 
 const meta: Meta = {
   title: "Primitives/Select",

@@ -14,11 +14,11 @@ import {
   FormControl,
   FormDescription,
   FormMessage,
-} from "../ui/form";
-import { Input } from "../ui/input";
-import { Button } from "../ui/button";
-import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../ui/select";
-import { Checkbox } from "../ui/checkbox";
+} from "../components/ui/form";
+import { Input } from "../components/ui/input";
+import { Button } from "../components/ui/button";
+import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "../components/ui/select";
+import { Checkbox } from "../components/ui/checkbox";
 
 const meta: Meta = {
   title: "Primitives/Form",
