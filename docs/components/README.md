@@ -167,6 +167,12 @@ import { Button, Dialog, DataTable } from "@togo-framework/ui";
 | [IssuesList](./IssuesList.md) | Sentry issues table: level, title/culprit, frequency, events/users, assignee. |
 | [IssueDetail](./IssueDetail.md) | Error detail: stack trace (source context), breadcrumbs, tags, frequency chart. |
 
+## Copilot
+
+| Component | Description |
+|---|---|
+| [Copilot](./Copilot.md) | ArtifactRenderer + ChatThread + dock (host-injected CopilotClient). |
+
 ## Feedback / Loading
 
 | Component | Description |
