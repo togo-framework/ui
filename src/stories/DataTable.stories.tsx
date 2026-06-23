@@ -185,18 +185,11 @@ const bulkActions_en: DataTableBulkAction[] = [
 // ── Meta ──────────────────────────────────────────────────────────────────────
 
 const meta: Meta<typeof DataTable> = {
-  title: "Domain/Data Table",
+  title: "Data/DataTable",
   component: DataTable as React.ComponentType,
   tags: ['autodocs'],
   parameters: {
     layout: 'padded',
-    backgrounds: {
-      default: 'dark',
-      values: [
-        { name: 'dark',  value: 'hsl(210 20% 6%)' },
-        { name: 'light', value: 'hsl(0 0% 98%)' },
-      ],
-    },
   },
 }
 export default meta
@@ -208,7 +201,7 @@ type Story = StoryObj<typeof DataTable>
 /** Default: EN/LTR, sorting + text/select filters, global search, pagination. */
 export const Default: Story = {
   render: () => (
-    <div className="dark p-4 bg-background rounded-xl">
+    <div className="p-4 bg-background rounded-xl">
       <DataTable<AlertRow>
         data={ROWS_20}
         columns={makeColumns('en')}
@@ -232,7 +225,7 @@ export const Default: Story = {
 /** Arabic RTL dark — all chrome strings and filter labels in Arabic */
 export const ArabicRTL: Story = {
   render: () => (
-    <div className="dark p-4 bg-background rounded-xl" dir="rtl">
+    <div className="p-4 bg-background rounded-xl" dir="rtl">
       <DataTable<AlertRow>
         data={ROWS_20}
         columns={makeColumns('ar')}
@@ -256,7 +249,7 @@ export const ServerSideMode: Story = {
   render: () => {
     const [log, setLog] = React.useState('(waiting for state change…)')
     return (
-      <div className="dark p-4 bg-background rounded-xl space-y-4">
+      <div className="p-4 bg-background rounded-xl space-y-4">
         <pre className="text-[10px] text-muted-foreground bg-muted p-2 rounded-md overflow-auto max-h-24">
           {log}
         </pre>
@@ -283,7 +276,7 @@ export const ServerSideMode: Story = {
 /** 1 000-row client-side performance demo */
 export const OneThousandRows: Story = {
   render: () => (
-    <div className="dark p-4 bg-background rounded-xl">
+    <div className="p-4 bg-background rounded-xl">
       <DataTable<AlertRow>
         data={ROWS_1K}
         columns={makeColumns('en')}
@@ -305,7 +298,7 @@ export const OneThousandRows: Story = {
 /** Expandable rows */
 export const ExpandableRows: Story = {
   render: () => (
-    <div className="dark p-4 bg-background rounded-xl">
+    <div className="p-4 bg-background rounded-xl">
       <DataTable<AlertRow>
         data={ROWS_20}
         columns={makeColumns('en')}
@@ -328,7 +321,7 @@ export const ExpandableRows: Story = {
 /** Loading state */
 export const Loading: Story = {
   render: () => (
-    <div className="dark p-4 bg-background rounded-xl">
+    <div className="p-4 bg-background rounded-xl">
       <DataTable<AlertRow>
         data={[]}
         columns={makeColumns('en')}
@@ -343,7 +336,7 @@ export const Loading: Story = {
 /** Error state */
 export const ErrorState: Story = {
   render: () => (
-    <div className="dark p-4 bg-background rounded-xl">
+    <div className="p-4 bg-background rounded-xl">
       <DataTable<AlertRow>
         data={[]}
         columns={makeColumns('en')}

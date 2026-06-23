@@ -11,6 +11,8 @@ const customViewports = {
 };
 
 const preview: Preview = {
+  // Autodocs: every component gets a generated Docs page (description + props + controls).
+  tags: ["autodocs"],
   parameters: {
     layout: "fullscreen",
     viewport: { viewports: customViewports },
