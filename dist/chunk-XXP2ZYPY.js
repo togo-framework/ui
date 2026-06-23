@@ -499,7 +499,7 @@ var ChartTooltipContent = React9.forwardRef(({ active, payload, className, indic
       const itemConfig = getPayloadConfigFromPayload(config, item, key);
       const indicatorColor = color || item.payload.fill || item.color;
       return /* @__PURE__ */ jsx11("div", { className: cn("flex w-full flex-wrap items-stretch gap-2 [&>svg]:h-2.5 [&>svg]:w-2.5 [&>svg]:text-muted-foreground", indicator === "dot" && "items-center"), children: formatter && item?.value !== void 0 && item.name ? formatter(item.value, item.name, item, index, item.payload) : /* @__PURE__ */ jsxs5(Fragment, { children: [
-        itemConfig?.icon ? /* @__PURE__ */ jsx11(itemConfig.icon, {}) : !hideIndicator && /* @__PURE__ */ jsx11("div", { className: cn("shrink-0 rounded-[2px] border-[--color-border] bg-[--color-bg]", { "h-2.5 w-2.5": indicator === "dot", "w-1": indicator === "line", "w-0 border-[1.5px] border-dashed bg-transparent": indicator === "dashed", "my-0.5": nestLabel && indicator === "dashed" }), style: { "--color-bg": indicatorColor, "--color-border": indicatorColor } }),
+        itemConfig?.icon ? /* @__PURE__ */ jsx11(itemConfig.icon, {}) : !hideIndicator && /* @__PURE__ */ jsx11("div", { className: cn("shrink-0 rounded-[2px] border-(--color-border) bg-(--color-bg)", { "h-2.5 w-2.5": indicator === "dot", "w-1": indicator === "line", "w-0 border-[1.5px] border-dashed bg-transparent": indicator === "dashed", "my-0.5": nestLabel && indicator === "dashed" }), style: { "--color-bg": indicatorColor, "--color-border": indicatorColor } }),
         /* @__PURE__ */ jsxs5("div", { className: cn("flex flex-1 justify-between leading-none", nestLabel ? "items-end" : "items-center"), children: [
           /* @__PURE__ */ jsxs5("div", { className: "grid gap-1.5", children: [
             nestLabel ? tooltipLabel : null,
@@ -1556,14 +1556,14 @@ SidebarProvider.displayName = "SidebarProvider";
 var Sidebar = React34.forwardRef(({ side = "left", variant = "sidebar", collapsible = "offcanvas", className, children, ...props }, ref) => {
   const { isMobile, state, openMobile, setOpenMobile } = useSidebar();
   if (collapsible === "none") {
-    return /* @__PURE__ */ jsx39("div", { className: cn("flex h-full w-[--sidebar-width] flex-col bg-sidebar text-sidebar-foreground", className), ref, ...props, children });
+    return /* @__PURE__ */ jsx39("div", { className: cn("flex h-full w-(--sidebar-width) flex-col bg-sidebar text-sidebar-foreground", className), ref, ...props, children });
   }
   if (isMobile) {
-    return /* @__PURE__ */ jsx39(Sheet, { open: openMobile, onOpenChange: setOpenMobile, ...props, children: /* @__PURE__ */ jsx39(SheetContent, { "data-sidebar": "sidebar", "data-mobile": "true", className: "w-[--sidebar-width] bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden", style: { "--sidebar-width": SIDEBAR_WIDTH_MOBILE }, side, children: /* @__PURE__ */ jsx39("div", { className: "flex h-full w-full flex-col", children }) }) });
+    return /* @__PURE__ */ jsx39(Sheet, { open: openMobile, onOpenChange: setOpenMobile, ...props, children: /* @__PURE__ */ jsx39(SheetContent, { "data-sidebar": "sidebar", "data-mobile": "true", className: "w-(--sidebar-width) bg-sidebar p-0 text-sidebar-foreground [&>button]:hidden", style: { "--sidebar-width": SIDEBAR_WIDTH_MOBILE }, side, children: /* @__PURE__ */ jsx39("div", { className: "flex h-full w-full flex-col", children }) }) });
   }
   return /* @__PURE__ */ jsxs18("div", { ref, className: "group peer hidden text-sidebar-foreground md:block", "data-state": state, "data-collapsible": state === "collapsed" ? collapsible : "", "data-variant": variant, "data-side": side, children: [
-    /* @__PURE__ */ jsx39("div", { className: cn("relative h-svh w-[--sidebar-width] bg-transparent transition-[width] duration-200 ease-linear", "group-data-[collapsible=offcanvas]:w-0", "group-data-[side=right]:rotate-180", variant === "floating" || variant === "inset" ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]" : "group-data-[collapsible=icon]:w-[--sidebar-width-icon]") }),
-    /* @__PURE__ */ jsx39("div", { className: cn("fixed inset-y-0 z-10 hidden h-svh w-[--sidebar-width] transition-[left,right,width] duration-200 ease-linear md:flex", side === "left" ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]" : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]", variant === "floating" || variant === "inset" ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]" : "group-data-[collapsible=icon]:w-[--sidebar-width-icon] group-data-[side=left]:border-r group-data-[side=right]:border-l", className), ...props, children: /* @__PURE__ */ jsx39("div", { "data-sidebar": "sidebar", className: "flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow", children }) })
+    /* @__PURE__ */ jsx39("div", { className: cn("relative h-svh w-(--sidebar-width) bg-transparent transition-[width] duration-200 ease-linear", "group-data-[collapsible=offcanvas]:w-0", "group-data-[side=right]:rotate-180", variant === "floating" || variant === "inset" ? "group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4))]" : "group-data-[collapsible=icon]:w-(--sidebar-width-icon)") }),
+    /* @__PURE__ */ jsx39("div", { className: cn("fixed inset-y-0 z-10 hidden h-svh w-(--sidebar-width) transition-[left,right,width] duration-200 ease-linear md:flex", side === "left" ? "left-0 group-data-[collapsible=offcanvas]:left-[calc(var(--sidebar-width)*-1)]" : "right-0 group-data-[collapsible=offcanvas]:right-[calc(var(--sidebar-width)*-1)]", variant === "floating" || variant === "inset" ? "p-2 group-data-[collapsible=icon]:w-[calc(var(--sidebar-width-icon)_+_theme(spacing.4)_+2px)]" : "group-data-[collapsible=icon]:w-(--sidebar-width-icon) group-data-[side=left]:border-r group-data-[side=right]:border-l", className), ...props, children: /* @__PURE__ */ jsx39("div", { "data-sidebar": "sidebar", className: "flex h-full w-full flex-col bg-sidebar group-data-[variant=floating]:rounded-lg group-data-[variant=floating]:border group-data-[variant=floating]:border-sidebar-border group-data-[variant=floating]:shadow", children }) })
   ] });
 });
 Sidebar.displayName = "Sidebar";
@@ -1670,7 +1670,7 @@ var SidebarMenuSkeleton = React34.forwardRef(
     const width = React34.useMemo(() => `${Math.floor(Math.random() * 40) + 50}%`, []);
     return /* @__PURE__ */ jsxs18("div", { ref, "data-sidebar": "menu-skeleton", className: cn("flex h-8 items-center gap-2 rounded-md px-2", className), ...props, children: [
       showIcon && /* @__PURE__ */ jsx39(Skeleton, { className: "size-4 rounded-md", "data-sidebar": "menu-skeleton-icon" }),
-      /* @__PURE__ */ jsx39(Skeleton, { className: "h-4 max-w-[--skeleton-width] flex-1", "data-sidebar": "menu-skeleton-text", style: { "--skeleton-width": width } })
+      /* @__PURE__ */ jsx39(Skeleton, { className: "h-4 max-w-(--skeleton-width) flex-1", "data-sidebar": "menu-skeleton-text", style: { "--skeleton-width": width } })
     ] });
   }
 );
@@ -2189,4 +2189,4 @@ export {
   ToggleGroup,
   ToggleGroupItem
 };
-//# sourceMappingURL=chunk-27ZISTR6.js.map
+//# sourceMappingURL=chunk-XXP2ZYPY.js.map

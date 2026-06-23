@@ -20,7 +20,9 @@ import { Badge } from "../components/ui/badge";
 const meta: Meta = {
   title: "Components/Sidebar",
   tags: ["autodocs"],
-  parameters: { layout: "fullscreen", docs: { story: { inline: false, height: "560px" } } },
+  // fullBleed removes the canvas padding so the Sidebar's fixed positioning aligns
+  // with the top/edge instead of overlapping the inset header.
+  parameters: { layout: "fullscreen", fullBleed: true, docs: { story: { inline: false, height: "560px" } } },
 };
 
 export default meta;
