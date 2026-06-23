@@ -16,3 +16,8 @@ export type { FeedbackHubProps } from "./FeedbackHub";
 // own project/DSN) instead of a bespoke per-product feedback launcher.
 export { MotorFeedbackLauncher } from "./MotorFeedbackLauncher";
 export type { MotorFeedbackLauncherProps } from "./MotorFeedbackLauncher";
+
+// FeedbackWidget — self-contained, working widget: floating trigger → panel with an
+// on-page element picker + comment form + list. No external SDK (unlike MotorFeedbackLauncher).
+export { FeedbackWidget } from "./FeedbackWidget";
+export type { FeedbackWidgetProps, FeedbackItem, FeedbackKind, PickedElement } from "./FeedbackWidget";

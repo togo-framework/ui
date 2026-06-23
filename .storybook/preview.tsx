@@ -58,8 +58,12 @@ const preview: Preview = {
       const dir = (ctx.globals.direction as string) || "ltr";
       // Full-bleed stories (auth, layout, profile) render edge-to-edge with no padding.
       const fullBleed = Boolean(ctx.parameters.fullBleed);
-      // Apply on <html> too so portaled UI (Dialog/DropdownMenu/Popover) is themed + RTL.
+      // In STORY (canvas) view, apply on <html> too so portaled UI (Dialog/DropdownMenu/
+      // Popover) is themed + RTL. In DOCS view, do NOT touch <html> — it would flip
+      // Storybook's own docs chrome (props tables, headings); the wrapper below still
+      // themes + mirrors the component preview itself.
       React.useEffect(() => {
+        if (ctx.viewMode === "docs") return;
         document.documentElement.classList.toggle("dark", theme === "dark");
         document.documentElement.setAttribute("dir", dir);
       }, [theme, dir]);
