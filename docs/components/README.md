@@ -192,6 +192,14 @@ import { Button, Dialog, DataTable } from "@togo-framework/ui";
 |---|---|
 | [SectionBoard](./SectionBoard.md) | Drag-reorder + edit prompt/model/settings sections (narrative/alerts edit mode). |
 
+## Layout
+
+| Component | Description |
+|---|---|
+| [AppLayout](./AppLayout.md) | Full app shell (sidebar + header + content), responsive + RTL. |
+| [AdminLayout](./AdminLayout.md) | App shell + a sub-nav tab bar for admin areas. |
+| AppSidebar · AppPageShell · ViewToggle · RouteProgress | Layout building blocks. |
+
 ## Markdown
 
 | Component | Description |
