@@ -117,6 +117,58 @@ import { Button, Dialog, DataTable } from "@togo-framework/ui";
 | [DataState](./DataState.md) | Loading/error/empty wrapper. |
 | [ServiceUnavailable](./ServiceUnavailable.md) · [SessionExpired](./SessionExpired.md) | Error states. |
 
+## Pickers
+
+| Component | Description |
+|---|---|
+| [ColorPicker](./ColorPicker.md) | Swatch + popover with color wheel, hex field, presets. |
+| [IconPicker](./IconPicker.md) | Searchable grid of lucide icons. |
+
+## Map
+
+| Component | Description |
+|---|---|
+| [MapView](./MapView.md) | Real OpenStreetMap via leaflet (SSR-safe). |
+| [MapPanel](./MapPanel.md) | Map chrome (legend + layers) around a canvas. |
+| [MapLegend](./MapLegend.md) · [MapLayersPanel](./MapLayersPanel.md) | Legend + layer toggles. |
+
+## Network
+
+| Component | Description |
+|---|---|
+| [NetworkGraph](./NetworkGraph.md) | Dependency-free SVG force-directed graph. |
+| [EntityNetworkGraph](./EntityNetworkGraph.md) | Connection graph shell (`renderGraph` prop). |
+
+## Workflow
+
+| Component | Description |
+|---|---|
+| [WorkflowPipeline](./WorkflowPipeline.md) | Read-only pipeline of step lanes (workflow manager). |
+| [WorkflowEditor](./WorkflowEditor.md) | Drag-and-drop step editor (dnd-kit). |
+| [WorkflowStepNode](./WorkflowStepNode.md) | Single workflow step node. |
+
+## Plugins
+
+| Component | Description |
+|---|---|
+| [PluginCard](./PluginCard.md) | Marketplace plugin card. |
+| [PluginPageHeader](./PluginPageHeader.md) · [PluginSectionCard](./PluginSectionCard.md) | Plugin page header + section card. |
+| [PluginSparkline](./PluginSparkline.md) · [SourceBadge](./SourceBadge.md) | Activity sparkline + source badge. |
+| [PluginDetailLayout](./PluginDetailLayout.md) · [PluginAppearanceSection](./PluginAppearanceSection.md) · [TestRunPanel](./TestRunPanel.md) | Plugin detail page parts. |
+
+## Logs
+
+| Component | Description |
+|---|---|
+| [LogsView](./LogsView.md) | Realtime/streamed, filterable log viewer. |
+
+## Feedback / Loading
+
+| Component | Description |
+|---|---|
+| [SentraLoading](./SentraLoading.md) | Branded loading indicator. |
+| [ContextualSkeleton](./ContextualSkeleton.md) · [SectionSkeleton](./SectionSkeleton.md) | Realtime-loading skeletons. |
+
 ## Theme & i18n
 
 | Provider | Description |
