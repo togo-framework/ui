@@ -46,8 +46,13 @@ export function ErrorTrackingPage({
 
   return (
     <div dir={dir} className={cn("flex h-[100vh] max-h-full overflow-hidden bg-background text-foreground", className)}>
-      {/* List — full width on mobile, fixed start column on desktop */}
-      <div className={cn("min-w-0 flex-1 border-border md:max-w-md md:flex-none md:border-e lg:max-w-lg", active && "hidden md:flex md:flex-col")}>
+      {/* List — full width until an issue is selected; then a fixed start column on desktop */}
+      <div
+        className={cn(
+          "min-w-0 flex-col border-border",
+          active ? "hidden md:flex md:max-w-md md:flex-none md:border-e lg:max-w-lg" : "flex flex-1",
+        )}
+      >
         <IssuesList
           issues={issues}
           selectedId={activeId}
@@ -61,8 +66,8 @@ export function ErrorTrackingPage({
         />
       </div>
 
-      {/* Detail */}
-      <div className={cn("min-w-0 flex-1", !active && "hidden md:flex md:items-center md:justify-center")}>
+      {/* Detail — only occupies space once an issue is selected */}
+      <div className={cn("min-w-0 flex-1", !active && "hidden")}>
         {active ? (
           <div className="flex h-full flex-col">
             <div className="border-b border-border p-2 md:hidden">

@@ -9109,21 +9109,30 @@ function ErrorTrackingPage({
     onSelectIssue?.(iss);
   };
   return /* @__PURE__ */ jsxs47("div", { dir, className: cn("flex h-[100vh] max-h-full overflow-hidden bg-background text-foreground", className), children: [
-    /* @__PURE__ */ jsx53("div", { className: cn("min-w-0 flex-1 border-border md:max-w-md md:flex-none md:border-e lg:max-w-lg", active && "hidden md:flex md:flex-col"), children: /* @__PURE__ */ jsx53(
-      IssuesList,
+    /* @__PURE__ */ jsx53(
+      "div",
       {
-        issues,
-        selectedId: activeId,
-        onSelectIssue: select,
-        language,
-        filter,
-        onFilterChange,
-        sort,
-        onSortChange,
-        environments
+        className: cn(
+          "min-w-0 flex-col border-border",
+          active ? "hidden md:flex md:max-w-md md:flex-none md:border-e lg:max-w-lg" : "flex flex-1"
+        ),
+        children: /* @__PURE__ */ jsx53(
+          IssuesList,
+          {
+            issues,
+            selectedId: activeId,
+            onSelectIssue: select,
+            language,
+            filter,
+            onFilterChange,
+            sort,
+            onSortChange,
+            environments
+          }
+        )
       }
-    ) }),
-    /* @__PURE__ */ jsx53("div", { className: cn("min-w-0 flex-1", !active && "hidden md:flex md:items-center md:justify-center"), children: active ? /* @__PURE__ */ jsxs47("div", { className: "flex h-full flex-col", children: [
+    ),
+    /* @__PURE__ */ jsx53("div", { className: cn("min-w-0 flex-1", !active && "hidden"), children: active ? /* @__PURE__ */ jsxs47("div", { className: "flex h-full flex-col", children: [
       /* @__PURE__ */ jsx53("div", { className: "border-b border-border p-2 md:hidden", children: /* @__PURE__ */ jsxs47(Button, { variant: "ghost", size: "sm", onClick: () => selectedId === void 0 ? setInternal(null) : onSelectIssue?.(active), children: [
         /* @__PURE__ */ jsx53(ArrowLeft5, { className: "size-4 rtl:rotate-180" }),
         " ",
