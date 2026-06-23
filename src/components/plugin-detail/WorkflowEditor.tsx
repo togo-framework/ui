@@ -84,6 +84,53 @@ import {
 import { Separator } from '../ui/separator'
 import { cn } from '../../lib/utils'
 import type { WorkflowPalette, WorkflowStep, WorkflowSource } from './types'
+import { NestedStepsEditor } from './NestedStepsEditor'
+import { StepOptionsDialog } from './StepOptionsDialog'
+
+// ── nested-tree helpers (steps can contain then/else/steps branches) ──
+const BR = ['then', 'else', 'steps'] as const
+let _wid = 0
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function assignUids(steps: any[]): any[] {
+  return (steps ?? []).map((s) => {
+    const n = { ...s, _uid: s._uid ?? `wstep-${_wid++}` }
+    for (const k of BR) if (Array.isArray(n[k])) n[k] = assignUids(n[k])
+    return n
+  })
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function updateByUid(steps: any[], uid: string, next: any): any[] {
+  return steps.map((s) => {
+    if (String(s._uid) === uid) return { ...next, _uid: s._uid }
+    let changed = false
+    const c = { ...s }
+    for (const k of BR) if (Array.isArray(c[k])) { const r = updateByUid(c[k], uid, next); if (r !== c[k]) { c[k] = r; changed = true } }
+    return changed ? c : s
+  })
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function deleteByUid(steps: any[], uid: string): any[] {
+  const out: any[] = []
+  for (const s of steps) {
+    if (String(s._uid) === uid) continue
+    const c = { ...s }
+    for (const k of BR) if (Array.isArray(c[k])) c[k] = deleteByUid(c[k], uid)
+    out.push(c)
+  }
+  return out
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+function stripUidsDeep(o: any): any {
+  if (Array.isArray(o)) return o.map(stripUidsDeep)
+  if (o && typeof o === 'object') {
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { _uid, ...rest } = o
+    const r: Record<string, any> = {}
+    for (const k of Object.keys(rest)) r[k] = stripUidsDeep(rest[k])
+    return r
+  }
+  return o
+}
 
 // ── Constants ─────────────────────────────────────────────────────────────────
 
@@ -969,7 +1016,7 @@ export const WorkflowEditor = ({
   const isRTL = language === 'ar'
 
   const initialSteps = useMemo(
-    () => workflowSteps.map((s, i) => ({ ...s, _uid: `step-${i}` })),
+    () => assignUids(workflowSteps),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
   )
@@ -1033,27 +1080,25 @@ export const WorkflowEditor = ({
   }, [])
 
   const handleDeleteStep = useCallback((id: string) => {
-    setEditSteps((prev) => prev.filter((s) => String(s._uid) !== id))
+    setEditSteps((prev) => deleteByUid(prev, id))
     markDirty()
   }, [])
 
-  const handleOpenEditStep = useCallback((id: string) => {
-    setEditSteps((prev) => {
-      const step = prev.find((s) => String(s._uid) === id)
-      if (step) { setEditingStep(step); setEditStepDialogOpen(true) }
-      return prev
-    })
+  // Open the type-specific options modal for a step (from the nested editor).
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  const handleEditStep = useCallback((step: any) => {
+    setEditingStep(step)
+    setEditStepDialogOpen(true)
   }, [])
 
-  const handleEditStepSave = useCallback(
+  // Save the FULL updated step back into the tree by its _uid (any depth).
+  const handleStepOptionsSave = useCallback(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    (patch: any) => {
-      if (!editingStep) return
-      setEditSteps((prev) => prev.map((s) =>
-        String(s._uid) === String(editingStep._uid) ? { ...s, ...patch } : s))
+    (next: any) => {
+      setEditSteps((prev) => updateByUid(prev, String(next._uid), next))
       markDirty()
     },
-    [editingStep],
+    [],
   )
 
   const handleToggleSource = useCallback((id: string) => {
@@ -1122,9 +1167,7 @@ export const WorkflowEditor = ({
       if (hasProtoPollutionKey(s)) { toast.error(isRTL ? 'مصدر يحتوي على مفاتيح غير مسموح بها' : 'Source contains blocked keys'); return }
     }
 
-    // eslint-disable-next-line @typescript-eslint/no-explicit-any
-    const stripUid = (o: any) => { const { _uid, ...rest } = o; return rest }
-    const cleanSteps = editSteps.map(stripUid)
+    const cleanSteps = stripUidsDeep(editSteps)
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const cleanSources = editSources.map((s: any) => {
       const { _uid, ...rest } = s
@@ -1179,33 +1222,15 @@ export const WorkflowEditor = ({
             {isRTL ? 'لا توجد خطوات — أضف خطوة' : 'No steps — add one'}
           </div>
         ) : (
-          <DndContext sensors={sensors} collisionDetection={closestCenter} onDragEnd={handleStepDragEnd}>
-            <SortableContext items={editSteps.map((s) => String(s._uid))} strategy={verticalListSortingStrategy}>
-              <div className="overflow-hidden rounded-lg border border-border divide-y divide-border">
-                {editSteps.map((s) => {
-                  const kind = s.kind ?? 'unknown'
-                  const n = kind === 'search_query' && Array.isArray(s.queries) ? s.queries.length
-                    : kind === 'rss_poll' && Array.isArray(s.urls) ? s.urls.length : null
-                  return (
-                    <SortableRow
-                      key={String(s._uid)}
-                      id={String(s._uid)}
-                      icon={kindIcon(kind)}
-                      title={stepLabel(kind)}
-                      subtitle={stepSummary(s, isRTL)}
-                      badge={n != null ? String(n) : undefined}
-                      disabled={!!s.disabled}
-                      checked={!s.disabled}
-                      isRTL={isRTL}
-                      onToggle={() => handleToggleStep(String(s._uid))}
-                      onEdit={() => handleOpenEditStep(String(s._uid))}
-                      onDelete={() => handleDeleteStep(String(s._uid))}
-                    />
-                  )
-                })}
-              </div>
-            </SortableContext>
-          </DndContext>
+          <div className="rounded-lg border border-border bg-muted/10 p-2">
+            <NestedStepsEditor
+              steps={editSteps}
+              language={isRTL ? 'ar' : 'en'}
+              onChange={(next) => { setEditSteps(next); markDirty() }}
+              onEditStep={handleEditStep}
+              onDeleteStep={handleDeleteStep}
+            />
+          </div>
         )}
       </div>
 
@@ -1272,12 +1297,12 @@ export const WorkflowEditor = ({
         palette={palette}
         isRTL={isRTL}
       />
-      <EditStepDialog
+      <StepOptionsDialog
         open={editStepDialogOpen}
         step={editingStep}
+        language={isRTL ? 'ar' : 'en'}
         onClose={() => setEditStepDialogOpen(false)}
-        onSave={handleEditStepSave}
-        isRTL={isRTL}
+        onSave={handleStepOptionsSave}
       />
       <EditSourceDialog
         open={editSourceDialogOpen}
