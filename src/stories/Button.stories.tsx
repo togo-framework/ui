@@ -4,7 +4,7 @@ import { Search, Plus, Loader2 } from "lucide-react";
 import { Button } from "../components/ui/button";
 
 const meta: Meta<typeof Button> = {
-  title: "Primitives/Button",
+  title: "Components/Button",
   component: Button,
   tags: ["autodocs"],
   argTypes: {

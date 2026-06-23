@@ -21,7 +21,7 @@ import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from ".
 import { Checkbox } from "../components/ui/checkbox";
 
 const meta: Meta = {
-  title: "Primitives/Form",
+  title: "Components/Form",
   tags: ["autodocs"],
   parameters: { layout: "centered" },
 };

@@ -4,7 +4,7 @@ import { Button } from "../components/ui/button";
 import { Badge } from "../components/ui/badge";
 
 const meta: Meta<typeof Card> = {
-  title: "Primitives/Card",
+  title: "Components/Card",
   component: Card,
   tags: ["autodocs"],
 };

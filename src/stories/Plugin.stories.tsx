@@ -108,7 +108,7 @@ const ICON_MAP: Record<string, LucideIcon> = {
 // ── Meta ──────────────────────────────────────────────────────────────────────
 
 const meta: Meta = {
-  title: 'Plugins/Catalog',
+  title: "Components/Plugin Card",
   tags: ["autodocs"],
 };
 

@@ -18,7 +18,7 @@ import { LayoutDashboard, Users, AlertTriangle, FileText, Settings, Shield } fro
 import { Badge } from "../components/ui/badge";
 
 const meta: Meta = {
-  title: "Primitives/Sidebar",
+  title: "Components/Sidebar",
   tags: ["autodocs"],
   parameters: { layout: "fullscreen", docs: { story: { inline: false, height: "560px" } } },
 };

@@ -14,7 +14,7 @@ import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 
 const meta: Meta = {
-  title: "Primitives/Dialog",
+  title: "Components/Dialog",
   tags: ["autodocs"],
   parameters: { layout: "centered" },
 };

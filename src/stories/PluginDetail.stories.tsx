@@ -4,7 +4,7 @@ import { MOCK_TABS, MOCK_PLUGIN, MOCK_ACTIVITY } from './_fixtures/plugin'
 
 // The full plugin DETAIL page: hero + tab rail + sub-sidebar + content slot.
 const meta: Meta<typeof PluginDetailLayout> = {
-  title: 'Plugins/Plugin Detail',
+  title: "Pages/Plugin Detail",
   component: PluginDetailLayout,
   parameters: {
     layout: 'fullscreen',

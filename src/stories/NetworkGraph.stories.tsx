@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { NetworkGraph } from "../components/entity/NetworkGraph";
 
 const meta: Meta<typeof NetworkGraph> = {
-  title: "Network/NetworkGraph",
+  title: "Components/Network Graph",
   component: NetworkGraph,
   tags: ["autodocs"],
   parameters: { docs: { story: { inline: false, height: "460px" } } },

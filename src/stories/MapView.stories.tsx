@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { MapView } from "../components/map/MapView";
 
 const meta: Meta<typeof MapView> = {
-  title: "Map/MapView",
+  title: "Components/Map View",
   component: MapView,
   tags: ["autodocs"],
   parameters: { fullBleed: true, docs: { story: { inline: false, height: "520px" }, description: { component: "Real OpenStreetMap via leaflet (SSR-safe, client-only)." } } },

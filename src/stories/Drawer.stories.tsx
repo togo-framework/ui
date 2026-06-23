@@ -12,7 +12,7 @@ import {
 import { Button } from "../components/ui/button";
 
 const meta: Meta = {
-  title: "Primitives/Drawer",
+  title: "Components/Drawer",
   tags: ["autodocs"],
   parameters: { layout: "centered" },
 };

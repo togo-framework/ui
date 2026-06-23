@@ -5,7 +5,7 @@ import type { ErrorFilter, IssueSort } from "../components/errors";
 import { SAMPLE_ISSUES } from "./_fixtures/errors";
 
 const meta: Meta<typeof ErrorTrackingPage> = {
-  title: "Logs/Error Tracking",
+  title: "Pages/Error Tracking",
   component: ErrorTrackingPage,
   parameters: {
     layout: "fullscreen",

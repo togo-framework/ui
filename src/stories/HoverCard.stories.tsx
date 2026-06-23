@@ -5,7 +5,7 @@ import { Avatar, AvatarFallback } from "../components/ui/avatar";
 import { Button } from "../components/ui/button";
 
 const meta: Meta = {
-  title: "Primitives/HoverCard",
+  title: "Components/HoverCard",
   tags: ["autodocs"],
   parameters: { layout: "centered" },
 };

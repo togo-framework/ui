@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from '@storybook/react'
 import { PluginAppearanceSection } from '../components/plugin-detail'
 
 const meta: Meta<typeof PluginAppearanceSection> = {
-  title: 'Plugins/Appearance',
+  title: "Components/Plugin Appearance",
   component: PluginAppearanceSection,
   parameters: { layout: 'padded' },
 }

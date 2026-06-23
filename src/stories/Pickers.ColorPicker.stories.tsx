@@ -3,7 +3,7 @@ import * as React from "react";
 import { ColorPicker } from "../components/pickers/ColorPicker";
 
 const meta: Meta<typeof ColorPicker> = {
-  title: "Pickers/ColorPicker",
+  title: "Components/Color Picker",
   component: ColorPicker,
   tags: ["autodocs"],
 };
