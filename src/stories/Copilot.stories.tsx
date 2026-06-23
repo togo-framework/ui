@@ -1,6 +1,9 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { ArtifactRenderer } from "../components/copilot/artifacts";
 import ChatThread from "../components/copilot/ChatThread";
+import { CopilotProvider } from "../components/copilot/CopilotProvider";
+import { CopilotLauncher } from "../components/copilot/CopilotLauncher";
+import type { CopilotClient } from "../components/copilot/client";
 
 const meta: Meta = {
   title: "Components/Copilot",
@@ -45,5 +48,51 @@ export const Chat: StoryObj = {
         ]}
       />
     </div>
+  ),
+};
+
+// ── Full Dock — wired CopilotProvider with a mock streaming client ──────────────
+// The provider renders UnifiedCopilotDock; CopilotLauncher opens it; the mock
+// client streams a token-by-token reply, a step, and a table artifact.
+const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+const mockClient: CopilotClient = {
+  async *copilotDispatch() {
+    const reply =
+      "Sure — coordinated activity is up 23% across monitored regions this week, " +
+      "concentrated in two source clusters. Here are the top contributors:";
+    yield { type: "step", step: { step: "search", message: "Searching sources…", done: false } } as any;
+    await sleep(400);
+    for (const word of reply.split(" ")) {
+      await sleep(45);
+      yield { type: "delta", text: word + " " } as any;
+    }
+    yield { type: "step", step: { step: "search", message: "Searched 3 sources", done: true, count: 3 } } as any;
+    await sleep(250);
+    yield {
+      type: "artifact",
+      artifact: {
+        version: 1, kind: "table", title_en: "Top sources", title_ar: "أهم المصادر",
+        data: { columns: ["Source", "Mentions"], rows: [["Reuters", 333], ["AFP", 276], ["Al Jazeera", 190]] },
+      },
+    } as any;
+    yield { type: "done" } as any;
+  },
+};
+
+export const FullDock: StoryObj = {
+  name: "Full Dock — open & chat (mock streaming)",
+  parameters: { layout: "fullscreen", fullBleed: true, docs: { story: { inline: false, height: "640px" } } },
+  render: () => (
+    <CopilotProvider client={mockClient} context={{ contextType: "global", contextRef: "", title_en: "Demo", title_ar: "تجربة", suggestions: [] } as any}>
+      <div className="min-h-screen bg-background p-8 text-foreground">
+        <h1 className="mb-2 text-2xl font-semibold">Copilot demo</h1>
+        <p className="mb-6 max-w-prose text-sm text-muted-foreground">
+          Click the launcher to open the dock, then send a message (e.g. “summarize the latest narrative”).
+          The mock client streams a reply token-by-token, shows a step, and returns a table artifact.
+        </p>
+        <CopilotLauncher variant="header" />
+      </div>
+    </CopilotProvider>
   ),
 };
