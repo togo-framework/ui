@@ -174,6 +174,12 @@ import { Button, Dialog, DataTable } from "@togo-framework/ui";
 | [SentraLoading](./SentraLoading.md) | Branded loading indicator. |
 | [ContextualSkeleton](./ContextualSkeleton.md) · [SectionSkeleton](./SectionSkeleton.md) | Realtime-loading skeletons. |
 
+## Dynamic Sections
+
+| Component | Description |
+|---|---|
+| [SectionBoard](./SectionBoard.md) | Drag-reorder + edit prompt/model/settings sections (narrative/alerts edit mode). |
+
 ## Theme & i18n
 
 | Provider | Description |

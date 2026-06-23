@@ -80,5 +80,9 @@ export {
 } from "./i18n/LanguageProvider";
 export type { LanguageContextValue, LanguageProviderProps } from "./i18n/LanguageProvider";
 
+// ── dynamic editable sections ──
+export { DynamicSection, SectionBoard } from "./components/sections/SectionBoard";
+export type { DynamicSectionProps, SectionBoardProps, SectionModel, ModelOption } from "./components/sections/SectionBoard";
+
 // ── utils ──
 export { cn } from "./lib/utils";

@@ -2387,6 +2387,51 @@ declare const useT: () => LanguageContextValue;
  */
 declare const useLanguage: () => LanguageContextValue;
 
+interface ModelOption {
+    value: string;
+    label?: string;
+}
+interface SectionModel {
+    id: string;
+    title: string;
+    badge?: string;
+    /** AI prompt that powers this section (edited in edit mode). */
+    prompt?: string;
+    /** Selected model id. */
+    model?: string;
+    /** Arbitrary key/value settings. */
+    settings?: Record<string, string>;
+    /** Rendered content in view mode. */
+    content?: React$1.ReactNode;
+}
+interface DynamicSectionProps {
+    section: SectionModel;
+    editMode?: boolean;
+    models?: ModelOption[];
+    language?: "en" | "ar";
+    onChange?: (section: SectionModel) => void;
+    onRemove?: () => void;
+    /** Drag handle props (supplied by SectionBoard in edit mode). */
+    handleProps?: React$1.HTMLAttributes<HTMLButtonElement>;
+    className?: string;
+}
+declare function DynamicSection({ section, editMode, models, language, onChange, onRemove, handleProps, className, }: DynamicSectionProps): React$1.JSX.Element;
+interface SectionBoardProps {
+    sections: SectionModel[];
+    editMode?: boolean;
+    models?: ModelOption[];
+    language?: "en" | "ar";
+    columns?: 1 | 2;
+    onChange?: (sections: SectionModel[]) => void;
+    onAddSection?: () => void;
+    className?: string;
+}
+/** SectionBoard — an ordered set of dynamic sections. In `editMode` each section is
+ * drag-reorderable (@dnd-kit) and editable (prompt / model / settings via a dialog);
+ * `onChange` fires on reorder and on per-section edits. View mode renders content only.
+ * Token-themed (dark/light), RTL + EN/AR. */
+declare function SectionBoard({ sections, editMode, models, language, columns, onChange, onAddSection, className, }: SectionBoardProps): React$1.JSX.Element;
+
 declare function cn(...inputs: ClassValue[]): string;
 
-export { type ActivityBucket, type AlertMapItem, type AlertSeverity, AppPageShell, type AppPageShellProps, AppSidebar, type AppSidebarProps, type AppearanceMode, AuthCard, type AuthCardBrand, type AuthClient, AuthErrorAlert, AuthFlow, type AuthLayout, AuthStepHeader, type BarPoint, type BrandContextValue, type BrandTokens, BrandingProvider, type BrandingProviderProps, type CardFilter, CardGrid, type CardGridLabels, ColorPicker, type ColorPickerProps, ContextualSkeleton, DEFAULT_LAYERS, DEFAULT_LEGEND_GROUPS, DEFAULT_REGION_PRESETS, DataState, type DataStateLabels, type DataStateProps, DataTable, type DataTableBulkAction, type DataTableColumnFilter, type DataTableColumnMeta, type DataTableDensity, type DataTableFilterType, type DataTableLanguage, type DataTableProps, type DataTableSelectOption, type DataTableServerCallbacks, type DataTableServerState, DynamicIcon, EmptyState, type EmptyStateProps, EntityNetworkGraph, type EntityNetworkGraphProps, type ErrorFilter, ErrorTrackingPage, type ErrorTrackingPageProps, EventMapPanel, type EventMapPanelProps, ForgotForm, type GraphLink, type GraphNode, IconPicker, type IconPickerProps, type Issue, type IssueAssignee, type IssueBreadcrumb, IssueDetail, type IssueDetailProps, type IssueLevel, type IssueSort, type IssueTag, IssuesList, type IssuesListProps, LANG_COOKIE_NAME, type LanguageContextValue, LanguageProvider, type LanguageProviderProps, type LegendGroup, type LegendItem, type LegendShapeType, LockScreen, type LockScreenProps, type LockScreenUser, type LogLevel, LoginForm, type LoginResult, type LogsFilter, LogsView, type LogsViewProps, MARKER_COLORS, MARKER_LABELS, type MapLayer, MapLayersPanel, type MapLayersPanelProps, MapLegend, type MapLegendProps, type MapMarker$1 as MapMarker, type MapMarkerType, MapPanel, type MapPanelProps, type MapRegionPreset, MapView, type MapViewProps, MiniBarChart, NestedStepsEditor, type NestedStepsEditorProps, NetworkGraph, type NetworkGraphProps, OTPBoxGroup, type OtpResult, PIPELINE_STAGES, PageHeader, type PageHeaderProps, PasswordInput, PasswordLockScreen, type PasswordLockScreenProps, type PasswordLockScreenUser, type PasswordRule, PasswordStrengthMeter, type PipelineCard, type PipelineLane, type PipelineModel, type PluginActivitySummary, type PluginAppearanceFields, PluginAppearanceSection, type PluginAppearanceSectionProps, PluginCard, type PluginCatalogEntry, type PluginDetailIdentity, PluginDetailLayout, type PluginDetailLayoutProps, type PluginDetailTab, PluginHero, PluginHeroSkeleton, PluginPageHeader, PluginSectionCard, PluginSparkline, type ProfileSession, ProfileView, type ProfileViewProps, type RenderMapContext, ResetForm, type ResolvedIcon, RouteProgress, type RouteProgressProps, SENTRA_BRAND, STEP_FIELD_REGISTRY, SectionSkeleton, SentraLoading, type ServiceLogRow, ServiceUnavailable, type ServiceUnavailableProps, SessionExpired, type SessionExpiredProps, type SidebarConversation, type SidebarUser, SourceBadge, type SparklinePoint, type StackFrame, type StackFrameContextLine, StatCard, type StatCardProps, StatusBadge, type StatusBadgeProps, type StatusBadgeTone, type Step, type StepFieldDef, type StepFieldType, type StepMetrics7d, StepOptionsDialog, type StepOptionsDialogProps, type TestRunCallbacks, type TestRunCompletePayload, TestRunPanel, type TestRunPanelProps, type TestRunSavedItem, type TestRunStep, TwoFAForm, type UnlockCredentials, type Verify2FAResult, type View, ViewToggle, type ViewToggleProps, Workflow, WorkflowEditor, type WorkflowEditorProps, type WorkflowPalette, WorkflowPipeline, type WorkflowPipelineProps, type WorkflowProps, type WorkflowSource, type WorkflowStep, type WorkflowStepLike, WorkflowStepNode, type WorkflowStepNodeProps, type WorkflowView, applyBrand, cn, computeRules, computeScore, hexToHSL, isHSL, isValidColor, levelTone, nudgeL, resolveIcon, statValueVariants, statusBadgeVariants, toHSLSafe, useBrand, useLanguage, useT };
+export { type ActivityBucket, type AlertMapItem, type AlertSeverity, AppPageShell, type AppPageShellProps, AppSidebar, type AppSidebarProps, type AppearanceMode, AuthCard, type AuthCardBrand, type AuthClient, AuthErrorAlert, AuthFlow, type AuthLayout, AuthStepHeader, type BarPoint, type BrandContextValue, type BrandTokens, BrandingProvider, type BrandingProviderProps, type CardFilter, CardGrid, type CardGridLabels, ColorPicker, type ColorPickerProps, ContextualSkeleton, DEFAULT_LAYERS, DEFAULT_LEGEND_GROUPS, DEFAULT_REGION_PRESETS, DataState, type DataStateLabels, type DataStateProps, DataTable, type DataTableBulkAction, type DataTableColumnFilter, type DataTableColumnMeta, type DataTableDensity, type DataTableFilterType, type DataTableLanguage, type DataTableProps, type DataTableSelectOption, type DataTableServerCallbacks, type DataTableServerState, DynamicIcon, DynamicSection, type DynamicSectionProps, EmptyState, type EmptyStateProps, EntityNetworkGraph, type EntityNetworkGraphProps, type ErrorFilter, ErrorTrackingPage, type ErrorTrackingPageProps, EventMapPanel, type EventMapPanelProps, ForgotForm, type GraphLink, type GraphNode, IconPicker, type IconPickerProps, type Issue, type IssueAssignee, type IssueBreadcrumb, IssueDetail, type IssueDetailProps, type IssueLevel, type IssueSort, type IssueTag, IssuesList, type IssuesListProps, LANG_COOKIE_NAME, type LanguageContextValue, LanguageProvider, type LanguageProviderProps, type LegendGroup, type LegendItem, type LegendShapeType, LockScreen, type LockScreenProps, type LockScreenUser, type LogLevel, LoginForm, type LoginResult, type LogsFilter, LogsView, type LogsViewProps, MARKER_COLORS, MARKER_LABELS, type MapLayer, MapLayersPanel, type MapLayersPanelProps, MapLegend, type MapLegendProps, type MapMarker$1 as MapMarker, type MapMarkerType, MapPanel, type MapPanelProps, type MapRegionPreset, MapView, type MapViewProps, MiniBarChart, type ModelOption, NestedStepsEditor, type NestedStepsEditorProps, NetworkGraph, type NetworkGraphProps, OTPBoxGroup, type OtpResult, PIPELINE_STAGES, PageHeader, type PageHeaderProps, PasswordInput, PasswordLockScreen, type PasswordLockScreenProps, type PasswordLockScreenUser, type PasswordRule, PasswordStrengthMeter, type PipelineCard, type PipelineLane, type PipelineModel, type PluginActivitySummary, type PluginAppearanceFields, PluginAppearanceSection, type PluginAppearanceSectionProps, PluginCard, type PluginCatalogEntry, type PluginDetailIdentity, PluginDetailLayout, type PluginDetailLayoutProps, type PluginDetailTab, PluginHero, PluginHeroSkeleton, PluginPageHeader, PluginSectionCard, PluginSparkline, type ProfileSession, ProfileView, type ProfileViewProps, type RenderMapContext, ResetForm, type ResolvedIcon, RouteProgress, type RouteProgressProps, SENTRA_BRAND, STEP_FIELD_REGISTRY, SectionBoard, type SectionBoardProps, type SectionModel, SectionSkeleton, SentraLoading, type ServiceLogRow, ServiceUnavailable, type ServiceUnavailableProps, SessionExpired, type SessionExpiredProps, type SidebarConversation, type SidebarUser, SourceBadge, type SparklinePoint, type StackFrame, type StackFrameContextLine, StatCard, type StatCardProps, StatusBadge, type StatusBadgeProps, type StatusBadgeTone, type Step, type StepFieldDef, type StepFieldType, type StepMetrics7d, StepOptionsDialog, type StepOptionsDialogProps, type TestRunCallbacks, type TestRunCompletePayload, TestRunPanel, type TestRunPanelProps, type TestRunSavedItem, type TestRunStep, TwoFAForm, type UnlockCredentials, type Verify2FAResult, type View, ViewToggle, type ViewToggleProps, Workflow, WorkflowEditor, type WorkflowEditorProps, type WorkflowPalette, WorkflowPipeline, type WorkflowPipelineProps, type WorkflowProps, type WorkflowSource, type WorkflowStep, type WorkflowStepLike, WorkflowStepNode, type WorkflowStepNodeProps, type WorkflowView, applyBrand, cn, computeRules, computeScore, hexToHSL, isHSL, isValidColor, levelTone, nudgeL, resolveIcon, statValueVariants, statusBadgeVariants, toHSLSafe, useBrand, useLanguage, useT };
