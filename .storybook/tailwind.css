@@ -1,5 +1,7 @@
 @import "tailwindcss";
 @import "../src/styles.css";
+@import "../src/shadcn.css";
+@source "../src";
 
 /* Storybook canvas: dark, Lusail. */
 body {
