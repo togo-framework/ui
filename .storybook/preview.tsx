@@ -59,13 +59,19 @@ const preview: Preview = {
     (Story, ctx) => {
       const theme = (ctx.globals.theme as string) || "dark";
       const dir = (ctx.globals.direction as string) || "ltr";
+      // Full-bleed stories (auth, layout, profile) render edge-to-edge with no padding.
+      const fullBleed = Boolean(ctx.parameters.fullBleed);
       // Apply on <html> too so portaled UI (Dialog/DropdownMenu/Popover) is themed + RTL.
       React.useEffect(() => {
         document.documentElement.classList.toggle("dark", theme === "dark");
         document.documentElement.setAttribute("dir", dir);
       }, [theme, dir]);
       return (
-        <div dir={dir} className={`tg-root ${theme === "dark" ? "dark" : ""} bg-background text-foreground`} style={{ padding: 24, minHeight: "100vh" }}>
+        <div
+          dir={dir}
+          className={`tg-root ${theme === "dark" ? "dark" : ""} bg-background text-foreground`}
+          style={{ padding: fullBleed ? 0 : 24, minHeight: "100vh" }}
+        >
           <Story />
         </div>
       );
