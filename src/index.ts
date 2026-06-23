@@ -92,6 +92,9 @@ export * from "./components/feedback";
 export { DynamicSection, SectionBoard } from "./components/sections/SectionBoard";
 export type { DynamicSectionProps, SectionBoardProps, SectionModel, ModelOption } from "./components/sections/SectionBoard";
 
+// ── markdown (renderer + editor) ──
+export * from "./components/markdown";
+
 // ── utils ──
 export { cn } from "./lib/utils";
 

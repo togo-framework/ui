@@ -192,6 +192,13 @@ import { Button, Dialog, DataTable } from "@togo-framework/ui";
 |---|---|
 | [SectionBoard](./SectionBoard.md) | Drag-reorder + edit prompt/model/settings sections (narrative/alerts edit mode). |
 
+## Markdown
+
+| Component | Description |
+|---|---|
+| [MarkdownRenderer](./MarkdownRenderer.md) | GFM markdown + highlighted code + mermaid, token-themed. |
+| [MarkdownEditor](./MarkdownEditor.md) | Toolbar + textarea + Write/Preview/Split live preview. |
+
 ## Theme & i18n
 
 | Provider | Description |
