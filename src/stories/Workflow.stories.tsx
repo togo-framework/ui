@@ -85,3 +85,27 @@ export const EditorEmpty: StoryObj<typeof WorkflowEditor> = {
   parameters: { docs: { story: { inline: false, height: '480px' } } },
   render: () => <WorkflowEditor workflowSteps={[]} workflowSources={[]} pluginSlug="new-plugin" language="en" onSave={async () => {}} />,
 }
+
+// Multi-level (nested) drag-and-drop: drag steps across the if→then and for_each→loop
+// branches; click the gear on any step to open its type-specific options modal.
+export const EditorNested: StoryObj<typeof WorkflowEditor> = {
+  name: 'WorkflowEditor / Nested DnD + step options',
+  parameters: { docs: { story: { inline: false, height: '640px' }, description: { story: 'Drag a step between the THEN and LOOP BODY branches (multi-level), or click a step’s gear to edit its type-specific settings.' } } },
+  render: () => (
+    <WorkflowEditor
+      workflowSteps={MOCK_STEPS}
+      workflowSources={[]}
+      pluginSlug="alert-pipeline"
+      language="en"
+      onSave={async (steps) => { await new Promise((r) => setTimeout(r, 600)); console.log('[WorkflowEditor] nested saved', steps) }}
+    />
+  ),
+}
+
+export const EditorNestedRTL: StoryObj<typeof WorkflowEditor> = {
+  name: 'WorkflowEditor / Nested DnD (RTL)',
+  parameters: { docs: { story: { inline: false, height: '640px' } } },
+  render: () => (
+    <WorkflowEditor workflowSteps={MOCK_STEPS} workflowSources={[]} pluginSlug="alert-pipeline" language="ar" onSave={async () => {}} />
+  ),
+}

@@ -145,7 +145,9 @@ import { Button, Dialog, DataTable } from "@togo-framework/ui";
 |---|---|
 | [WorkflowPipeline](./WorkflowPipeline.md) | Read-only pipeline of step lanes (workflow manager). |
 | [WorkflowEditor](./WorkflowEditor.md) | Drag-and-drop step editor (dnd-kit). |
-| [WorkflowStepNode](./WorkflowStepNode.md) | Single workflow step node. |
+| [WorkflowStepNode](./WorkflowStepNode.md) | Single workflow step node (human-readable). |
+| [NestedStepsEditor](./NestedStepsEditor.md) | Multi-level drag-and-drop step tree editor. |
+| [StepOptionsDialog](./StepOptionsDialog.md) | Type-specific per-step options modal. |
 
 ## Plugins
 
