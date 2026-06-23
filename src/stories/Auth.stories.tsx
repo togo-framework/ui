@@ -126,6 +126,7 @@ const AuthFlowMeta: Meta<typeof AuthFlow> = {
     layout: 'fullscreen',
     fullBleed: true,
     docs: {
+      story: { inline: false, height: "640px" },
       description: {
         component:
           'Convenience wrapper that orchestrates login → OTP → 2FA → forgot → reset in one component. ' +

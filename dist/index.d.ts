@@ -830,7 +830,7 @@ declare const PasswordStrengthMeter: {
     displayName: string;
 };
 
-type Lang$1 = 'en' | 'ar';
+type Lang$2 = 'en' | 'ar';
 interface LockScreenUser {
     /** Display name (language-resolved by caller). */
     name?: string | null;
@@ -848,7 +848,7 @@ interface LockScreenProps {
     /** Called when the user clicks "Not you? Sign out". */
     onSignOut: () => void;
     /** Current UI language. Default: 'en'. */
-    language?: Lang$1;
+    language?: Lang$2;
     /**
      * Exact PIN length expected. Accepts 4-6. Default: 6.
      * NOTE: OTPBoxGroup always renders 6 slots; when pinLength < 6 the component
@@ -865,7 +865,7 @@ declare const LockScreen: {
     displayName: string;
 };
 
-type Lang = 'en' | 'ar';
+type Lang$1 = 'en' | 'ar';
 interface PasswordLockScreenUser {
     name?: string | null;
     email: string;
@@ -891,7 +891,7 @@ interface PasswordLockScreenProps {
      */
     onForceLogout?: () => void;
     /** UI language. Default: 'en'. */
-    language?: Lang;
+    language?: Lang$1;
     /** Max failed attempts before lockout state. Default: 5. */
     maxAttempts?: number;
     /**
@@ -1889,6 +1889,134 @@ declare const LogsView: {
     displayName: string;
 };
 
+/**
+ * Error-tracking data contract (Sentry-style). Product-agnostic: every component
+ * is presentational — data arrives via props, no fetching, no app imports.
+ */
+type IssueLevel = "fatal" | "error" | "warning" | "info" | "debug";
+interface StackFrameContextLine {
+    line: number;
+    text: string;
+    /** the line where the error occurred */
+    current?: boolean;
+}
+interface StackFrame {
+    filename: string;
+    function?: string;
+    lineno?: number;
+    colno?: number;
+    /** true = application frame (vs. node_modules / framework) */
+    inApp?: boolean;
+    /** optional source context around the frame */
+    context?: StackFrameContextLine[];
+}
+interface IssueBreadcrumb {
+    /** ISO 8601 */
+    timestamp: string;
+    type?: "navigation" | "http" | "ui" | "log" | "error" | "info";
+    category?: string;
+    message: string;
+    level?: IssueLevel;
+}
+interface IssueTag {
+    key: string;
+    value: string;
+}
+interface IssueAssignee {
+    name?: string;
+    email?: string;
+    avatarUrl?: string;
+}
+interface Issue {
+    id: string;
+    /** e.g. "TypeError: Cannot read properties of undefined (reading 'id')" */
+    title: string;
+    /** where it happened, e.g. "app/checkout/page.tsx in handleSubmit" */
+    culprit?: string;
+    level: IssueLevel;
+    /** total events (occurrences) */
+    count: number;
+    /** distinct users affected */
+    userCount?: number;
+    /** ISO 8601 */
+    firstSeen: string;
+    lastSeen: string;
+    status?: "unresolved" | "resolved" | "ignored";
+    assignee?: IssueAssignee;
+    environment?: string;
+    project?: string;
+    /** events-over-time buckets for the row sparkline / detail chart */
+    frequency?: number[];
+    stack?: StackFrame[];
+    breadcrumbs?: IssueBreadcrumb[];
+    tags?: IssueTag[];
+}
+interface ErrorFilter {
+    /** empty/undefined = all levels */
+    levels?: IssueLevel[];
+    environment?: string;
+    /** ISO lower bound (or a relative key the app resolves) */
+    range?: string;
+    status?: Issue["status"];
+    /** full-text search on title/culprit */
+    q?: string;
+}
+type IssueSort = "lastSeen" | "firstSeen" | "count" | "userCount";
+
+type Lang = "en" | "ar";
+/** Map a Sentry-style level to a StatusBadge tone. */
+declare function levelTone(level: IssueLevel): "danger" | "warning" | "info" | "neutral";
+
+interface IssuesListProps {
+    issues: Issue[];
+    selectedId?: string | null;
+    onSelectIssue?: (issue: Issue) => void;
+    language?: Lang;
+    filter?: ErrorFilter;
+    onFilterChange?: (f: ErrorFilter) => void;
+    sort?: IssueSort;
+    onSortChange?: (s: IssueSort) => void;
+    /** options for the environment dropdown */
+    environments?: string[];
+    className?: string;
+}
+/** IssuesList — the Sentry-style "Issues" view: a filter bar + a list of error
+ * groups (level, title + culprit, frequency sparkline, events, users, assignee,
+ * last-seen). Presentational; row click → onSelectIssue. RTL + bilingual. */
+declare function IssuesList({ issues, selectedId, onSelectIssue, language, filter, onFilterChange, sort, onSortChange, environments, className, }: IssuesListProps): React$1.JSX.Element;
+
+interface IssueDetailProps {
+    issue: Issue;
+    language?: Lang;
+    onResolve?: (issue: Issue) => void;
+    onIgnore?: (issue: Issue) => void;
+    className?: string;
+}
+/** IssueDetail — the error detail pane: title + culprit, level, resolve/ignore,
+ * stats, a frequency chart, then tabbed Stack trace / Breadcrumbs / Tags. */
+declare function IssueDetail({ issue, language, onResolve, onIgnore, className }: IssueDetailProps): React$1.JSX.Element;
+
+interface ErrorTrackingPageProps {
+    issues: Issue[];
+    language?: Lang;
+    filter?: ErrorFilter;
+    onFilterChange?: (f: ErrorFilter) => void;
+    sort?: IssueSort;
+    onSortChange?: (s: IssueSort) => void;
+    environments?: string[];
+    onResolve?: (issue: Issue) => void;
+    onIgnore?: (issue: Issue) => void;
+    /** controlled selection (optional) */
+    selectedId?: string | null;
+    onSelectIssue?: (issue: Issue) => void;
+    className?: string;
+}
+/** ErrorTrackingPage — the Sentry-style master/detail error page: IssuesList on
+ * the start side, IssueDetail on the end side. Responsive: split on desktop,
+ * list→detail drill-down on mobile. Uncontrolled selection unless `selectedId`
+ * is provided. */
+declare function ErrorTrackingPage({ issues, language, filter, onFilterChange, sort, onSortChange, environments, onResolve, onIgnore, selectedId, onSelectIssue, className, }: ErrorTrackingPageProps): React$1.JSX.Element;
+
 interface SentraLoadingProps {
     language?: 'en' | 'ar';
     dir?: 'ltr' | 'rtl';
@@ -2164,4 +2292,4 @@ declare const useLanguage: () => LanguageContextValue;
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { type ActivityBucket, type AlertMapItem, type AlertSeverity, AppPageShell, type AppPageShellProps, AppSidebar, type AppSidebarProps, type AppearanceMode, AuthCard, type AuthCardBrand, type AuthClient, AuthErrorAlert, AuthFlow, type AuthLayout, AuthStepHeader, type BarPoint, type BrandContextValue, type BrandTokens, BrandingProvider, type BrandingProviderProps, type CardFilter, CardGrid, type CardGridLabels, ColorPicker, type ColorPickerProps, ContextualSkeleton, DEFAULT_LAYERS, DEFAULT_LEGEND_GROUPS, DEFAULT_REGION_PRESETS, DataState, type DataStateLabels, type DataStateProps, DataTable, type DataTableBulkAction, type DataTableColumnFilter, type DataTableColumnMeta, type DataTableDensity, type DataTableFilterType, type DataTableLanguage, type DataTableProps, type DataTableSelectOption, type DataTableServerCallbacks, type DataTableServerState, DynamicIcon, EmptyState, type EmptyStateProps, EntityNetworkGraph, type EntityNetworkGraphProps, EventMapPanel, type EventMapPanelProps, ForgotForm, type GraphLink, type GraphNode, IconPicker, type IconPickerProps, LANG_COOKIE_NAME, type LanguageContextValue, LanguageProvider, type LanguageProviderProps, type LegendGroup, type LegendItem, type LegendShapeType, LockScreen, type LockScreenProps, type LockScreenUser, type LogLevel, LoginForm, type LoginResult, type LogsFilter, LogsView, type LogsViewProps, MARKER_COLORS, MARKER_LABELS, type MapLayer, MapLayersPanel, type MapLayersPanelProps, MapLegend, type MapLegendProps, type MapMarker$1 as MapMarker, type MapMarkerType, MapPanel, type MapPanelProps, type MapRegionPreset, MapView, type MapViewProps, MiniBarChart, NetworkGraph, type NetworkGraphProps, OTPBoxGroup, type OtpResult, PIPELINE_STAGES, PageHeader, type PageHeaderProps, PasswordInput, PasswordLockScreen, type PasswordLockScreenProps, type PasswordLockScreenUser, type PasswordRule, PasswordStrengthMeter, type PipelineCard, type PipelineLane, type PipelineModel, type PluginActivitySummary, type PluginAppearanceFields, PluginAppearanceSection, type PluginAppearanceSectionProps, PluginCard, type PluginCatalogEntry, type PluginDetailIdentity, PluginDetailLayout, type PluginDetailLayoutProps, type PluginDetailTab, PluginHero, PluginHeroSkeleton, PluginPageHeader, PluginSectionCard, PluginSparkline, type ProfileSession, ProfileView, type ProfileViewProps, type RenderMapContext, ResetForm, type ResolvedIcon, RouteProgress, type RouteProgressProps, SENTRA_BRAND, SectionSkeleton, SentraLoading, type ServiceLogRow, ServiceUnavailable, type ServiceUnavailableProps, SessionExpired, type SessionExpiredProps, type SidebarConversation, type SidebarUser, SourceBadge, type SparklinePoint, StatCard, type StatCardProps, StatusBadge, type StatusBadgeProps, type StatusBadgeTone, type StepMetrics7d, type TestRunCallbacks, type TestRunCompletePayload, TestRunPanel, type TestRunPanelProps, type TestRunSavedItem, type TestRunStep, TwoFAForm, type UnlockCredentials, type Verify2FAResult, type View, ViewToggle, type ViewToggleProps, WorkflowEditor, type WorkflowEditorProps, type WorkflowPalette, WorkflowPipeline, type WorkflowPipelineProps, type WorkflowSource, type WorkflowStep, WorkflowStepNode, type WorkflowStepNodeProps, applyBrand, cn, computeRules, computeScore, hexToHSL, isHSL, isValidColor, nudgeL, resolveIcon, statValueVariants, statusBadgeVariants, toHSLSafe, useBrand, useLanguage, useT };
+export { type ActivityBucket, type AlertMapItem, type AlertSeverity, AppPageShell, type AppPageShellProps, AppSidebar, type AppSidebarProps, type AppearanceMode, AuthCard, type AuthCardBrand, type AuthClient, AuthErrorAlert, AuthFlow, type AuthLayout, AuthStepHeader, type BarPoint, type BrandContextValue, type BrandTokens, BrandingProvider, type BrandingProviderProps, type CardFilter, CardGrid, type CardGridLabels, ColorPicker, type ColorPickerProps, ContextualSkeleton, DEFAULT_LAYERS, DEFAULT_LEGEND_GROUPS, DEFAULT_REGION_PRESETS, DataState, type DataStateLabels, type DataStateProps, DataTable, type DataTableBulkAction, type DataTableColumnFilter, type DataTableColumnMeta, type DataTableDensity, type DataTableFilterType, type DataTableLanguage, type DataTableProps, type DataTableSelectOption, type DataTableServerCallbacks, type DataTableServerState, DynamicIcon, EmptyState, type EmptyStateProps, EntityNetworkGraph, type EntityNetworkGraphProps, type ErrorFilter, ErrorTrackingPage, type ErrorTrackingPageProps, EventMapPanel, type EventMapPanelProps, ForgotForm, type GraphLink, type GraphNode, IconPicker, type IconPickerProps, type Issue, type IssueAssignee, type IssueBreadcrumb, IssueDetail, type IssueDetailProps, type IssueLevel, type IssueSort, type IssueTag, IssuesList, type IssuesListProps, LANG_COOKIE_NAME, type LanguageContextValue, LanguageProvider, type LanguageProviderProps, type LegendGroup, type LegendItem, type LegendShapeType, LockScreen, type LockScreenProps, type LockScreenUser, type LogLevel, LoginForm, type LoginResult, type LogsFilter, LogsView, type LogsViewProps, MARKER_COLORS, MARKER_LABELS, type MapLayer, MapLayersPanel, type MapLayersPanelProps, MapLegend, type MapLegendProps, type MapMarker$1 as MapMarker, type MapMarkerType, MapPanel, type MapPanelProps, type MapRegionPreset, MapView, type MapViewProps, MiniBarChart, NetworkGraph, type NetworkGraphProps, OTPBoxGroup, type OtpResult, PIPELINE_STAGES, PageHeader, type PageHeaderProps, PasswordInput, PasswordLockScreen, type PasswordLockScreenProps, type PasswordLockScreenUser, type PasswordRule, PasswordStrengthMeter, type PipelineCard, type PipelineLane, type PipelineModel, type PluginActivitySummary, type PluginAppearanceFields, PluginAppearanceSection, type PluginAppearanceSectionProps, PluginCard, type PluginCatalogEntry, type PluginDetailIdentity, PluginDetailLayout, type PluginDetailLayoutProps, type PluginDetailTab, PluginHero, PluginHeroSkeleton, PluginPageHeader, PluginSectionCard, PluginSparkline, type ProfileSession, ProfileView, type ProfileViewProps, type RenderMapContext, ResetForm, type ResolvedIcon, RouteProgress, type RouteProgressProps, SENTRA_BRAND, SectionSkeleton, SentraLoading, type ServiceLogRow, ServiceUnavailable, type ServiceUnavailableProps, SessionExpired, type SessionExpiredProps, type SidebarConversation, type SidebarUser, SourceBadge, type SparklinePoint, type StackFrame, type StackFrameContextLine, StatCard, type StatCardProps, StatusBadge, type StatusBadgeProps, type StatusBadgeTone, type StepMetrics7d, type TestRunCallbacks, type TestRunCompletePayload, TestRunPanel, type TestRunPanelProps, type TestRunSavedItem, type TestRunStep, TwoFAForm, type UnlockCredentials, type Verify2FAResult, type View, ViewToggle, type ViewToggleProps, WorkflowEditor, type WorkflowEditorProps, type WorkflowPalette, WorkflowPipeline, type WorkflowPipelineProps, type WorkflowSource, type WorkflowStep, WorkflowStepNode, type WorkflowStepNodeProps, applyBrand, cn, computeRules, computeScore, hexToHSL, isHSL, isValidColor, levelTone, nudgeL, resolveIcon, statValueVariants, statusBadgeVariants, toHSLSafe, useBrand, useLanguage, useT };

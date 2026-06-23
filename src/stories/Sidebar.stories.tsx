@@ -20,7 +20,7 @@ import { Badge } from "../components/ui/badge";
 const meta: Meta = {
   title: "Primitives/Sidebar",
   tags: ["autodocs"],
-  parameters: { layout: "fullscreen" },
+  parameters: { layout: "fullscreen", docs: { story: { inline: false, height: "560px" } } },
 };
 
 export default meta;

@@ -7,6 +7,7 @@ const meta: Meta<typeof ProfileView> = {
   tags: ["autodocs"],
   parameters: {
     docs: {
+      story: { inline: false, height: "560px" },
       description: {
         component:
           "ProfileView — a presentational account / security / sessions profile screen built " +
