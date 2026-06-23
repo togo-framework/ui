@@ -5084,82 +5084,203 @@ function NetworkGraph({
   width = 640,
   height = 420,
   className,
-  groupColor
+  groupColor,
+  nodeRadius = 11,
+  onNodeClick
 }) {
-  const positions = React9.useMemo(() => computeLayout(nodes, links, width, height), [nodes, links, width, height]);
+  const svgRef = React9.useRef(null);
+  const sim = React9.useRef(/* @__PURE__ */ new Map());
+  const alpha = React9.useRef(1);
+  const raf = React9.useRef(null);
+  const drag = React9.useRef(null);
+  const [, tick] = React9.useReducer((c) => c + 1, 0);
+  const [hover, setHover] = React9.useState(null);
   const groups = React9.useMemo(() => Array.from(new Set(nodes.map((n) => n.group ?? "default"))), [nodes]);
   const colorOf = (g) => groupColor?.(g) ?? PALETTE[Math.max(0, groups.indexOf(g ?? "default")) % PALETTE.length];
+  const stop = React9.useCallback(() => {
+    if (raf.current != null) {
+      cancelAnimationFrame(raf.current);
+      raf.current = null;
+    }
+  }, []);
+  const step = React9.useCallback(() => {
+    const m2 = sim.current;
+    const ids = Array.from(m2.keys());
+    const a = alpha.current;
+    for (let i = 0; i < ids.length; i++) {
+      for (let j = i + 1; j < ids.length; j++) {
+        const p = m2.get(ids[i]), q = m2.get(ids[j]);
+        let dx = p.x - q.x, dy = p.y - q.y;
+        const d2 = dx * dx + dy * dy || 0.01;
+        const d = Math.sqrt(d2);
+        const f = 3200 / d2 * a;
+        dx /= d;
+        dy /= d;
+        p.vx += dx * f;
+        p.vy += dy * f;
+        q.vx -= dx * f;
+        q.vy -= dy * f;
+      }
+    }
+    for (const l of links) {
+      const p = m2.get(l.source), q = m2.get(l.target);
+      if (!p || !q) continue;
+      let dx = q.x - p.x, dy = q.y - p.y;
+      const d = Math.sqrt(dx * dx + dy * dy) || 0.01;
+      const f = (d - 100) * 0.045 * a;
+      dx /= d;
+      dy /= d;
+      p.vx += dx * f;
+      p.vy += dy * f;
+      q.vx -= dx * f;
+      q.vy -= dy * f;
+    }
+    for (const p of m2.values()) {
+      if (p.fx != null) {
+        p.x = p.fx;
+        p.y = p.fy;
+        p.vx = 0;
+        p.vy = 0;
+        continue;
+      }
+      p.vx += (width / 2 - p.x) * 15e-4 * a;
+      p.vy += (height / 2 - p.y) * 15e-4 * a;
+      p.vx *= 0.86;
+      p.vy *= 0.86;
+      p.x = Math.max(nodeRadius + 4, Math.min(width - nodeRadius - 4, p.x + p.vx));
+      p.y = Math.max(nodeRadius + 4, Math.min(height - nodeRadius - 4, p.y + p.vy));
+    }
+    alpha.current = drag.current ? Math.max(a, 0.3) : a * 0.99;
+    tick();
+    if (alpha.current > 0.02 || drag.current) raf.current = requestAnimationFrame(step);
+    else raf.current = null;
+  }, [links, width, height, nodeRadius]);
+  const start = React9.useCallback(() => {
+    if (raf.current == null) raf.current = requestAnimationFrame(step);
+  }, [step]);
+  React9.useEffect(() => {
+    const prev = sim.current;
+    const next = /* @__PURE__ */ new Map();
+    const n = nodes.length || 1;
+    nodes.forEach((node, i) => {
+      const old = prev.get(node.id);
+      if (old) next.set(node.id, old);
+      else {
+        const ang = i / n * Math.PI * 2;
+        const R = Math.min(width, height) / 3;
+        next.set(node.id, { x: width / 2 + R * Math.cos(ang), y: height / 2 + R * Math.sin(ang), vx: 0, vy: 0 });
+      }
+    });
+    sim.current = next;
+    alpha.current = 1;
+    start();
+    return stop;
+  }, [nodes, links, width, height, start, stop]);
+  function toSvg(e) {
+    const svg = svgRef.current;
+    if (!svg) return { x: 0, y: 0 };
+    const pt = svg.createSVGPoint();
+    pt.x = e.clientX;
+    pt.y = e.clientY;
+    const ctm = svg.getScreenCTM();
+    if (!ctm) return { x: 0, y: 0 };
+    const p = pt.matrixTransform(ctm.inverse());
+    return { x: p.x, y: p.y };
+  }
+  function onDown(id, e) {
+    e.stopPropagation();
+    e.currentTarget.setPointerCapture?.(e.pointerId);
+    const p = sim.current.get(id);
+    if (p) {
+      const m2 = toSvg(e);
+      p.fx = m2.x;
+      p.fy = m2.y;
+    }
+    drag.current = { id, moved: false };
+    alpha.current = Math.max(alpha.current, 0.5);
+    start();
+  }
+  function onMove(e) {
+    const d = drag.current;
+    if (!d) return;
+    const p = sim.current.get(d.id);
+    if (p) {
+      const m2 = toSvg(e);
+      p.fx = m2.x;
+      p.fy = m2.y;
+      d.moved = true;
+    }
+  }
+  function onUp(e) {
+    const d = drag.current;
+    if (!d) return;
+    const p = sim.current.get(d.id);
+    if (p) {
+      p.fx = null;
+      p.fy = null;
+    }
+    if (!d.moved) {
+      const node = nodes.find((n) => n.id === d.id);
+      if (node) onNodeClick?.(node);
+    }
+    drag.current = null;
+    alpha.current = Math.max(alpha.current, 0.3);
+    start();
+  }
+  const m = sim.current;
   return /* @__PURE__ */ jsxs31(
     "svg",
     {
+      ref: svgRef,
       viewBox: `0 0 ${width} ${height}`,
-      className: cn("w-full rounded-xl border border-border bg-card", className),
+      className: cn("w-full touch-none select-none rounded-xl border border-border bg-card", className),
       role: "img",
-      "aria-label": "Network graph",
+      "aria-label": "Network graph (drag nodes to rearrange)",
+      onPointerMove: onMove,
+      onPointerUp: onUp,
+      onPointerLeave: onUp,
       children: [
         links.map((l, i) => {
-          const a = positions[l.source], b = positions[l.target];
+          const a = m.get(l.source), b = m.get(l.target);
           if (!a || !b) return null;
-          return /* @__PURE__ */ jsx37("line", { x1: a.x, y1: a.y, x2: b.x, y2: b.y, stroke: "hsl(var(--border))", strokeWidth: 1.5 }, i);
+          const active = hover != null && (l.source === hover || l.target === hover);
+          return /* @__PURE__ */ jsx37(
+            "line",
+            {
+              x1: a.x,
+              y1: a.y,
+              x2: b.x,
+              y2: b.y,
+              stroke: active ? "hsl(var(--primary))" : "hsl(var(--border))",
+              strokeWidth: active ? 2 : 1.5,
+              strokeOpacity: hover != null && !active ? 0.4 : 1
+            },
+            i
+          );
         }),
         nodes.map((n) => {
-          const p = positions[n.id];
+          const p = m.get(n.id);
           if (!p) return null;
-          return /* @__PURE__ */ jsxs31("g", { transform: `translate(${p.x},${p.y})`, children: [
-            /* @__PURE__ */ jsx37("circle", { r: 10, fill: colorOf(n.group), stroke: "hsl(var(--background))", strokeWidth: 2 }),
-            /* @__PURE__ */ jsx37("text", { y: 24, textAnchor: "middle", className: "fill-foreground", style: { fontSize: 11 }, children: n.label ?? n.id })
-          ] }, n.id);
+          const dim = hover != null && hover !== n.id;
+          return /* @__PURE__ */ jsxs31(
+            "g",
+            {
+              transform: `translate(${p.x},${p.y})`,
+              style: { cursor: "grab", opacity: dim ? 0.45 : 1 },
+              onPointerDown: (e) => onDown(n.id, e),
+              onPointerEnter: () => setHover(n.id),
+              onPointerLeave: () => setHover(null),
+              children: [
+                /* @__PURE__ */ jsx37("circle", { r: nodeRadius, fill: colorOf(n.group), stroke: "hsl(var(--background))", strokeWidth: 2 }),
+                /* @__PURE__ */ jsx37("text", { y: nodeRadius + 14, textAnchor: "middle", className: "fill-foreground", style: { fontSize: 11, pointerEvents: "none" }, children: n.label ?? n.id })
+              ]
+            },
+            n.id
+          );
         })
       ]
     }
   );
-}
-function computeLayout(nodes, links, w, h) {
-  const cx = w / 2, cy = h / 2, R = Math.min(w, h) / 2 - 50;
-  const pos = {};
-  const n = nodes.length || 1;
-  nodes.forEach((node, i) => {
-    const a = i / n * Math.PI * 2;
-    pos[node.id] = { x: cx + R * Math.cos(a), y: cy + R * Math.sin(a) };
-  });
-  const adj = links.filter((l) => pos[l.source] && pos[l.target]);
-  for (let iter = 0; iter < 120; iter++) {
-    const disp = {};
-    for (const node of nodes) disp[node.id] = { x: 0, y: 0 };
-    for (let i = 0; i < nodes.length; i++) {
-      for (let j = i + 1; j < nodes.length; j++) {
-        const a = pos[nodes[i].id], b = pos[nodes[j].id];
-        let dx = a.x - b.x, dy = a.y - b.y;
-        let d2 = dx * dx + dy * dy || 0.01;
-        const f = 2200 / d2;
-        const d = Math.sqrt(d2);
-        dx /= d;
-        dy /= d;
-        disp[nodes[i].id].x += dx * f;
-        disp[nodes[i].id].y += dy * f;
-        disp[nodes[j].id].x -= dx * f;
-        disp[nodes[j].id].y -= dy * f;
-      }
-    }
-    for (const l of adj) {
-      const a = pos[l.source], b = pos[l.target];
-      let dx = b.x - a.x, dy = b.y - a.y;
-      const d = Math.sqrt(dx * dx + dy * dy) || 0.01;
-      const f = (d - 90) * 0.05;
-      dx /= d;
-      dy /= d;
-      disp[l.source].x += dx * f;
-      disp[l.source].y += dy * f;
-      disp[l.target].x -= dx * f;
-      disp[l.target].y -= dy * f;
-    }
-    for (const node of nodes) {
-      const p = pos[node.id], dd = disp[node.id];
-      p.x = Math.max(30, Math.min(w - 30, p.x + Math.max(-8, Math.min(8, dd.x))));
-      p.y = Math.max(30, Math.min(h - 30, p.y + Math.max(-8, Math.min(8, dd.y))));
-    }
-  }
-  return pos;
 }
 
 // src/components/entity/EntityNetworkGraph.tsx
@@ -5325,7 +5446,7 @@ var EntityNetworkGraph = ({
 EntityNetworkGraph.displayName = "EntityNetworkGraph";
 
 // src/components/plugin/PluginCard.tsx
-import { useMemo as useMemo6, useCallback as useCallback6, useEffect as useEffect11, useRef as useRef8, useState as useState20 } from "react";
+import { useMemo as useMemo6, useCallback as useCallback7, useEffect as useEffect12, useRef as useRef9, useState as useState21 } from "react";
 import { Settings2, ExternalLink, CircleDot } from "lucide-react";
 
 // src/components/plugin/PluginSparkline.tsx
@@ -5450,11 +5571,11 @@ var STATE_CLASSES = {
   }
 };
 function useLongPress(callback, { delay = 500 } = {}) {
-  const timerRef = useRef8(null);
-  const start = useCallback6(() => {
+  const timerRef = useRef9(null);
+  const start = useCallback7(() => {
     timerRef.current = setTimeout(callback, delay);
   }, [callback, delay]);
-  const cancel = useCallback6(() => {
+  const cancel = useCallback7(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
   }, []);
   return {
@@ -5466,9 +5587,9 @@ function useLongPress(callback, { delay = 500 } = {}) {
   };
 }
 function useInView(rootMargin = "200px") {
-  const ref = useRef8(null);
-  const [inView, setInView] = useState20(false);
-  useEffect11(() => {
+  const ref = useRef9(null);
+  const [inView, setInView] = useState21(false);
+  useEffect12(() => {
     const el = ref.current;
     if (!el || inView) return;
     const obs = new IntersectionObserver(
@@ -5525,7 +5646,7 @@ var PluginCard = ({
     if (target.closest("a, button, input, [role='button']")) return;
     onSelectChange?.(plugin.id, !selected);
   };
-  const handleLongPress = useCallback6(() => {
+  const handleLongPress = useCallback7(() => {
     onSelectChange?.(plugin.id, true);
   }, [onSelectChange, plugin.id]);
   const longPressHandlers = useLongPress(handleLongPress, { delay: 500 });
@@ -5909,7 +6030,7 @@ var resolveIcon = (navIcon) => {
 };
 
 // src/components/plugin-detail/WorkflowStepNode.tsx
-import { useState as useState21 } from "react";
+import { useState as useState22 } from "react";
 import {
   Clock,
   GitBranch,
@@ -5988,7 +6109,7 @@ var STEP_ICONS = {
 };
 var StepSummary = ({ step, isRTL }) => {
   const lbl = (en, ar) => isRTL ? ar : en;
-  const [showQuery, setShowQuery] = useState21(false);
+  const [showQuery, setShowQuery] = useState22(false);
   const kind = step.kind ?? "?";
   if (kind === "cron_trigger") {
     const schedule = step.schedule ?? step.interval ?? "?";
@@ -6205,7 +6326,7 @@ var StepConnector = () => /* @__PURE__ */ jsx44("div", { className: "flex justif
 StepConnector.displayName = "StepConnector";
 var NestedAddControl = ({ isRTL, addableKinds, onAdd }) => {
   const lbl = (en, ar) => isRTL ? ar : en;
-  const [kind, setKind] = useState21("");
+  const [kind, setKind] = useState22("");
   return /* @__PURE__ */ jsxs38("div", { className: "flex items-center gap-1.5 pt-1", children: [
     /* @__PURE__ */ jsxs38(Select, { value: kind, onValueChange: setKind, children: [
       /* @__PURE__ */ jsx44(SelectTrigger, { className: "h-6 w-36 text-[11px]", children: /* @__PURE__ */ jsx44(SelectValue, { placeholder: lbl("+ add\u2026", "+ \u0625\u0636\u0627\u0641\u0629\u2026") }) }),
@@ -6482,7 +6603,7 @@ var WorkflowPipeline = ({ model, isRTL = false }) => {
 WorkflowPipeline.displayName = "WorkflowPipeline";
 
 // src/components/plugin-detail/WorkflowEditor.tsx
-import { useState as useState22, useCallback as useCallback7, useMemo as useMemo7 } from "react";
+import { useState as useState23, useCallback as useCallback8, useMemo as useMemo7 } from "react";
 import {
   DndContext,
   closestCenter,
@@ -6516,7 +6637,7 @@ import {
   ExternalLink as ExternalLink2
 } from "lucide-react";
 import { toast as toast2 } from "sonner";
-import { useEffect as useEffect12 } from "react";
+import { useEffect as useEffect13 } from "react";
 import { Fragment as Fragment11, jsx as jsx46, jsxs as jsxs40 } from "react/jsx-runtime";
 var PROTO_POLLUTION_KEYS = ["__proto__", "constructor", "prototype"];
 var SOURCE_TYPES = [
@@ -6677,9 +6798,9 @@ var SortableRow = ({
 };
 SortableRow.displayName = "SortableRow";
 var AddItemDialog = ({ open, onClose, onAddStep, onAddSource, palette, isRTL }) => {
-  const [mode, setMode] = useState22("step");
-  const [selectedKind, setSelectedKind] = useState22("");
-  const [selectedType, setSelectedType] = useState22("");
+  const [mode, setMode] = useState23("step");
+  const [selectedKind, setSelectedKind] = useState23("");
+  const [selectedType, setSelectedType] = useState23("");
   const handleAdd = () => {
     if (mode === "step" && selectedKind) {
       const obj = { kind: selectedKind };
@@ -6724,26 +6845,26 @@ AddItemDialog.displayName = "AddItemDialog";
 var EditStepDialog = ({ open, step, onClose, onSave, isRTL }) => {
   const kind = step?.kind ?? "";
   const lbl = (en, ar) => isRTL ? ar : en;
-  const [queriesTxt, setQueriesTxt] = useState22("");
-  const [enginesTxt, setEnginesTxt] = useState22("");
-  const [urlsTxt, setUrlsTxt] = useState22("");
-  const [freshnessHours, setFreshnessHours] = useState22("");
-  const [url, setUrl] = useState22("");
-  const [method, setMethod] = useState22("GET");
-  const [resultPath, setResultPath] = useState22("");
-  const [targetField, setTargetField] = useState22("");
-  const [timeoutSec, setTimeoutSec] = useState22("");
-  const [headersTxt, setHeadersTxt] = useState22("");
-  const [bodyJsonTxt, setBodyJsonTxt] = useState22("");
-  const [userAgent, setUserAgent] = useState22("");
-  const [extractTxt, setExtractTxt] = useState22("");
-  const [table, setTable] = useState22("");
-  const [rowsField, setRowsField] = useState22("");
-  const [onConflict, setOnConflict] = useState22("");
-  const [skipOnEmpty, setSkipOnEmpty] = useState22(false);
-  const [fieldMapTxt, setFieldMapTxt] = useState22("");
-  const [jsonErr, setJsonErr] = useState22(null);
-  useEffect12(() => {
+  const [queriesTxt, setQueriesTxt] = useState23("");
+  const [enginesTxt, setEnginesTxt] = useState23("");
+  const [urlsTxt, setUrlsTxt] = useState23("");
+  const [freshnessHours, setFreshnessHours] = useState23("");
+  const [url, setUrl] = useState23("");
+  const [method, setMethod] = useState23("GET");
+  const [resultPath, setResultPath] = useState23("");
+  const [targetField, setTargetField] = useState23("");
+  const [timeoutSec, setTimeoutSec] = useState23("");
+  const [headersTxt, setHeadersTxt] = useState23("");
+  const [bodyJsonTxt, setBodyJsonTxt] = useState23("");
+  const [userAgent, setUserAgent] = useState23("");
+  const [extractTxt, setExtractTxt] = useState23("");
+  const [table, setTable] = useState23("");
+  const [rowsField, setRowsField] = useState23("");
+  const [onConflict, setOnConflict] = useState23("");
+  const [skipOnEmpty, setSkipOnEmpty] = useState23(false);
+  const [fieldMapTxt, setFieldMapTxt] = useState23("");
+  const [jsonErr, setJsonErr] = useState23(null);
+  useEffect13(() => {
     if (!step) return;
     setJsonErr(null);
     const jstr = (v) => v == null ? "" : JSON.stringify(v, null, 2);
@@ -7001,28 +7122,28 @@ SecretRefNote.displayName = "SecretRefNote";
 var EditSourceDialog = ({ open, source, pluginSlug, onClose, onSave, isRTL }) => {
   const sourceType = source?.type ?? "";
   const lbl = (en, ar) => isRTL ? ar : en;
-  const [sxLanguage, setSxLanguage] = useState22("ar");
-  const [sxSite, setSxSite] = useState22("");
-  const [sxCategories, setSxCategories] = useState22("news");
-  const [sxTimeRange, setSxTimeRange] = useState22("");
-  const [sxMaxPerQuery, setSxMaxPerQuery] = useState22("10");
-  const [httpEndpoint, setHttpEndpoint] = useState22("");
-  const [httpMethod, setHttpMethod] = useState22("GET");
-  const [httpResultPath, setHttpResultPath] = useState22("");
-  const [httpHeaders, setHttpHeaders] = useState22("");
-  const [httpTimeout, setHttpTimeout] = useState22("");
-  const [crUrl, setCrUrl] = useState22("");
-  const [crProfileId, setCrProfileId] = useState22("");
-  const [crSelectorsTxt, setCrSelectorsTxt] = useState22("");
-  const [apiTrackHandle, setApiTrackHandle] = useState22("");
-  const [apiLang, setApiLang] = useState22("ar");
-  const [apiMaxResults, setApiMaxResults] = useState22("100");
-  const [mwSearchId, setMwSearchId] = useState22("");
-  const [mwQuery, setMwQuery] = useState22("");
-  const [mwPlatform, setMwPlatform] = useState22("");
-  const [mwPageSize, setMwPageSize] = useState22("50");
-  const [jsonErr, setJsonErr] = useState22(null);
-  useEffect12(() => {
+  const [sxLanguage, setSxLanguage] = useState23("ar");
+  const [sxSite, setSxSite] = useState23("");
+  const [sxCategories, setSxCategories] = useState23("news");
+  const [sxTimeRange, setSxTimeRange] = useState23("");
+  const [sxMaxPerQuery, setSxMaxPerQuery] = useState23("10");
+  const [httpEndpoint, setHttpEndpoint] = useState23("");
+  const [httpMethod, setHttpMethod] = useState23("GET");
+  const [httpResultPath, setHttpResultPath] = useState23("");
+  const [httpHeaders, setHttpHeaders] = useState23("");
+  const [httpTimeout, setHttpTimeout] = useState23("");
+  const [crUrl, setCrUrl] = useState23("");
+  const [crProfileId, setCrProfileId] = useState23("");
+  const [crSelectorsTxt, setCrSelectorsTxt] = useState23("");
+  const [apiTrackHandle, setApiTrackHandle] = useState23("");
+  const [apiLang, setApiLang] = useState23("ar");
+  const [apiMaxResults, setApiMaxResults] = useState23("100");
+  const [mwSearchId, setMwSearchId] = useState23("");
+  const [mwQuery, setMwQuery] = useState23("");
+  const [mwPlatform, setMwPlatform] = useState23("");
+  const [mwPageSize, setMwPageSize] = useState23("50");
+  const [jsonErr, setJsonErr] = useState23(null);
+  useEffect13(() => {
     if (!source) return;
     setJsonErr(null);
     const jstr = (v) => v == null ? "" : JSON.stringify(v, null, 2);
@@ -7229,22 +7350,22 @@ var WorkflowEditor = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     []
   );
-  const [uidSeq, setUidSeq] = useState22(1e3);
-  const [editSteps, setEditSteps] = useState22(initialSteps);
-  const [editSources, setEditSources] = useState22(initialSources);
-  const [addDialogOpen, setAddDialogOpen] = useState22(false);
-  const [isSaving, setIsSaving] = useState22(false);
-  const [dirty, setDirty] = useState22(false);
-  const [editingStep, setEditingStep] = useState22(null);
-  const [editStepDialogOpen, setEditStepDialogOpen] = useState22(false);
-  const [editingSource, setEditingSource] = useState22(null);
-  const [editSourceDialogOpen, setEditSourceDialogOpen] = useState22(false);
+  const [uidSeq, setUidSeq] = useState23(1e3);
+  const [editSteps, setEditSteps] = useState23(initialSteps);
+  const [editSources, setEditSources] = useState23(initialSources);
+  const [addDialogOpen, setAddDialogOpen] = useState23(false);
+  const [isSaving, setIsSaving] = useState23(false);
+  const [dirty, setDirty] = useState23(false);
+  const [editingStep, setEditingStep] = useState23(null);
+  const [editStepDialogOpen, setEditStepDialogOpen] = useState23(false);
+  const [editingSource, setEditingSource] = useState23(null);
+  const [editSourceDialogOpen, setEditSourceDialogOpen] = useState23(false);
   const markDirty = () => setDirty(true);
   const sensors = useSensors(
     useSensor(PointerSensor, { activationConstraint: { distance: 5 } }),
     useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
   );
-  const handleStepDragEnd = useCallback7((event) => {
+  const handleStepDragEnd = useCallback8((event) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     setEditSteps((prev) => {
@@ -7255,7 +7376,7 @@ var WorkflowEditor = ({
     });
     markDirty();
   }, []);
-  const handleSourceDragEnd = useCallback7((event) => {
+  const handleSourceDragEnd = useCallback8((event) => {
     const { active, over } = event;
     if (!over || active.id === over.id) return;
     setEditSources((prev) => {
@@ -7266,15 +7387,15 @@ var WorkflowEditor = ({
     });
     markDirty();
   }, []);
-  const handleToggleStep = useCallback7((id) => {
+  const handleToggleStep = useCallback8((id) => {
     setEditSteps((prev) => prev.map((s) => String(s._uid) === id ? { ...s, disabled: !s.disabled } : s));
     markDirty();
   }, []);
-  const handleDeleteStep = useCallback7((id) => {
+  const handleDeleteStep = useCallback8((id) => {
     setEditSteps((prev) => prev.filter((s) => String(s._uid) !== id));
     markDirty();
   }, []);
-  const handleOpenEditStep = useCallback7((id) => {
+  const handleOpenEditStep = useCallback8((id) => {
     setEditSteps((prev) => {
       const step = prev.find((s) => String(s._uid) === id);
       if (step) {
@@ -7284,7 +7405,7 @@ var WorkflowEditor = ({
       return prev;
     });
   }, []);
-  const handleEditStepSave = useCallback7(
+  const handleEditStepSave = useCallback8(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (patch) => {
       if (!editingStep) return;
@@ -7293,15 +7414,15 @@ var WorkflowEditor = ({
     },
     [editingStep]
   );
-  const handleToggleSource = useCallback7((id) => {
+  const handleToggleSource = useCallback8((id) => {
     setEditSources((prev) => prev.map((s) => String(s._uid) === id ? { ...s, enabled: s.enabled === false } : s));
     markDirty();
   }, []);
-  const handleDeleteSource = useCallback7((id) => {
+  const handleDeleteSource = useCallback8((id) => {
     setEditSources((prev) => prev.filter((s) => String(s._uid) !== id));
     markDirty();
   }, []);
-  const handleOpenEditSource = useCallback7((id) => {
+  const handleOpenEditSource = useCallback8((id) => {
     setEditSources((prev) => {
       const source = prev.find((s) => String(s._uid) === id);
       if (source) {
@@ -7311,7 +7432,7 @@ var WorkflowEditor = ({
       return prev;
     });
   }, []);
-  const handleEditSourceSave = useCallback7(
+  const handleEditSourceSave = useCallback8(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (patch) => {
       if (!editingSource) return;
@@ -7320,7 +7441,7 @@ var WorkflowEditor = ({
     },
     [editingSource]
   );
-  const handleAddStep = useCallback7(
+  const handleAddStep = useCallback8(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (step) => {
       if (hasProtoPollutionKey(step)) {
@@ -7333,7 +7454,7 @@ var WorkflowEditor = ({
     },
     [isRTL, uidSeq]
   );
-  const handleAddSource = useCallback7(
+  const handleAddSource = useCallback8(
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (src) => {
       if (hasProtoPollutionKey(src)) {
@@ -7346,12 +7467,12 @@ var WorkflowEditor = ({
     },
     [isRTL, uidSeq]
   );
-  const handleReset = useCallback7(() => {
+  const handleReset = useCallback8(() => {
     setEditSteps(initialSteps);
     setEditSources(initialSources);
     setDirty(false);
   }, [initialSteps, initialSources]);
-  const handleSave = useCallback7(async () => {
+  const handleSave = useCallback8(async () => {
     for (const s of editSteps) {
       if (hasProtoPollutionKey(s)) {
         toast2.error(isRTL ? "\u062E\u0637\u0648\u0629 \u062A\u062D\u062A\u0648\u064A \u0639\u0644\u0649 \u0645\u0641\u0627\u062A\u064A\u062D \u063A\u064A\u0631 \u0645\u0633\u0645\u0648\u062D \u0628\u0647\u0627" : "Step contains blocked keys");
@@ -7513,7 +7634,7 @@ var WorkflowEditor = ({
 WorkflowEditor.displayName = "WorkflowEditor";
 
 // src/components/plugin-detail/PluginAppearanceSection.tsx
-import { useState as useState23, useEffect as useEffect13 } from "react";
+import { useState as useState24, useEffect as useEffect14 } from "react";
 import { Fragment as Fragment12, jsx as jsx47, jsxs as jsxs41 } from "react/jsx-runtime";
 var PLACEMENT_OPTIONS = [
   {
@@ -7568,11 +7689,11 @@ var PluginAppearanceSection = ({
 }) => {
   const isRTL = language === "ar";
   const isCapability = appearance.plugin_type === "capability";
-  const [mode, setMode] = useState23(appearance.appearance_mode);
-  const [order, setOrder] = useState23(appearance.nav_order);
-  const [isDefaultPage, setIsDefaultPage] = useState23(appearance.is_default_page ?? false);
-  const [dirty, setDirty] = useState23(false);
-  useEffect13(() => {
+  const [mode, setMode] = useState24(appearance.appearance_mode);
+  const [order, setOrder] = useState24(appearance.nav_order);
+  const [isDefaultPage, setIsDefaultPage] = useState24(appearance.is_default_page ?? false);
+  const [dirty, setDirty] = useState24(false);
+  useEffect14(() => {
     setMode(appearance.appearance_mode);
     setOrder(appearance.nav_order);
     setIsDefaultPage(appearance.is_default_page ?? false);
@@ -7697,7 +7818,7 @@ var PluginAppearanceSection = ({
 PluginAppearanceSection.displayName = "PluginAppearanceSection";
 
 // src/components/plugin-detail/TestRunPanel.tsx
-import { useState as useState24, useRef as useRef9, useCallback as useCallback8 } from "react";
+import { useState as useState25, useRef as useRef10, useCallback as useCallback9 } from "react";
 import {
   Play,
   Square,
@@ -7741,7 +7862,7 @@ var StepRow = ({ step, isRTL }) => {
 };
 StepRow.displayName = "StepRow";
 var SavedItem = ({ item, isRTL }) => {
-  const [rawOpen, setRawOpen] = useState24(false);
+  const [rawOpen, setRawOpen] = useState25(false);
   const bodyText = isRTL ? item.content_ar || item.content_en || "" : item.content_en || item.content_ar || "";
   const handleToggleRaw = () => setRawOpen((v) => !v);
   return /* @__PURE__ */ jsxs42("div", { className: "space-y-2 py-3", children: [
@@ -7802,13 +7923,13 @@ var TestRunPanel = ({
   onRunRequest
 }) => {
   const isRTL = language === "ar";
-  const [runState, setRunState] = useState24("idle");
-  const [steps, setSteps] = useState24([]);
-  const [complete, setComplete] = useState24(null);
-  const [errorMsg, setErrorMsg] = useState24(null);
-  const [savedExpanded, setSavedExpanded] = useState24(true);
-  const abortRef = useRef9(null);
-  const handleStart = useCallback8(() => {
+  const [runState, setRunState] = useState25("idle");
+  const [steps, setSteps] = useState25([]);
+  const [complete, setComplete] = useState25(null);
+  const [errorMsg, setErrorMsg] = useState25(null);
+  const [savedExpanded, setSavedExpanded] = useState25(true);
+  const abortRef = useRef10(null);
+  const handleStart = useCallback9(() => {
     setSteps([]);
     setComplete(null);
     setErrorMsg(null);
@@ -7826,7 +7947,7 @@ var TestRunPanel = ({
       }
     });
   }, [slug, maxEnvelopes, onRunRequest]);
-  const handleStop = useCallback8(() => {
+  const handleStop = useCallback9(() => {
     abortRef.current?.abort();
     setRunState("idle");
   }, []);
@@ -8212,14 +8333,14 @@ var PluginDetailLayout = ({
 PluginDetailLayout.displayName = "PluginDetailLayout";
 
 // src/components/logs/LogsView.tsx
-import React11, { useState as useState26, useCallback as useCallback9 } from "react";
+import React11, { useState as useState27, useCallback as useCallback10 } from "react";
 import { ChevronDown as ChevronDown7, ChevronRight as ChevronRight4, RefreshCw, Search as Search5, X as X2 } from "lucide-react";
 
 // src/hooks/useDebounce.ts
-import { useState as useState25, useEffect as useEffect14 } from "react";
+import { useState as useState26, useEffect as useEffect15 } from "react";
 function useDebounce(value, delay = 300) {
-  const [debounced, setDebounced] = useState25(value);
-  useEffect14(() => {
+  const [debounced, setDebounced] = useState26(value);
+  useEffect15(() => {
     const timer = setTimeout(() => setDebounced(value), delay);
     return () => clearTimeout(timer);
   }, [value, delay]);
@@ -8227,15 +8348,15 @@ function useDebounce(value, delay = 300) {
 }
 
 // src/hooks/useInfiniteScroll.ts
-import { useEffect as useEffect15, useRef as useRef10 } from "react";
+import { useEffect as useEffect16, useRef as useRef11 } from "react";
 function useInfiniteScroll({
   onLoadMore,
   hasMore,
   isLoading,
   threshold = 0.1
 }) {
-  const sentinelRef = useRef10(null);
-  useEffect15(() => {
+  const sentinelRef = useRef11(null);
+  useEffect16(() => {
     const el = sentinelRef.current;
     if (!el) return;
     const observer = new IntersectionObserver(
@@ -8319,7 +8440,7 @@ var LevelBadge = ({ level }) => /* @__PURE__ */ jsx50(
 LevelBadge.displayName = "LevelBadge";
 var ALL_LEVELS = ["error", "warn", "info", "debug"];
 var LevelFilter = ({ selected, onChange, ariaLabel }) => {
-  const handleToggle = useCallback9(
+  const handleToggle = useCallback10(
     (level) => {
       if (selected.includes(level)) {
         onChange(selected.filter((l) => l !== level));
@@ -8399,8 +8520,8 @@ var LogsView = ({
 }) => {
   const t2 = LABELS[language];
   const isRtl = language === "ar";
-  const [expanded, setExpanded] = useState26(/* @__PURE__ */ new Set());
-  const [localQ, setLocalQ] = useState26(filters.q ?? "");
+  const [expanded, setExpanded] = useState27(/* @__PURE__ */ new Set());
+  const [localQ, setLocalQ] = useState27(filters.q ?? "");
   const debouncedQ = useDebounce(localQ, 300);
   const prevDebouncedQ = React11.useRef(debouncedQ);
   React11.useEffect(() => {
@@ -8415,7 +8536,7 @@ var LogsView = ({
     hasMore: hasMore && !loading,
     isLoading: loading
   });
-  const handleToggleRow = useCallback9((id) => {
+  const handleToggleRow = useCallback10((id) => {
     setExpanded((prev) => {
       const next = new Set(prev);
       if (next.has(id)) {
@@ -8426,44 +8547,44 @@ var LogsView = ({
       return next;
     });
   }, []);
-  const handleLevelChange = useCallback9(
+  const handleLevelChange = useCallback10(
     (levels) => {
       onFilterChange({ ...filters, levels: levels.length ? levels : void 0 });
     },
     [filters, onFilterChange]
   );
-  const handleServiceChange = useCallback9(
+  const handleServiceChange = useCallback10(
     (val) => {
       onFilterChange({ ...filters, service: val === "__all__" ? void 0 : val });
     },
     [filters, onFilterChange]
   );
-  const handleComponentChange = useCallback9(
+  const handleComponentChange = useCallback10(
     (val) => {
       onFilterChange({ ...filters, component: val === "__all__" ? void 0 : val });
     },
     [filters, onFilterChange]
   );
-  const handleSinceChange = useCallback9(
+  const handleSinceChange = useCallback10(
     (e) => {
       onFilterChange({ ...filters, since: e.target.value || void 0 });
     },
     [filters, onFilterChange]
   );
-  const handleUntilChange = useCallback9(
+  const handleUntilChange = useCallback10(
     (e) => {
       onFilterChange({ ...filters, until: e.target.value || void 0 });
     },
     [filters, onFilterChange]
   );
-  const handleSearchChange = useCallback9((e) => {
+  const handleSearchChange = useCallback10((e) => {
     setLocalQ(e.target.value);
   }, []);
-  const handleClearSearch = useCallback9(() => {
+  const handleClearSearch = useCallback10(() => {
     setLocalQ("");
     onFilterChange({ ...filters, q: void 0 });
   }, [filters, onFilterChange]);
-  const handleToggleLiveTail = useCallback9(() => {
+  const handleToggleLiveTail = useCallback10(() => {
     onToggleLiveTail?.(!liveTail);
   }, [liveTail, onToggleLiveTail]);
   return /* @__PURE__ */ jsxs44(
@@ -8840,7 +8961,7 @@ function applyBrand(root, tokens = {}) {
 }
 
 // src/theme/BrandingProvider.tsx
-import { createContext, useContext, useEffect as useEffect16 } from "react";
+import { createContext, useContext, useEffect as useEffect17 } from "react";
 import { jsx as jsx54 } from "react/jsx-runtime";
 var BrandContext = createContext({
   primaryHex: SENTRA_BRAND.primaryHex,
@@ -8860,7 +8981,7 @@ var BrandingProvider = ({
   productName,
   children
 }) => {
-  useEffect16(() => {
+  useEffect17(() => {
     if (typeof document === "undefined") return;
     applyBrand(document.documentElement, { primaryHex, accentHex, logoUrl });
   }, [primaryHex, accentHex, logoUrl]);
@@ -8881,9 +9002,9 @@ BrandingProvider.displayName = "BrandingProvider";
 import {
   createContext as createContext2,
   useContext as useContext2,
-  useState as useState27,
-  useCallback as useCallback10,
-  useEffect as useEffect17
+  useState as useState28,
+  useCallback as useCallback11,
+  useEffect as useEffect18
 } from "react";
 
 // src/i18n/index.ts
@@ -9154,13 +9275,13 @@ var LanguageProvider = ({
   initialLanguage = "en",
   onLanguageChange
 }) => {
-  const [language, setLanguageState] = useState27(initialLanguage);
-  const applyDirToDocument = useCallback10((l) => {
+  const [language, setLanguageState] = useState28(initialLanguage);
+  const applyDirToDocument = useCallback11((l) => {
     if (typeof document === "undefined") return;
     document.documentElement.dir = l === "ar" ? "rtl" : "ltr";
     document.documentElement.lang = l;
   }, []);
-  useEffect17(() => {
+  useEffect18(() => {
     const cached = readCachedLang();
     const resolved = cached ?? initialLanguage;
     if (resolved !== language) setLanguageState(resolved);
@@ -9170,7 +9291,7 @@ var LanguageProvider = ({
       i18n_default.changeLanguage(resolved);
     }
   }, []);
-  const setLanguage = useCallback10(
+  const setLanguage = useCallback11(
     (l) => {
       setLanguageState(l);
       applyDirToDocument(l);
@@ -9184,7 +9305,7 @@ var LanguageProvider = ({
     },
     [applyDirToDocument, onLanguageChange]
   );
-  const seedLanguage = useCallback10(
+  const seedLanguage = useCallback11(
     (l) => {
       if (readCachedLang()) return;
       setLanguageState(l);
@@ -9193,7 +9314,7 @@ var LanguageProvider = ({
     },
     [applyDirToDocument]
   );
-  const t2 = useCallback10(
+  const t2 = useCallback11(
     (key, vars) => {
       return i18n_default.t(key, { ...vars, lng: language });
     },
