@@ -1,16 +1,43 @@
 import type { Meta, StoryObj } from '@storybook/react'
-import { WorkflowStepNode, WorkflowPipeline, WorkflowEditor } from '../components/plugin-detail'
+import { useState } from 'react'
+import { WorkflowStepNode, WorkflowPipeline, WorkflowEditor, Workflow } from '../components/plugin-detail'
 import {
   MOCK_STEPS, MOCK_PIPELINE_MODEL, MOCK_WORKFLOW_STEPS, MOCK_WORKFLOW_SOURCES,
 } from './_fixtures/plugin'
 
-// Workflow manager — step nodes, the read-only pipeline, and the drag-and-drop editor.
+// Workflow manager — the unified Workflow component (Steps / Pipeline / Editor views)
+// plus the individual building blocks it composes.
 const meta: Meta<typeof WorkflowStepNode> = {
   title: "Components/Workflow",
   component: WorkflowStepNode,
   parameters: { layout: 'padded' },
 }
 export default meta
+
+// ─── Unified Workflow (Steps / Pipeline / Editor in one) ──────────────────────
+
+/** The unified component: one step model, switch views with the header toggle.
+ * Editor view is enabled because `onChange` is provided. */
+export const Unified: StoryObj<typeof Workflow> = {
+  name: 'Unified — Steps / Pipeline / Editor',
+  render: () => {
+    const [steps, setSteps] = useState(MOCK_STEPS as never[])
+    return <Workflow steps={steps} onChange={(s) => setSteps(s as never[])} language="en" />
+  },
+}
+
+export const UnifiedRTL: StoryObj<typeof Workflow> = {
+  name: 'Unified — Arabic / RTL',
+  render: () => {
+    const [steps, setSteps] = useState(MOCK_STEPS as never[])
+    return <Workflow steps={steps} onChange={(s) => setSteps(s as never[])} language="ar" />
+  },
+}
+
+export const UnifiedReadOnly: StoryObj<typeof Workflow> = {
+  name: 'Unified — read-only (no Editor view)',
+  render: () => <Workflow steps={MOCK_STEPS as never[]} language="en" />,
+}
 
 // ─── WorkflowStepNode ─────────────────────────────────────────────────────────
 
