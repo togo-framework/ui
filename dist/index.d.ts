@@ -2024,7 +2024,7 @@ interface IssueAssignee {
     email?: string;
     avatarUrl?: string;
 }
-interface Issue {
+interface Issue$1 {
     id: string;
     /** e.g. "TypeError: Cannot read properties of undefined (reading 'id')" */
     title: string;
@@ -2054,7 +2054,7 @@ interface ErrorFilter {
     environment?: string;
     /** ISO lower bound (or a relative key the app resolves) */
     range?: string;
-    status?: Issue["status"];
+    status?: Issue$1["status"];
     /** full-text search on title/culprit */
     q?: string;
 }
@@ -2065,9 +2065,9 @@ type Lang = "en" | "ar";
 declare function levelTone(level: IssueLevel): "danger" | "warning" | "info" | "neutral";
 
 interface IssuesListProps {
-    issues: Issue[];
+    issues: Issue$1[];
     selectedId?: string | null;
-    onSelectIssue?: (issue: Issue) => void;
+    onSelectIssue?: (issue: Issue$1) => void;
     language?: Lang;
     filter?: ErrorFilter;
     onFilterChange?: (f: ErrorFilter) => void;
@@ -2083,10 +2083,10 @@ interface IssuesListProps {
 declare function IssuesList({ issues, selectedId, onSelectIssue, language, filter, onFilterChange, sort, onSortChange, environments, className, }: IssuesListProps): React$1.JSX.Element;
 
 interface IssueDetailProps {
-    issue: Issue;
+    issue: Issue$1;
     language?: Lang;
-    onResolve?: (issue: Issue) => void;
-    onIgnore?: (issue: Issue) => void;
+    onResolve?: (issue: Issue$1) => void;
+    onIgnore?: (issue: Issue$1) => void;
     className?: string;
 }
 /** IssueDetail — the error detail pane: title + culprit, level, resolve/ignore,
@@ -2094,18 +2094,18 @@ interface IssueDetailProps {
 declare function IssueDetail({ issue, language, onResolve, onIgnore, className }: IssueDetailProps): React$1.JSX.Element;
 
 interface ErrorTrackingPageProps {
-    issues: Issue[];
+    issues: Issue$1[];
     language?: Lang;
     filter?: ErrorFilter;
     onFilterChange?: (f: ErrorFilter) => void;
     sort?: IssueSort;
     onSortChange?: (s: IssueSort) => void;
     environments?: string[];
-    onResolve?: (issue: Issue) => void;
-    onIgnore?: (issue: Issue) => void;
+    onResolve?: (issue: Issue$1) => void;
+    onIgnore?: (issue: Issue$1) => void;
     /** controlled selection (optional) */
     selectedId?: string | null;
-    onSelectIssue?: (issue: Issue) => void;
+    onSelectIssue?: (issue: Issue$1) => void;
     className?: string;
 }
 /** ErrorTrackingPage — the Sentry-style master/detail error page: IssuesList on
@@ -2387,6 +2387,248 @@ declare const useT: () => LanguageContextValue;
  */
 declare const useLanguage: () => LanguageContextValue;
 
+/** Issue lifecycle status. Lowercase string values mirror the SDK / DB enum. */
+type IssueStatus = "todo" | "in_progress" | "blocked" | "ready_for_review" | "done";
+/** Issue kind. `change` doubles as a feature request (carries the upvotes). */
+type IssueType = "bug" | "change" | "question" | "discussion";
+/** Issue priority. Color-coded AND text-labelled (a11y: never color-only). */
+type IssuePriority = "low" | "normal" | "high" | "critical";
+/** Who reported the issue — an authed hub user or an external/anonymous SDK reporter. */
+type IssueReporterKind = "user" | "external";
+/** A person reference (reporter / assignee / comment author). */
+interface IssuePerson {
+    id: string;
+    /** Pre-resolved display name (the host chooses EN/AR before passing it). */
+    name: string;
+    avatarUrl?: string | null;
+    kind?: IssueReporterKind;
+    /** Only set for external reporters. */
+    email?: string | null;
+}
+/** A stored attachment on an issue (image / pdf). URL is host-provided. */
+interface IssueAttachment {
+    /** Download URL (https) supplied by the host's upload endpoint. */
+    url: string;
+    /** Original file name. */
+    name: string;
+    /** MIME type. */
+    contentType: string;
+    /** Size in bytes. */
+    size?: number;
+    /** Pixel dimensions (images only). */
+    width?: number;
+    height?: number;
+}
+/** A comment on an issue. `body` is markdown/plain text (host decides rendering). */
+interface IssueComment {
+    id: string;
+    author: IssuePerson | null;
+    /** Comment body (markdown). Components render it as plain text by default; a
+     *  host may pass a `renderBody` prop to plug in its own markdown renderer. */
+    body: string;
+    createdAt: string;
+}
+/** Where on the page an issue was pinned by the reporter's element picker.
+ *  Mirrors the SDK anchor shape exactly so Motor's SDK + these components agree. */
+interface IssueAnchor {
+    /** CSS selector of the pinned element (primary anchor). */
+    selector?: string;
+    /** window scroll offset at pin time (fallback when the selector no longer matches). */
+    scrollY: number;
+    /** First ~80 chars of the pinned element's text, for human context. */
+    hint?: string;
+    /** Full URL at pin time (incl. query/hash) — restores tab/panel state. */
+    href?: string;
+}
+/** Lightweight per-card aggregate counts (drives the card footer icons). */
+interface IssueCounts {
+    comments?: number;
+    attachments?: number;
+    children?: number;
+}
+/** The full issue shape consumed by the board / card / drawer / detail view.
+ *  A host maps its `/api/issues/v1` rows onto this; every field the components
+ *  read is here, so there is no hidden data dependency. */
+interface Issue {
+    id: string;
+    /** Human-facing sequential number (#123). */
+    number: number;
+    title: string;
+    description?: string | null;
+    type: IssueType;
+    status: IssueStatus;
+    priority: IssuePriority;
+    /** Optional area/component tag (e.g. "auth", "billing"). */
+    area?: string | null;
+    /** Route the issue was filed against (normalized pathname). */
+    route?: string | null;
+    /** Page-pin anchor (from the SDK element picker). */
+    anchor?: IssueAnchor | null;
+    reporter?: IssuePerson | null;
+    assignee?: IssuePerson | null;
+    /** Board ordering rank (lexicographic). Used to sort within a status column. */
+    boardRank?: string;
+    voteCount?: number;
+    votedByMe?: boolean;
+    counts?: IssueCounts;
+    comments?: IssueComment[];
+    attachments?: IssueAttachment[];
+    createdAt: string;
+    updatedAt?: string;
+}
+
+type Language = "en" | "ar";
+
+/**
+ * FeedbackButton — the trigger that opens the feedback hub / new-issue flow.
+ *
+ * Pure + product-agnostic (Rule 25): it renders a button and calls `onOpen` (or
+ * `onClick`) — it owns no modal, no portal, no fetch. The host decides what
+ * opening means (mount a FeedbackHub, open a NewIssueModal, etc.). Two layouts:
+ * `variant="floating"` (a fixed FAB pinned to the inline-end / bottom corner,
+ * RTL-aware) and `variant="inline"` (a compact toolbar/nav button). Bilingual
+ * via `language` (Rule 8); token-clean (Rule 16).
+ *
+ * Props contract:
+ *  - onOpen() | onClick(): fired when pressed (onOpen preferred; onClick alias)
+ *  - language: 'en' | 'ar' — picks the "Feedback" label
+ *  - variant:  'floating' (default) | 'inline'
+ *  - count:    optional unread/open badge count
+ *  - label:    optional override of the default "Feedback" text
+ */
+declare const feedbackButtonVariants: (props?: ({
+    variant?: "inline" | "floating" | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string;
+type FeedbackButtonProps = React$1.ButtonHTMLAttributes<HTMLButtonElement> & VariantProps<typeof feedbackButtonVariants> & {
+    onOpen?: () => void;
+    language?: Language;
+    /** Optional open/unread count rendered as a small badge. */
+    count?: number;
+    /** Optional label override (default: "Feedback" / "ملاحظات"). */
+    label?: string;
+};
+declare const FeedbackButton: React$1.ForwardRefExoticComponent<React$1.ButtonHTMLAttributes<HTMLButtonElement> & VariantProps<(props?: ({
+    variant?: "inline" | "floating" | null | undefined;
+} & class_variance_authority_types.ClassProp) | undefined) => string> & {
+    onOpen?: () => void;
+    language?: Language;
+    /** Optional open/unread count rendered as a small badge. */
+    count?: number;
+    /** Optional label override (default: "Feedback" / "ملاحظات"). */
+    label?: string;
+} & React$1.RefAttributes<HTMLButtonElement>>;
+
+/**
+ * FeedbackHub — the reporter's feedback slide-over: the list of issues they have
+ * filed (optionally scoped to the current route) plus a "Report something new"
+ * entry. This is the lightweight reporter surface (distinct from the full manager
+ * IssueBoard): a reporter opens it from a FeedbackButton to see their open items
+ * and file a new one.
+ *
+ * Pure + product-agnostic (Rule 25): `issues` + the current `route` arrive as
+ * props; selecting an item or starting a new report just fires `onSelectIssue` /
+ * `onNewIssue`. No fetch, no portal beyond the @prism/ui Sheet (which is
+ * RTL-aware). Bilingual via `language` (Rule 8); token-clean (Rule 16).
+ *
+ * Props contract:
+ *  - open / onOpenChange:  controlled visibility
+ *  - issues:    Issue[] filed by this reporter (host-supplied)
+ *  - language:  'en' | 'ar'
+ *  - route:     optional current route — when set, shows a "this page" group first
+ *  - loading:   host-driven loading flag → skeleton rows
+ *  - onNewIssue():        start a new report
+ *  - onSelectIssue(id):   open an existing issue's detail
+ *  - title:     optional header override (default "Feedback")
+ */
+type FeedbackHubProps = {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    issues: Issue[];
+    language?: Language;
+    route?: string;
+    loading?: boolean;
+    onNewIssue?: () => void;
+    onSelectIssue?: (id: string) => void;
+    title?: string;
+};
+declare const FeedbackHub: {
+    ({ open, onOpenChange, issues, language, route, loading, onNewIssue, onSelectIssue, title, }: FeedbackHubProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+/**
+ * MotorFeedbackLauncher — the ONE shared feedback launcher for every Sentra
+ * product dashboard (Sentra hub, Scout, Cortex, Fort, Axon).
+ *
+ * It loads the shared Motor feedback SDK (@sentra/motor-feedback, served as a
+ * static bundle at `sdkSrc`, default /motor-feedback.js) and mounts its
+ * FeedbackHub on this floating trigger. ALL feedback behaviour — the report
+ * form, element anchor, client-side screenshot, attachments, and the POST to
+ * Motor's /api/issues/v1 surface — lives in the Motor SDK. No product
+ * reimplements the feedback form or transport (operator decision 2026-06-14:
+ * "feedback must extend the Motor SDK, not be custom per product").
+ *
+ * The FAB is DRAGGABLE: press-and-drag moves it anywhere on screen and the
+ * position is cached in localStorage (per project), so it survives reloads. A
+ * drag is distinguished from a click by a small movement threshold — a real
+ * click still opens the feedback panel; a drag does not.
+ *
+ * Why the SDK over a bespoke modal: the SDK renders its panel inside a Shadow
+ * DOM mounted on <body>, so it sits on the top stacking layer — immune to the
+ * host app's z-index / transformed ancestors (the old bespoke launcher rendered
+ * *behind* the header). This trigger button also carries a very high z-index so
+ * the FAB itself floats over all app UI.
+ *
+ * Product-agnostic (Rule 25): no app context, no fetch here — `project`,
+ * `publishableKey` (Motor DSN public key), `apiBase`, and `language` all arrive
+ * as props. Renders nothing when `project`/`publishableKey` are empty (Motor
+ * optional → host stays standalone). Bilingual (Rule 8); token-clean (Rule 16).
+ */
+type SdkIssueType = "bug" | "change" | "question" | "discussion";
+type FeedbackHubHandle = {
+    open(): void;
+    close(): void;
+    refresh(): void;
+    destroy(): void;
+};
+type MotorFeedbackSdk = {
+    mountFeedbackHub(opts: {
+        trigger: Element;
+        project: string;
+        publishableKey: string;
+        apiBase: string;
+        theme?: "light" | "dark" | "auto";
+        defaultType?: SdkIssueType;
+        title?: string;
+        reporterEmail?: string;
+        reporterName?: string;
+    }): FeedbackHubHandle;
+};
+declare global {
+    interface Window {
+        MotorFeedback?: MotorFeedbackSdk;
+    }
+}
+type MotorFeedbackLauncherProps = {
+    /** Motor project slug, e.g. "sentra" | "scout" | "cortex" | "fort" | "axon". */
+    project: string;
+    /** Motor DSN public key, e.g. "motor-sentra-dev-key" (NEXT_PUBLIC_MOTOR_DSN). */
+    publishableKey: string;
+    /** Motor issues API base, e.g. http://localhost:8215/api/issues/v1. */
+    apiBase: string;
+    language?: Language;
+    /** Where the Motor SDK bundle is served. Default: /motor-feedback.js */
+    sdkSrc?: string;
+    theme?: "light" | "dark" | "auto";
+    defaultType?: SdkIssueType;
+    /** Pre-fill the reporter identity when the host knows the signed-in user. */
+    reporterEmail?: string;
+    reporterName?: string;
+    /** Optional FAB label override (default: "Feedback" / "ملاحظات"). */
+    label?: string;
+};
+declare const MotorFeedbackLauncher: React$1.FC<MotorFeedbackLauncherProps>;
+
 interface ModelOption {
     value: string;
     label?: string;
@@ -2434,4 +2676,4 @@ declare function SectionBoard({ sections, editMode, models, language, columns, o
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { type ActivityBucket, type AlertMapItem, type AlertSeverity, AppPageShell, type AppPageShellProps, AppSidebar, type AppSidebarProps, type AppearanceMode, AuthCard, type AuthCardBrand, type AuthClient, AuthErrorAlert, AuthFlow, type AuthLayout, AuthStepHeader, type BarPoint, type BrandContextValue, type BrandTokens, BrandingProvider, type BrandingProviderProps, type CardFilter, CardGrid, type CardGridLabels, ColorPicker, type ColorPickerProps, ContextualSkeleton, DEFAULT_LAYERS, DEFAULT_LEGEND_GROUPS, DEFAULT_REGION_PRESETS, DataState, type DataStateLabels, type DataStateProps, DataTable, type DataTableBulkAction, type DataTableColumnFilter, type DataTableColumnMeta, type DataTableDensity, type DataTableFilterType, type DataTableLanguage, type DataTableProps, type DataTableSelectOption, type DataTableServerCallbacks, type DataTableServerState, DynamicIcon, DynamicSection, type DynamicSectionProps, EmptyState, type EmptyStateProps, EntityNetworkGraph, type EntityNetworkGraphProps, type ErrorFilter, ErrorTrackingPage, type ErrorTrackingPageProps, EventMapPanel, type EventMapPanelProps, ForgotForm, type GraphLink, type GraphNode, IconPicker, type IconPickerProps, type Issue, type IssueAssignee, type IssueBreadcrumb, IssueDetail, type IssueDetailProps, type IssueLevel, type IssueSort, type IssueTag, IssuesList, type IssuesListProps, LANG_COOKIE_NAME, type LanguageContextValue, LanguageProvider, type LanguageProviderProps, type LegendGroup, type LegendItem, type LegendShapeType, LockScreen, type LockScreenProps, type LockScreenUser, type LogLevel, LoginForm, type LoginResult, type LogsFilter, LogsView, type LogsViewProps, MARKER_COLORS, MARKER_LABELS, type MapLayer, MapLayersPanel, type MapLayersPanelProps, MapLegend, type MapLegendProps, type MapMarker$1 as MapMarker, type MapMarkerType, MapPanel, type MapPanelProps, type MapRegionPreset, MapView, type MapViewProps, MiniBarChart, type ModelOption, NestedStepsEditor, type NestedStepsEditorProps, NetworkGraph, type NetworkGraphProps, OTPBoxGroup, type OtpResult, PIPELINE_STAGES, PageHeader, type PageHeaderProps, PasswordInput, PasswordLockScreen, type PasswordLockScreenProps, type PasswordLockScreenUser, type PasswordRule, PasswordStrengthMeter, type PipelineCard, type PipelineLane, type PipelineModel, type PluginActivitySummary, type PluginAppearanceFields, PluginAppearanceSection, type PluginAppearanceSectionProps, PluginCard, type PluginCatalogEntry, type PluginDetailIdentity, PluginDetailLayout, type PluginDetailLayoutProps, type PluginDetailTab, PluginHero, PluginHeroSkeleton, PluginPageHeader, PluginSectionCard, PluginSparkline, type ProfileSession, ProfileView, type ProfileViewProps, type RenderMapContext, ResetForm, type ResolvedIcon, RouteProgress, type RouteProgressProps, SENTRA_BRAND, STEP_FIELD_REGISTRY, SectionBoard, type SectionBoardProps, type SectionModel, SectionSkeleton, SentraLoading, type ServiceLogRow, ServiceUnavailable, type ServiceUnavailableProps, SessionExpired, type SessionExpiredProps, type SidebarConversation, type SidebarUser, SourceBadge, type SparklinePoint, type StackFrame, type StackFrameContextLine, StatCard, type StatCardProps, StatusBadge, type StatusBadgeProps, type StatusBadgeTone, type Step, type StepFieldDef, type StepFieldType, type StepMetrics7d, StepOptionsDialog, type StepOptionsDialogProps, type TestRunCallbacks, type TestRunCompletePayload, TestRunPanel, type TestRunPanelProps, type TestRunSavedItem, type TestRunStep, TwoFAForm, type UnlockCredentials, type Verify2FAResult, type View, ViewToggle, type ViewToggleProps, Workflow, WorkflowEditor, type WorkflowEditorProps, type WorkflowPalette, WorkflowPipeline, type WorkflowPipelineProps, type WorkflowProps, type WorkflowSource, type WorkflowStep, type WorkflowStepLike, WorkflowStepNode, type WorkflowStepNodeProps, type WorkflowView, applyBrand, cn, computeRules, computeScore, hexToHSL, isHSL, isValidColor, levelTone, nudgeL, resolveIcon, statValueVariants, statusBadgeVariants, toHSLSafe, useBrand, useLanguage, useT };
+export { type ActivityBucket, type AlertMapItem, type AlertSeverity, AppPageShell, type AppPageShellProps, AppSidebar, type AppSidebarProps, type AppearanceMode, AuthCard, type AuthCardBrand, type AuthClient, AuthErrorAlert, AuthFlow, type AuthLayout, AuthStepHeader, type BarPoint, type BrandContextValue, type BrandTokens, BrandingProvider, type BrandingProviderProps, type CardFilter, CardGrid, type CardGridLabels, ColorPicker, type ColorPickerProps, ContextualSkeleton, DEFAULT_LAYERS, DEFAULT_LEGEND_GROUPS, DEFAULT_REGION_PRESETS, DataState, type DataStateLabels, type DataStateProps, DataTable, type DataTableBulkAction, type DataTableColumnFilter, type DataTableColumnMeta, type DataTableDensity, type DataTableFilterType, type DataTableLanguage, type DataTableProps, type DataTableSelectOption, type DataTableServerCallbacks, type DataTableServerState, DynamicIcon, DynamicSection, type DynamicSectionProps, EmptyState, type EmptyStateProps, EntityNetworkGraph, type EntityNetworkGraphProps, type ErrorFilter, ErrorTrackingPage, type ErrorTrackingPageProps, EventMapPanel, type EventMapPanelProps, FeedbackButton, type FeedbackButtonProps, FeedbackHub, type FeedbackHubProps, ForgotForm, type GraphLink, type GraphNode, IconPicker, type IconPickerProps, type Issue$1 as Issue, type IssueAssignee, type IssueBreadcrumb, IssueDetail, type IssueDetailProps, type IssueLevel, type IssueSort, type IssueTag, IssuesList, type IssuesListProps, LANG_COOKIE_NAME, type LanguageContextValue, LanguageProvider, type LanguageProviderProps, type LegendGroup, type LegendItem, type LegendShapeType, LockScreen, type LockScreenProps, type LockScreenUser, type LogLevel, LoginForm, type LoginResult, type LogsFilter, LogsView, type LogsViewProps, MARKER_COLORS, MARKER_LABELS, type MapLayer, MapLayersPanel, type MapLayersPanelProps, MapLegend, type MapLegendProps, type MapMarker$1 as MapMarker, type MapMarkerType, MapPanel, type MapPanelProps, type MapRegionPreset, MapView, type MapViewProps, MiniBarChart, type ModelOption, MotorFeedbackLauncher, type MotorFeedbackLauncherProps, NestedStepsEditor, type NestedStepsEditorProps, NetworkGraph, type NetworkGraphProps, OTPBoxGroup, type OtpResult, PIPELINE_STAGES, PageHeader, type PageHeaderProps, PasswordInput, PasswordLockScreen, type PasswordLockScreenProps, type PasswordLockScreenUser, type PasswordRule, PasswordStrengthMeter, type PipelineCard, type PipelineLane, type PipelineModel, type PluginActivitySummary, type PluginAppearanceFields, PluginAppearanceSection, type PluginAppearanceSectionProps, PluginCard, type PluginCatalogEntry, type PluginDetailIdentity, PluginDetailLayout, type PluginDetailLayoutProps, type PluginDetailTab, PluginHero, PluginHeroSkeleton, PluginPageHeader, PluginSectionCard, PluginSparkline, type ProfileSession, ProfileView, type ProfileViewProps, type RenderMapContext, ResetForm, type ResolvedIcon, RouteProgress, type RouteProgressProps, SENTRA_BRAND, STEP_FIELD_REGISTRY, SectionBoard, type SectionBoardProps, type SectionModel, SectionSkeleton, SentraLoading, type ServiceLogRow, ServiceUnavailable, type ServiceUnavailableProps, SessionExpired, type SessionExpiredProps, type SidebarConversation, type SidebarUser, SourceBadge, type SparklinePoint, type StackFrame, type StackFrameContextLine, StatCard, type StatCardProps, StatusBadge, type StatusBadgeProps, type StatusBadgeTone, type Step, type StepFieldDef, type StepFieldType, type StepMetrics7d, StepOptionsDialog, type StepOptionsDialogProps, type TestRunCallbacks, type TestRunCompletePayload, TestRunPanel, type TestRunPanelProps, type TestRunSavedItem, type TestRunStep, TwoFAForm, type UnlockCredentials, type Verify2FAResult, type View, ViewToggle, type ViewToggleProps, Workflow, WorkflowEditor, type WorkflowEditorProps, type WorkflowPalette, WorkflowPipeline, type WorkflowPipelineProps, type WorkflowProps, type WorkflowSource, type WorkflowStep, type WorkflowStepLike, WorkflowStepNode, type WorkflowStepNodeProps, type WorkflowView, applyBrand, cn, computeRules, computeScore, feedbackButtonVariants, hexToHSL, isHSL, isValidColor, levelTone, nudgeL, resolveIcon, statValueVariants, statusBadgeVariants, toHSLSafe, useBrand, useLanguage, useT };

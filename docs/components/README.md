@@ -174,6 +174,12 @@ import { Button, Dialog, DataTable } from "@togo-framework/ui";
 | [SentraLoading](./SentraLoading.md) | Branded loading indicator. |
 | [ContextualSkeleton](./ContextualSkeleton.md) · [SectionSkeleton](./SectionSkeleton.md) | Realtime-loading skeletons. |
 
+## Feedback
+
+| Component | Description |
+|---|---|
+| [FeedbackButton](./FeedbackButton.md) | Reporter feedback trigger (FAB/inline) + FeedbackHub slide-over. |
+
 ## Dynamic Sections
 
 | Component | Description |

@@ -5620,7 +5620,7 @@ var PluginCard = ({
   const description = (isRTL ? plugin.description_ar : plugin.description_en) || plugin.description_en || plugin.description || "";
   const rawTypeKey = String(plugin.plugin_type ?? "");
   const typeKey = rawTypeKey === "adk_artifact" && plugin.adk_kind ? String(plugin.adk_kind) : rawTypeKey;
-  const typeLabel = TYPE_LABELS[typeKey] ?? {
+  const typeLabel2 = TYPE_LABELS[typeKey] ?? {
     en: typeKey || "Plugin",
     ar: typeKey || "\u0625\u0636\u0627\u0641\u0629"
   };
@@ -5718,7 +5718,7 @@ var PluginCard = ({
                   {
                     variant: "secondary",
                     className: "text-[10px] font-normal uppercase tracking-wide",
-                    children: isRTL ? typeLabel.ar : typeLabel.en
+                    children: isRTL ? typeLabel2.ar : typeLabel2.en
                   }
                 ),
                 /* @__PURE__ */ jsxs34(
@@ -8679,7 +8679,7 @@ var PluginHero = ({ plugin, activity, isRTL }) => {
   const name = (isRTL ? plugin.name_ar : plugin.name_en) || plugin.name_en || plugin.name || plugin.slug || "";
   const description = (isRTL ? plugin.description_ar : plugin.description_en) || plugin.description_en || plugin.description || "";
   const typeKey = String(plugin.plugin_type ?? "");
-  const typeLabel = TYPE_LABELS2[typeKey] ?? { en: typeKey || "Plugin", ar: typeKey || "\u0625\u0636\u0627\u0641\u0629" };
+  const typeLabel2 = TYPE_LABELS2[typeKey] ?? { en: typeKey || "Plugin", ar: typeKey || "\u0625\u0636\u0627\u0641\u0629" };
   const color = plugin.nav_color || DEFAULT_COLOR2;
   const { Component: Icon } = resolveIcon(plugin.nav_icon);
   const enabled = plugin.enabled_globally !== false;
@@ -8725,7 +8725,7 @@ var PluginHero = ({ plugin, activity, isRTL }) => {
         ] }),
         description && /* @__PURE__ */ jsx51("p", { className: "mt-2.5 text-sm text-muted-foreground max-w-3xl", children: description }),
         /* @__PURE__ */ jsxs45("div", { className: "mt-3 flex items-center gap-2 flex-wrap", children: [
-          /* @__PURE__ */ jsx51(Badge, { variant: "secondary", className: "text-[10px] uppercase tracking-wide", children: isRTL ? typeLabel.ar : typeLabel.en }),
+          /* @__PURE__ */ jsx51(Badge, { variant: "secondary", className: "text-[10px] uppercase tracking-wide", children: isRTL ? typeLabel2.ar : typeLabel2.en }),
           plugin.slug && /* @__PURE__ */ jsx51(Badge, { variant: "outline", className: "text-[10px] font-mono", children: plugin.slug }),
           plugin.version && /* @__PURE__ */ jsxs45(Badge, { variant: "outline", className: "text-[10px] font-mono", children: [
             "v",
@@ -10352,8 +10352,356 @@ var useT2 = () => {
 };
 var useLanguage = () => useT2();
 
-// src/components/sections/SectionBoard.tsx
+// src/components/feedback/FeedbackButton.tsx
 import * as React17 from "react";
+import { MessageSquarePlus } from "lucide-react";
+import { cva as cva3 } from "class-variance-authority";
+import { jsx as jsx62, jsxs as jsxs54 } from "react/jsx-runtime";
+var feedbackButtonVariants = cva3(
+  "inline-flex items-center gap-1.5 font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background",
+  {
+    variants: {
+      variant: {
+        floating: "fixed bottom-5 end-5 z-40 rounded-full bg-primary px-4 py-3 text-sm text-primary-foreground shadow-lg hover:bg-primary/90",
+        inline: "rounded-md px-2.5 py-1.5 text-xs text-muted-foreground hover:bg-secondary/50 hover:text-foreground"
+      }
+    },
+    defaultVariants: { variant: "floating" }
+  }
+);
+var FeedbackButton = React17.forwardRef(
+  ({ variant, language = "en", count, label, onOpen, onClick, className, ...props }, ref) => {
+    const ar = language === "ar";
+    const text = label ?? (ar ? "\u0645\u0644\u0627\u062D\u0638\u0627\u062A" : "Feedback");
+    const handleClick = (e) => {
+      onClick?.(e);
+      onOpen?.();
+    };
+    return /* @__PURE__ */ jsxs54(
+      "button",
+      {
+        ref,
+        type: "button",
+        onClick: handleClick,
+        "aria-label": text,
+        className: cn(feedbackButtonVariants({ variant }), "relative", className),
+        ...props,
+        children: [
+          /* @__PURE__ */ jsx62(MessageSquarePlus, { size: variant === "inline" ? 15 : 18 }),
+          /* @__PURE__ */ jsx62("span", { className: cn(variant === "inline" && "hidden sm:inline"), children: text }),
+          count && count > 0 ? /* @__PURE__ */ jsx62("span", { className: "ms-1 inline-flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground", children: count > 99 ? "99+" : count }) : null
+        ]
+      }
+    );
+  }
+);
+FeedbackButton.displayName = "FeedbackButton";
+
+// src/components/feedback/FeedbackHub.tsx
+import { Plus as Plus2, MessageSquarePlus as MessageSquarePlus2 } from "lucide-react";
+
+// src/components/issues/meta.ts
+var STATUS_COLUMNS = [
+  { key: "todo", en: "To do", ar: "\u0644\u0644\u062A\u0646\u0641\u064A\u0630" },
+  { key: "in_progress", en: "In progress", ar: "\u0642\u064A\u062F \u0627\u0644\u062A\u0646\u0641\u064A\u0630" },
+  { key: "blocked", en: "Blocked", ar: "\u0645\u062D\u0638\u0648\u0631" },
+  { key: "ready_for_review", en: "Review", ar: "\u0644\u0644\u0645\u0631\u0627\u062C\u0639\u0629" },
+  { key: "done", en: "Done", ar: "\u0645\u0643\u062A\u0645\u0644" }
+];
+var statusLabel = (s, lang) => {
+  const col = STATUS_COLUMNS.find((c) => c.key === s);
+  if (!col) return s;
+  return lang === "ar" ? col.ar : col.en;
+};
+var STATUS_TONE = {
+  todo: "neutral",
+  in_progress: "info",
+  blocked: "danger",
+  ready_for_review: "warning",
+  done: "success"
+};
+var TYPE_LABEL = {
+  bug: { en: "Bug", ar: "\u062E\u0644\u0644" },
+  change: { en: "Feature", ar: "\u0645\u064A\u0632\u0629" },
+  question: { en: "Question", ar: "\u0633\u0624\u0627\u0644" },
+  discussion: { en: "Discussion", ar: "\u0646\u0642\u0627\u0634" }
+};
+var typeLabel = (t2, lang) => lang === "ar" ? TYPE_LABEL[t2].ar : TYPE_LABEL[t2].en;
+var ATTACHMENT_MAX_BYTES = 10 * 1024 * 1024;
+var formatTimestamp = (iso, lang) => new Date(iso).toLocaleString(lang === "ar" ? "ar" : void 0, {
+  month: "short",
+  day: "numeric",
+  hour: "2-digit",
+  minute: "2-digit"
+});
+
+// src/components/feedback/FeedbackHub.tsx
+import { Fragment as Fragment16, jsx as jsx63, jsxs as jsxs55 } from "react/jsx-runtime";
+var FeedbackHub = ({
+  open,
+  onOpenChange,
+  issues,
+  language = "en",
+  route,
+  loading = false,
+  onNewIssue,
+  onSelectIssue,
+  title
+}) => {
+  const ar = language === "ar";
+  const heading = title ?? (ar ? "\u0645\u0644\u0627\u062D\u0638\u0627\u062A" : "Feedback");
+  const onThisPage = route ? issues.filter((i) => i.route === route) : [];
+  const elsewhere = route ? issues.filter((i) => i.route !== route) : issues;
+  return /* @__PURE__ */ jsx63(Sheet, { open, onOpenChange, children: /* @__PURE__ */ jsxs55(SheetContent, { side: "right", className: "flex w-full max-w-md flex-col gap-0 p-0 sm:max-w-md", children: [
+    /* @__PURE__ */ jsx63(SheetHeader, { className: "border-b border-border/50 px-5 py-3 text-start", children: /* @__PURE__ */ jsx63(SheetTitle, { className: "text-sm font-semibold", children: heading }) }),
+    /* @__PURE__ */ jsxs55("div", { className: "flex-1 space-y-4 overflow-y-auto p-4", children: [
+      /* @__PURE__ */ jsxs55(Button, { size: "sm", className: "w-full", onClick: onNewIssue, children: [
+        /* @__PURE__ */ jsx63(Plus2, { size: 14 }),
+        " ",
+        ar ? "\u0623\u0628\u0644\u063A \u0639\u0646 \u0634\u064A\u0621 \u062C\u062F\u064A\u062F" : "Report something new"
+      ] }),
+      loading ? /* @__PURE__ */ jsx63("div", { className: "space-y-2", children: [0, 1, 2].map((k) => /* @__PURE__ */ jsx63("div", { className: "h-16 animate-pulse rounded-lg bg-secondary" }, k)) }) : issues.length === 0 ? /* @__PURE__ */ jsx63(
+        EmptyState,
+        {
+          icon: /* @__PURE__ */ jsx63(MessageSquarePlus2, {}),
+          title: ar ? "\u0644\u0627 \u062A\u0648\u062C\u062F \u0645\u0644\u0627\u062D\u0638\u0627\u062A \u0628\u0639\u062F" : "No feedback yet",
+          description: ar ? "\u0644\u0645 \u062A\u064F\u0628\u0644\u0650\u0651\u063A \u0639\u0646 \u0623\u064A \u0634\u064A\u0621 \u062D\u062A\u0649 \u0627\u0644\u0622\u0646. \u0627\u0628\u062F\u0623 \u0628\u0627\u0644\u0632\u0631 \u0623\u0639\u0644\u0627\u0647." : "You haven't reported anything yet. Start with the button above."
+        }
+      ) : /* @__PURE__ */ jsxs55(Fragment16, { children: [
+        route && onThisPage.length > 0 ? /* @__PURE__ */ jsx63(
+          FeedbackGroup,
+          {
+            label: ar ? "\u0641\u064A \u0647\u0630\u0647 \u0627\u0644\u0635\u0641\u062D\u0629" : "On this page",
+            items: onThisPage,
+            language,
+            onSelect: onSelectIssue
+          }
+        ) : null,
+        elsewhere.length > 0 ? /* @__PURE__ */ jsx63(
+          FeedbackGroup,
+          {
+            label: route ? ar ? "\u0641\u064A \u0623\u0645\u0627\u0643\u0646 \u0623\u062E\u0631\u0649" : "Elsewhere" : ar ? "\u0645\u0644\u0627\u062D\u0638\u0627\u062A\u0643" : "Your reports",
+            items: elsewhere,
+            language,
+            onSelect: onSelectIssue
+          }
+        ) : null
+      ] })
+    ] })
+  ] }) });
+};
+FeedbackHub.displayName = "FeedbackHub";
+var FeedbackGroup = ({
+  label,
+  items,
+  language,
+  onSelect
+}) => /* @__PURE__ */ jsxs55("div", { children: [
+  /* @__PURE__ */ jsx63("p", { className: "mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground", children: label }),
+  /* @__PURE__ */ jsx63("ul", { className: "space-y-2", children: items.map((issue) => /* @__PURE__ */ jsx63("li", { children: /* @__PURE__ */ jsxs55(
+    "button",
+    {
+      type: "button",
+      onClick: () => onSelect?.(issue.id),
+      className: cn(
+        "block w-full rounded-lg border border-border/60 bg-card p-3 text-start transition",
+        "hover:border-primary/40 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+      ),
+      children: [
+        /* @__PURE__ */ jsxs55("div", { className: "mb-1 flex items-center gap-2", children: [
+          /* @__PURE__ */ jsxs55("span", { className: "font-mono text-xs text-muted-foreground", children: [
+            "#",
+            issue.number
+          ] }),
+          /* @__PURE__ */ jsx63(StatusBadge, { tone: STATUS_TONE[issue.status], className: "text-[10px]", children: statusLabel(issue.status, language) }),
+          /* @__PURE__ */ jsx63("span", { className: "ms-auto text-[10px] uppercase tracking-wider text-muted-foreground", children: typeLabel(issue.type, language) })
+        ] }),
+        /* @__PURE__ */ jsx63("p", { className: "line-clamp-2 text-sm font-medium text-foreground", children: issue.title }),
+        /* @__PURE__ */ jsx63("p", { className: "mt-1 text-[11px] text-muted-foreground", children: formatTimestamp(issue.createdAt, language) })
+      ]
+    }
+  ) }, issue.id)) })
+] });
+FeedbackGroup.displayName = "FeedbackHubGroup";
+
+// src/components/feedback/MotorFeedbackLauncher.tsx
+import * as React18 from "react";
+import { MessageSquarePlus as MessageSquarePlus3 } from "lucide-react";
+import { jsx as jsx64, jsxs as jsxs56 } from "react/jsx-runtime";
+var FAB_W = 132;
+var FAB_H = 48;
+var DRAG_THRESHOLD = 5;
+var clampToViewport = (left, top) => {
+  if (typeof window === "undefined") return { left, top };
+  const maxLeft = Math.max(0, window.innerWidth - FAB_W);
+  const maxTop = Math.max(0, window.innerHeight - FAB_H);
+  return {
+    left: Math.min(Math.max(0, left), maxLeft),
+    top: Math.min(Math.max(0, top), maxTop)
+  };
+};
+var MotorFeedbackLauncher = ({
+  project,
+  publishableKey,
+  apiBase,
+  language = "en",
+  sdkSrc = "/motor-feedback.js",
+  theme = "auto",
+  defaultType = "bug",
+  reporterEmail,
+  reporterName,
+  label
+}) => {
+  const ar = language === "ar";
+  const text = label ?? (ar ? "\u0645\u0644\u0627\u062D\u0638\u0627\u062A" : "Feedback");
+  const storageKey = `motor-feedback-fab:${project}`;
+  const triggerRef = React18.useRef(null);
+  const handleRef = React18.useRef(null);
+  const [pos, setPos] = React18.useState(null);
+  const drag = React18.useRef({
+    active: false,
+    moved: false,
+    startX: 0,
+    startY: 0,
+    dx: 0,
+    dy: 0
+  });
+  const active = Boolean(project && publishableKey && apiBase);
+  React18.useEffect(() => {
+    if (!active || typeof window === "undefined") return;
+    try {
+      const raw = window.localStorage.getItem(storageKey);
+      if (raw) {
+        const parsed = JSON.parse(raw);
+        if (typeof parsed.left === "number" && typeof parsed.top === "number") {
+          setPos(clampToViewport(parsed.left, parsed.top));
+        }
+      }
+    } catch {
+    }
+  }, [active, storageKey]);
+  React18.useEffect(() => {
+    if (!active) return;
+    let cancelled = false;
+    const mount = () => {
+      if (cancelled || handleRef.current || !window.MotorFeedback || !triggerRef.current) return;
+      handleRef.current = window.MotorFeedback.mountFeedbackHub({
+        trigger: triggerRef.current,
+        project,
+        publishableKey,
+        apiBase,
+        theme,
+        defaultType,
+        title: text,
+        reporterEmail,
+        reporterName
+      });
+    };
+    if (window.MotorFeedback) {
+      mount();
+    } else {
+      let script = document.querySelector(`script[src="${sdkSrc}"]`);
+      if (!script) {
+        script = document.createElement("script");
+        script.src = sdkSrc;
+        script.async = true;
+        document.body.appendChild(script);
+      }
+      script.addEventListener("load", mount);
+    }
+    return () => {
+      cancelled = true;
+      handleRef.current?.destroy();
+      handleRef.current = null;
+    };
+  }, [active, project, publishableKey, apiBase, theme, defaultType, text, reporterEmail, reporterName, sdkSrc]);
+  const handlePointerDown = (e) => {
+    if (!triggerRef.current) return;
+    const rect = triggerRef.current.getBoundingClientRect();
+    drag.current = {
+      active: true,
+      moved: false,
+      startX: e.clientX,
+      startY: e.clientY,
+      dx: e.clientX - rect.left,
+      dy: e.clientY - rect.top
+    };
+    try {
+      triggerRef.current.setPointerCapture(e.pointerId);
+    } catch {
+    }
+  };
+  const handlePointerMove = (e) => {
+    const d = drag.current;
+    if (!d.active) return;
+    if (!d.moved) {
+      if (Math.abs(e.clientX - d.startX) <= DRAG_THRESHOLD && Math.abs(e.clientY - d.startY) <= DRAG_THRESHOLD) {
+        return;
+      }
+      d.moved = true;
+    }
+    setPos(clampToViewport(e.clientX - d.dx, e.clientY - d.dy));
+  };
+  const handlePointerUp = (e) => {
+    const d = drag.current;
+    if (!d.active) return;
+    d.active = false;
+    try {
+      triggerRef.current?.releasePointerCapture(e.pointerId);
+    } catch {
+    }
+    if (d.moved) {
+      setPos((cur) => {
+        if (cur && typeof window !== "undefined") {
+          try {
+            window.localStorage.setItem(storageKey, JSON.stringify(cur));
+          } catch {
+          }
+        }
+        return cur;
+      });
+    }
+  };
+  const handleClickCapture = (e) => {
+    if (drag.current.moved) {
+      e.preventDefault();
+      e.stopPropagation();
+      drag.current.moved = false;
+    }
+  };
+  if (!active) return null;
+  const positioned = pos !== null;
+  const style = positioned ? { left: pos.left, top: pos.top, right: "auto", bottom: "auto", touchAction: "none" } : { touchAction: "none" };
+  return /* @__PURE__ */ jsxs56(
+    "button",
+    {
+      ref: triggerRef,
+      type: "button",
+      "aria-label": text,
+      title: ar ? "\u0627\u0633\u062D\u0628 \u0644\u062A\u062D\u0631\u064A\u0643 \u0627\u0644\u0632\u0631" : "Drag to move",
+      onPointerDown: handlePointerDown,
+      onPointerMove: handlePointerMove,
+      onPointerUp: handlePointerUp,
+      onClickCapture: handleClickCapture,
+      style,
+      className: cn(
+        "fixed z-[2147483000] inline-flex cursor-grab items-center gap-1.5 rounded-full",
+        "bg-primary px-4 py-3 text-sm font-medium text-primary-foreground shadow-lg transition-colors duration-fast ease-standard",
+        "hover:bg-primary/90 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+        "focus-visible:ring-offset-2 ring-offset-background active:cursor-grabbing select-none",
+        !positioned && "bottom-5 end-5"
+      ),
+      children: [
+        /* @__PURE__ */ jsx64(MessageSquarePlus3, { size: 18 }),
+        /* @__PURE__ */ jsx64("span", { children: text })
+      ]
+    }
+  );
+};
+MotorFeedbackLauncher.displayName = "MotorFeedbackLauncher";
+
+// src/components/sections/SectionBoard.tsx
+import * as React19 from "react";
 import {
   DndContext as DndContext3,
   DragOverlay as DragOverlay2,
@@ -10371,8 +10719,8 @@ import {
   arrayMove as arrayMove2
 } from "@dnd-kit/sortable";
 import { CSS as CSS3 } from "@dnd-kit/utilities";
-import { GripVertical as GripVertical3, Settings2 as Settings23, Trash2 as Trash24, Plus as Plus2 } from "lucide-react";
-import { Fragment as Fragment16, jsx as jsx62, jsxs as jsxs54 } from "react/jsx-runtime";
+import { GripVertical as GripVertical3, Settings2 as Settings23, Trash2 as Trash24, Plus as Plus3 } from "lucide-react";
+import { Fragment as Fragment17, jsx as jsx65, jsxs as jsxs57 } from "react/jsx-runtime";
 var T2 = {
   en: {
     edit: "Edit section",
@@ -10412,8 +10760,8 @@ function SectionEditor({
   onSave
 }) {
   const t2 = T2[language];
-  const [draft, setDraft] = React17.useState(section);
-  React17.useEffect(() => {
+  const [draft, setDraft] = React19.useState(section);
+  React19.useEffect(() => {
     if (open) setDraft(section);
   }, [open, section]);
   const settings = Object.entries(draft.settings ?? {});
@@ -10423,12 +10771,12 @@ function SectionEditor({
     setDraft({ ...draft, settings: Object.fromEntries(next.filter(([k]) => k)) });
   };
   const addSetting = () => setDraft({ ...draft, settings: { ...draft.settings ?? {}, "": "" } });
-  return /* @__PURE__ */ jsx62(Dialog, { open, onOpenChange: (o) => !o && onClose(), children: /* @__PURE__ */ jsxs54(DialogContent, { children: [
-    /* @__PURE__ */ jsx62(DialogHeader, { children: /* @__PURE__ */ jsx62(DialogTitle, { children: draft.title || t2.edit }) }),
-    /* @__PURE__ */ jsxs54("div", { className: "space-y-4", children: [
-      /* @__PURE__ */ jsxs54("div", { className: "space-y-1.5", children: [
-        /* @__PURE__ */ jsx62(Label, { htmlFor: "sec-prompt", children: t2.prompt }),
-        /* @__PURE__ */ jsx62(
+  return /* @__PURE__ */ jsx65(Dialog, { open, onOpenChange: (o) => !o && onClose(), children: /* @__PURE__ */ jsxs57(DialogContent, { children: [
+    /* @__PURE__ */ jsx65(DialogHeader, { children: /* @__PURE__ */ jsx65(DialogTitle, { children: draft.title || t2.edit }) }),
+    /* @__PURE__ */ jsxs57("div", { className: "space-y-4", children: [
+      /* @__PURE__ */ jsxs57("div", { className: "space-y-1.5", children: [
+        /* @__PURE__ */ jsx65(Label, { htmlFor: "sec-prompt", children: t2.prompt }),
+        /* @__PURE__ */ jsx65(
           Textarea,
           {
             id: "sec-prompt",
@@ -10438,31 +10786,31 @@ function SectionEditor({
           }
         )
       ] }),
-      /* @__PURE__ */ jsxs54("div", { className: "space-y-1.5", children: [
-        /* @__PURE__ */ jsx62(Label, { children: t2.model }),
-        /* @__PURE__ */ jsxs54(Select, { value: draft.model ?? "", onValueChange: (v) => setDraft({ ...draft, model: v }), children: [
-          /* @__PURE__ */ jsx62(SelectTrigger, { children: /* @__PURE__ */ jsx62(SelectValue, { placeholder: t2.noModel }) }),
-          /* @__PURE__ */ jsx62(SelectContent, { children: models.map((m) => /* @__PURE__ */ jsx62(SelectItem, { value: m.value, children: m.label ?? m.value }, m.value)) })
+      /* @__PURE__ */ jsxs57("div", { className: "space-y-1.5", children: [
+        /* @__PURE__ */ jsx65(Label, { children: t2.model }),
+        /* @__PURE__ */ jsxs57(Select, { value: draft.model ?? "", onValueChange: (v) => setDraft({ ...draft, model: v }), children: [
+          /* @__PURE__ */ jsx65(SelectTrigger, { children: /* @__PURE__ */ jsx65(SelectValue, { placeholder: t2.noModel }) }),
+          /* @__PURE__ */ jsx65(SelectContent, { children: models.map((m) => /* @__PURE__ */ jsx65(SelectItem, { value: m.value, children: m.label ?? m.value }, m.value)) })
         ] })
       ] }),
-      /* @__PURE__ */ jsxs54("div", { className: "space-y-1.5", children: [
-        /* @__PURE__ */ jsx62(Label, { children: t2.settings }),
-        /* @__PURE__ */ jsxs54("div", { className: "space-y-2", children: [
-          settings.map(([k, v], i) => /* @__PURE__ */ jsxs54("div", { className: "flex gap-2", children: [
-            /* @__PURE__ */ jsx62(Input, { placeholder: t2.key, value: k, onChange: (e) => setSetting(i, e.target.value, v) }),
-            /* @__PURE__ */ jsx62(Input, { placeholder: t2.value, value: v, onChange: (e) => setSetting(i, k, e.target.value) })
+      /* @__PURE__ */ jsxs57("div", { className: "space-y-1.5", children: [
+        /* @__PURE__ */ jsx65(Label, { children: t2.settings }),
+        /* @__PURE__ */ jsxs57("div", { className: "space-y-2", children: [
+          settings.map(([k, v], i) => /* @__PURE__ */ jsxs57("div", { className: "flex gap-2", children: [
+            /* @__PURE__ */ jsx65(Input, { placeholder: t2.key, value: k, onChange: (e) => setSetting(i, e.target.value, v) }),
+            /* @__PURE__ */ jsx65(Input, { placeholder: t2.value, value: v, onChange: (e) => setSetting(i, k, e.target.value) })
           ] }, i)),
-          /* @__PURE__ */ jsxs54(Button, { type: "button", variant: "ghost", size: "sm", onClick: addSetting, children: [
-            /* @__PURE__ */ jsx62(Plus2, { className: "h-3.5 w-3.5" }),
+          /* @__PURE__ */ jsxs57(Button, { type: "button", variant: "ghost", size: "sm", onClick: addSetting, children: [
+            /* @__PURE__ */ jsx65(Plus3, { className: "h-3.5 w-3.5" }),
             " ",
             t2.addSetting
           ] })
         ] })
       ] })
     ] }),
-    /* @__PURE__ */ jsxs54(DialogFooter, { children: [
-      /* @__PURE__ */ jsx62(Button, { variant: "secondary", onClick: onClose, children: t2.cancel }),
-      /* @__PURE__ */ jsx62(Button, { onClick: () => onSave(draft), children: t2.save })
+    /* @__PURE__ */ jsxs57(DialogFooter, { children: [
+      /* @__PURE__ */ jsx65(Button, { variant: "secondary", onClick: onClose, children: t2.cancel }),
+      /* @__PURE__ */ jsx65(Button, { onClick: () => onSave(draft), children: t2.save })
     ] })
   ] }) });
 }
@@ -10477,32 +10825,32 @@ function DynamicSection({
   className
 }) {
   const t2 = T2[language];
-  const [editing, setEditing] = React17.useState(false);
-  return /* @__PURE__ */ jsxs54(Card, { className: cn("space-y-3 p-4", className), children: [
-    /* @__PURE__ */ jsxs54("div", { className: "flex items-center gap-2", children: [
-      editMode && /* @__PURE__ */ jsx62(
+  const [editing, setEditing] = React19.useState(false);
+  return /* @__PURE__ */ jsxs57(Card, { className: cn("space-y-3 p-4", className), children: [
+    /* @__PURE__ */ jsxs57("div", { className: "flex items-center gap-2", children: [
+      editMode && /* @__PURE__ */ jsx65(
         "button",
         {
           type: "button",
           "aria-label": "Drag to reorder",
           className: "shrink-0 cursor-grab text-muted-foreground hover:text-foreground",
           ...handleProps,
-          children: /* @__PURE__ */ jsx62(GripVertical3, { className: "h-4 w-4" })
+          children: /* @__PURE__ */ jsx65(GripVertical3, { className: "h-4 w-4" })
         }
       ),
-      /* @__PURE__ */ jsx62("h3", { className: "min-w-0 flex-1 truncate text-sm font-semibold", children: section.title }),
-      section.badge && /* @__PURE__ */ jsx62(Badge, { children: section.badge }),
-      editMode && /* @__PURE__ */ jsxs54(Fragment16, { children: [
-        /* @__PURE__ */ jsx62(Button, { variant: "ghost", size: "sm", className: "h-7 w-7 p-0", "aria-label": t2.edit, onClick: () => setEditing(true), children: /* @__PURE__ */ jsx62(Settings23, { className: "h-4 w-4" }) }),
-        onRemove && /* @__PURE__ */ jsx62(Button, { variant: "ghost", size: "sm", className: "h-7 w-7 p-0 text-destructive", "aria-label": "Remove", onClick: onRemove, children: /* @__PURE__ */ jsx62(Trash24, { className: "h-4 w-4" }) })
+      /* @__PURE__ */ jsx65("h3", { className: "min-w-0 flex-1 truncate text-sm font-semibold", children: section.title }),
+      section.badge && /* @__PURE__ */ jsx65(Badge, { children: section.badge }),
+      editMode && /* @__PURE__ */ jsxs57(Fragment17, { children: [
+        /* @__PURE__ */ jsx65(Button, { variant: "ghost", size: "sm", className: "h-7 w-7 p-0", "aria-label": t2.edit, onClick: () => setEditing(true), children: /* @__PURE__ */ jsx65(Settings23, { className: "h-4 w-4" }) }),
+        onRemove && /* @__PURE__ */ jsx65(Button, { variant: "ghost", size: "sm", className: "h-7 w-7 p-0 text-destructive", "aria-label": "Remove", onClick: onRemove, children: /* @__PURE__ */ jsx65(Trash24, { className: "h-4 w-4" }) })
       ] })
     ] }),
-    /* @__PURE__ */ jsx62("div", { className: "text-sm text-muted-foreground", children: section.content ?? /* @__PURE__ */ jsx62("span", { className: "italic opacity-70", children: t2.empty }) }),
-    editMode && (section.model || section.prompt) && /* @__PURE__ */ jsxs54("div", { className: "flex flex-wrap items-center gap-2 border-t border-border pt-2 text-[11px] text-muted-foreground", children: [
-      section.model && /* @__PURE__ */ jsx62(Badge, { variant: "outline", children: section.model }),
-      section.prompt && /* @__PURE__ */ jsx62("span", { className: "line-clamp-1 flex-1 font-mono opacity-70", children: section.prompt })
+    /* @__PURE__ */ jsx65("div", { className: "text-sm text-muted-foreground", children: section.content ?? /* @__PURE__ */ jsx65("span", { className: "italic opacity-70", children: t2.empty }) }),
+    editMode && (section.model || section.prompt) && /* @__PURE__ */ jsxs57("div", { className: "flex flex-wrap items-center gap-2 border-t border-border pt-2 text-[11px] text-muted-foreground", children: [
+      section.model && /* @__PURE__ */ jsx65(Badge, { variant: "outline", children: section.model }),
+      section.prompt && /* @__PURE__ */ jsx65("span", { className: "line-clamp-1 flex-1 font-mono opacity-70", children: section.prompt })
     ] }),
-    /* @__PURE__ */ jsx62(
+    /* @__PURE__ */ jsx65(
       SectionEditor,
       {
         open: editing,
@@ -10521,7 +10869,7 @@ function DynamicSection({
 function SortableSection(props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable3({ id: props.id });
   const style = { transform: CSS3.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
-  return /* @__PURE__ */ jsx62("div", { ref: setNodeRef, style, children: /* @__PURE__ */ jsx62(DynamicSection, { ...props, handleProps: { ...attributes, ...listeners } }) });
+  return /* @__PURE__ */ jsx65("div", { ref: setNodeRef, style, children: /* @__PURE__ */ jsx65(DynamicSection, { ...props, handleProps: { ...attributes, ...listeners } }) });
 }
 function SectionBoard({
   sections,
@@ -10535,7 +10883,7 @@ function SectionBoard({
 }) {
   const t2 = T2[language];
   const isRTL = language === "ar";
-  const [activeId, setActiveId] = React17.useState(null);
+  const [activeId, setActiveId] = React19.useState(null);
   const sensors = useSensors3(
     useSensor3(PointerSensor3, { activationConstraint: { distance: 4 } }),
     useSensor3(KeyboardSensor3, { coordinateGetter: sortableKeyboardCoordinates3 })
@@ -10554,10 +10902,10 @@ function SectionBoard({
   const grid = cn("grid gap-3", columns === 2 ? "sm:grid-cols-2" : "grid-cols-1");
   const active = sections.find((s) => s.id === activeId);
   if (!editMode) {
-    return /* @__PURE__ */ jsx62("div", { dir: isRTL ? "rtl" : "ltr", className: cn(grid, className), children: sections.map((s) => /* @__PURE__ */ jsx62(DynamicSection, { section: s, language, models }, s.id)) });
+    return /* @__PURE__ */ jsx65("div", { dir: isRTL ? "rtl" : "ltr", className: cn(grid, className), children: sections.map((s) => /* @__PURE__ */ jsx65(DynamicSection, { section: s, language, models }, s.id)) });
   }
-  return /* @__PURE__ */ jsxs54("div", { dir: isRTL ? "rtl" : "ltr", className: cn("space-y-3", className), children: [
-    /* @__PURE__ */ jsxs54(
+  return /* @__PURE__ */ jsxs57("div", { dir: isRTL ? "rtl" : "ltr", className: cn("space-y-3", className), children: [
+    /* @__PURE__ */ jsxs57(
       DndContext3,
       {
         sensors,
@@ -10566,7 +10914,7 @@ function SectionBoard({
         onDragEnd,
         onDragCancel: () => setActiveId(null),
         children: [
-          /* @__PURE__ */ jsx62(SortableContext3, { items: sections.map((s) => s.id), strategy: verticalListSortingStrategy3, children: /* @__PURE__ */ jsx62("div", { className: grid, children: sections.map((s) => /* @__PURE__ */ jsx62(
+          /* @__PURE__ */ jsx65(SortableContext3, { items: sections.map((s) => s.id), strategy: verticalListSortingStrategy3, children: /* @__PURE__ */ jsx65("div", { className: grid, children: sections.map((s) => /* @__PURE__ */ jsx65(
             SortableSection,
             {
               id: s.id,
@@ -10579,12 +10927,12 @@ function SectionBoard({
             },
             s.id
           )) }) }),
-          /* @__PURE__ */ jsx62(DragOverlay2, { children: active ? /* @__PURE__ */ jsx62(DynamicSection, { section: active, editMode: true, models, language, className: "shadow-lg" }) : null })
+          /* @__PURE__ */ jsx65(DragOverlay2, { children: active ? /* @__PURE__ */ jsx65(DynamicSection, { section: active, editMode: true, models, language, className: "shadow-lg" }) : null })
         ]
       }
     ),
-    onAddSection && /* @__PURE__ */ jsxs54(Button, { variant: "outline", className: "w-full border-dashed", onClick: onAddSection, children: [
-      /* @__PURE__ */ jsx62(Plus2, { className: "h-4 w-4" }),
+    onAddSection && /* @__PURE__ */ jsxs57(Button, { variant: "outline", className: "w-full border-dashed", onClick: onAddSection, children: [
+      /* @__PURE__ */ jsx65(Plus3, { className: "h-4 w-4" }),
       " ",
       t2.addSection
     ] })
@@ -10726,6 +11074,8 @@ export {
   EntityNetworkGraph,
   ErrorTrackingPage,
   EventMapPanel,
+  FeedbackButton,
+  FeedbackHub,
   ForgotForm_default as ForgotForm,
   Form,
   FormControl,
@@ -10775,6 +11125,7 @@ export {
   MenubarSubTrigger,
   MenubarTrigger,
   MiniBarChart,
+  MotorFeedbackLauncher,
   NativeSelect,
   NavigationMenu,
   NavigationMenuContent,
@@ -10913,6 +11264,7 @@ export {
   cn,
   computeRules,
   computeScore,
+  feedbackButtonVariants,
   hexToHSL,
   isHSL,
   isValidColor,
