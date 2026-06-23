@@ -5,8 +5,9 @@ import {
   Building2, Database, FileText, ScrollText, Zap, Network, Download, Fingerprint,
   User as UserIcon, LogOut,
 } from "lucide-react";
-import { AdminShell, NavItem } from "./AdminShell";
-import { RealtimeDot, LangToggle, UserMenu, PlatformSwitcher, PageHeader } from "./Bits";
+import { AdminShell, NavItemDef as NavItem } from "./AdminShell";
+import { UserDropdown } from "./UserDropdown";
+import { RealtimeDot, LangToggle, PlatformSwitcher, PageHeader } from "./Bits";
 import { StatCard } from "../data/StatCard";
 import { Button } from "../primitives/Button";
 
@@ -43,7 +44,7 @@ export const FortDashboard: StoryObj = {
         headerRight={
           <>
             <LangToggle label="عربي" onToggle={() => {}} />
-            <UserMenu email="admin@sentra.local" items={[{ label: "Profile", icon: <UserIcon className="h-4 w-4" />, onClick: () => {} }, { label: "Sign out", icon: <LogOut className="h-4 w-4" />, onClick: () => {}, danger: true }]} />
+            <UserDropdown email="admin@sentra.local" items={[{ label: "Profile", icon: <UserIcon className="h-4 w-4" />, onClick: () => {} }, { label: "Sign out", icon: <LogOut className="h-4 w-4" />, onClick: () => {}, danger: true }]} />
           </>
         }
       >
