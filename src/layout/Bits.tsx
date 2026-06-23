@@ -1,5 +1,6 @@
 import * as React from "react";
 import { ChevronDown, Languages, Building2 } from "lucide-react";
+// UserMenu now lives in UserDropdown.tsx (decomposed into UserDropdown + UserDropdownItem).
 
 // ── RealtimeDot ───────────────────────────────────────────────────────────────
 export interface RealtimeDotProps {
@@ -31,47 +32,6 @@ export function LangToggle({ label, onToggle }: LangToggleProps) {
   );
 }
 
-// ── UserMenu ──────────────────────────────────────────────────────────────────
-export interface UserMenuItem {
-  label: string;
-  icon?: React.ReactNode;
-  onClick: () => void;
-  danger?: boolean;
-}
-export interface UserMenuProps {
-  email: string;
-  items: UserMenuItem[];
-  primary?: string;
-}
-/** UserMenu — an avatar + email button with a dropdown of actions. */
-export function UserMenu({ email, items, primary = "#7c3aed" }: UserMenuProps) {
-  const [open, setOpen] = React.useState(false);
-  const ref = React.useRef<HTMLDivElement>(null);
-  React.useEffect(() => {
-    const close = (e: MouseEvent) => { if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false); };
-    document.addEventListener("mousedown", close);
-    return () => document.removeEventListener("mousedown", close);
-  }, []);
-  const initial = (email || "?").charAt(0).toUpperCase();
-  return (
-    <div className="relative" ref={ref}>
-      <button onClick={() => setOpen((v) => !v)} className="flex items-center gap-2 rounded-full py-1 pe-3 ps-1 transition hover:bg-white/5">
-        <span className="flex h-8 w-8 items-center justify-center rounded-full text-sm font-semibold text-white" style={{ background: `linear-gradient(135deg, ${primary}, #4f46e5)` }}>{initial}</span>
-        <span className="max-w-[160px] truncate text-sm text-slate-300">{email}</span>
-        <ChevronDown className="h-4 w-4 text-slate-500" />
-      </button>
-      {open && (
-        <div className="absolute end-0 mt-2 w-44 overflow-hidden rounded-xl border border-slate-800 bg-slate-900 shadow-xl">
-          {items.map((it, i) => (
-            <button key={i} onClick={() => { setOpen(false); it.onClick(); }} className={`flex w-full items-center gap-2 px-4 py-2.5 text-start text-sm hover:bg-white/5 ${it.danger ? "text-red-400" : "text-slate-200"}`}>
-              {it.icon}{it.label}
-            </button>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ── PlatformSwitcher ──────────────────────────────────────────────────────────
 export interface PlatformOption { id: string; name: string }
