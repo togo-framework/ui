@@ -79,6 +79,23 @@ interface CheckboxProps extends React.InputHTMLAttributes<HTMLInputElement> {
 /** Checkbox — a violet-accented checkbox. */
 declare function Checkbox({ className, ...props }: CheckboxProps): React.JSX.Element;
 
+type AvatarSize = "sm" | "md" | "lg";
+interface AvatarProps {
+    /** Text to derive the initial from (name/email), used when no `src`/`icon`. */
+    text?: string;
+    /** An image URL. */
+    src?: string;
+    /** An icon element (e.g. a brand glyph) shown instead of an initial. */
+    icon?: React.ReactNode;
+    size?: AvatarSize;
+    /** Gradient base colour. */
+    primary?: string;
+    className?: string;
+}
+/** Avatar — a gradient initial/icon/image chip used by the brand, user menu, and
+ * profile/record heroes. */
+declare function Avatar({ text, src, icon, size, primary, className }: AvatarProps): React.JSX.Element;
+
 interface ModalProps {
     open: boolean;
     onClose: () => void;
@@ -159,35 +176,64 @@ interface DetailGridProps {
 /** DetailGrid — a key/value grid for record detail/profile views. */
 declare function DetailGrid({ fields, columns }: DetailGridProps): React.JSX.Element;
 
-interface NavItem {
-    key: string;
-    label: string;
-    icon: React.ReactNode;
-    active?: boolean;
+interface SidebarProps extends React.HTMLAttributes<HTMLElement> {
 }
-interface Brand {
+/** Sidebar — the fixed admin rail (RTL-aware: border-e + inline-start placement). */
+declare function Sidebar({ className, children, ...props }: SidebarProps): React.JSX.Element;
+interface BrandProps {
     name: string;
     subtitle?: string;
-    primary?: string;
     icon?: React.ReactNode;
+    primary?: string;
+    logoUrl?: string;
 }
-interface AdminShellProps {
-    brand: Brand;
-    nav: NavItem[];
-    groupLabel?: string;
-    onNavigate: (key: string) => void;
-    /** Slot below the brand (e.g. a PlatformSwitcher). */
-    sidebarTop?: React.ReactNode;
-    /** Left side of the top bar (e.g. a RealtimeDot). */
-    headerLeft?: React.ReactNode;
-    /** Right side of the top bar (e.g. LangToggle + UserMenu). */
-    headerRight?: React.ReactNode;
+/** Brand — the sidebar header (icon/logo chip + name + subtitle). */
+declare function Brand({ name, subtitle, icon, primary, logoUrl }: BrandProps): React.JSX.Element;
+interface SidebarSectionProps {
+    label?: string;
     children: React.ReactNode;
+    className?: string;
 }
-/** AdminShell — the prism-style admin layout: a fixed sidebar (RTL-aware: it sits
- * at the inline-start, so it flips to the right under dir="rtl") + a top bar + main
- * content. Fully presentational — pass nav items, brand, and slots. */
-declare function AdminShell({ brand, nav, groupLabel, onNavigate, sidebarTop, headerLeft, headerRight, children }: AdminShellProps): React.JSX.Element;
+/** SidebarSection — a labeled group of nav items. */
+declare function SidebarSection({ label, children, className }: SidebarSectionProps): React.JSX.Element;
+interface NavItemProps {
+    icon?: React.ReactNode;
+    label: string;
+    active?: boolean;
+    onClick?: () => void;
+    /** Accent for the active tint (defaults to the CSS --primary var). */
+    primary?: string;
+}
+/** NavItem — a single sidebar nav entry (button-based; wire routing via onClick). */
+declare function NavItem({ icon, label, active, onClick, primary }: NavItemProps): React.JSX.Element;
+
+interface UserDropdownItemProps {
+    icon?: React.ReactNode;
+    label: string;
+    onClick: () => void;
+    danger?: boolean;
+}
+/** UserDropdownItem — a single entry in the user menu. */
+declare function UserDropdownItem({ icon, label, onClick, danger }: UserDropdownItemProps): React.JSX.Element;
+interface UserDropdownProps {
+    email: string;
+    primary?: string;
+    avatarUrl?: string;
+    /** Provide either declarative `items` or compose `<UserDropdownItem>` children. */
+    items?: (UserDropdownItemProps & {
+        key?: React.Key;
+    })[];
+    children?: React.ReactNode;
+}
+/** UserDropdown — avatar + email trigger with a dropdown menu. Compose items via
+ * the `items` prop or `<UserDropdownItem>` children. */
+declare function UserDropdown({ email, primary, avatarUrl, items, children }: UserDropdownProps): React.JSX.Element;
+interface TopbarProps {
+    left?: React.ReactNode;
+    right?: React.ReactNode;
+}
+/** Topbar — the app header bar with left + right slots. */
+declare function Topbar({ left, right }: TopbarProps): React.JSX.Element;
 
 interface RealtimeDotProps {
     connected: boolean;
@@ -201,19 +247,6 @@ interface LangToggleProps {
 }
 /** LangToggle — a small language switch button (the label is the OTHER language). */
 declare function LangToggle({ label, onToggle }: LangToggleProps): React.JSX.Element;
-interface UserMenuItem {
-    label: string;
-    icon?: React.ReactNode;
-    onClick: () => void;
-    danger?: boolean;
-}
-interface UserMenuProps {
-    email: string;
-    items: UserMenuItem[];
-    primary?: string;
-}
-/** UserMenu — an avatar + email button with a dropdown of actions. */
-declare function UserMenu({ email, items, primary }: UserMenuProps): React.JSX.Element;
 interface PlatformOption {
     id: string;
     name: string;
@@ -239,6 +272,102 @@ declare function Toast({ message }: {
     message: string;
 }): React.JSX.Element | null;
 
+interface NavItemDef {
+    key: string;
+    label: string;
+    icon: React.ReactNode;
+    active?: boolean;
+}
+interface BrandInfo {
+    name: string;
+    subtitle?: string;
+    primary?: string;
+    icon?: React.ReactNode;
+    logoUrl?: string;
+}
+interface AdminShellProps {
+    brand: BrandInfo;
+    nav: NavItemDef[];
+    groupLabel?: string;
+    onNavigate: (key: string) => void;
+    sidebarTop?: React.ReactNode;
+    headerLeft?: React.ReactNode;
+    headerRight?: React.ReactNode;
+    children: React.ReactNode;
+}
+/** AdminShell — a convenience composition of the layout atoms (Sidebar + Brand +
+ * SidebarSection/NavItem + Topbar). For full control, compose those atoms directly
+ * instead of using this wrapper. */
+declare function AdminShell({ brand, nav, groupLabel, onNavigate, sidebarTop, headerLeft, headerRight, children }: AdminShellProps): React.JSX.Element;
+
+interface BrandPanelProps {
+    name: string;
+    tagline?: string;
+    icon?: React.ReactNode;
+    primary?: string;
+    footer?: React.ReactNode;
+}
+/** BrandPanel — the branded showcase half of the auth split-screen. */
+declare function BrandPanel({ name, tagline, icon, primary, footer }: BrandPanelProps): React.JSX.Element;
+interface AuthLayoutProps {
+    /** The brand showcase panel (right on LTR, left on RTL). */
+    brand: BrandPanelProps;
+    /** The form side (AuthCard). */
+    children: React.ReactNode;
+}
+/** AuthLayout — the split-screen auth shell: form on one side, BrandPanel on the
+ * other (the panel sits at the inline-end, so it flips under dir="rtl"). */
+declare function AuthLayout({ brand, children }: AuthLayoutProps): React.JSX.Element;
+interface AuthCardProps {
+    title: string;
+    subtitle?: string;
+    footer?: React.ReactNode;
+    children: React.ReactNode;
+}
+/** AuthCard — the titled form container used on every auth screen. */
+declare function AuthCard({ title, subtitle, footer, children }: AuthCardProps): React.JSX.Element;
+/** AuthError — an inline form error line (renders nothing when empty). */
+declare function AuthError({ children }: {
+    children?: React.ReactNode;
+}): React.JSX.Element | null;
+interface AuthMethod {
+    key?: React.Key;
+    label: string;
+    icon?: React.ReactNode;
+    onClick: () => void;
+}
+interface AuthMethodsProps {
+    methods: AuthMethod[];
+    /** Divider label (e.g. "or"). */
+    dividerLabel?: string;
+    className?: string;
+}
+/** AuthMethods — a divider + alternative sign-in buttons (dev login, OAuth, …). */
+declare function AuthMethods({ methods, dividerLabel, className }: AuthMethodsProps): React.JSX.Element | null;
+
+interface EntityHeaderProps {
+    /** Text to derive the avatar initial from (or pass `avatarUrl`/`icon`). */
+    title: string;
+    avatarText?: string;
+    avatarUrl?: string;
+    icon?: React.ReactNode;
+    primary?: string;
+    /** A small line under the title (id, email, role…). */
+    subtitle?: React.ReactNode;
+    /** Badges/meta shown next to the subtitle. */
+    meta?: React.ReactNode;
+    /** Right-aligned action buttons. */
+    actions?: React.ReactNode;
+}
+/** EntityHeader — the avatar-hero header shared by profile pages and record
+ * detail views (user/role/platform). */
+declare function EntityHeader({ title, avatarText, avatarUrl, icon, primary, subtitle, meta, actions }: EntityHeaderProps): React.JSX.Element;
+/** ProfileCard — a titled section block for profile/detail bodies (re-exports Card semantics). */
+declare function ProfileSection({ title, children }: {
+    title: string;
+    children: React.ReactNode;
+}): React.JSX.Element;
+
 declare function cn(...inputs: ClassValue[]): string;
 
-export { AdminShell, type AdminShellProps, AreaChart, type AreaChartProps, Badge, type BadgeProps, type BadgeTone, BarChart, type BarChartProps, type BarDatum, type Brand, Button, type ButtonProps, type ButtonSize, type ButtonVariant, Card, type CardProps, CardTitle, type CellKind, Checkbox, type CheckboxProps, type Column, DataTable, type DataTableProps, type DetailField, DetailGrid, type DetailGridProps, Field, type FieldProps, Gauge, type GaugeProps, Input, type InputProps, LangToggle, type LangToggleProps, Modal, type ModalProps, type NavItem, PageHeader, type PageHeaderProps, type PlatformOption, PlatformSwitcher, type PlatformSwitcherProps, RealtimeDot, type RealtimeDotProps, SearchInput, type SearchInputProps, Select, type SelectProps, type SeriesPoint, StatCard, type StatCardProps, StatusPill, type StatusPillProps, Switch, type SwitchProps, Toast, UserMenu, type UserMenuItem, type UserMenuProps, cn, inputCls };
+export { AdminShell, type AdminShellProps, AreaChart, type AreaChartProps, AuthCard, type AuthCardProps, AuthError, AuthLayout, type AuthLayoutProps, type AuthMethod, AuthMethods, type AuthMethodsProps, Avatar, type AvatarProps, type AvatarSize, Badge, type BadgeProps, type BadgeTone, BarChart, type BarChartProps, type BarDatum, Brand, type BrandInfo, BrandPanel, type BrandPanelProps, type BrandProps, Button, type ButtonProps, type ButtonSize, type ButtonVariant, Card, type CardProps, CardTitle, type CellKind, Checkbox, type CheckboxProps, type Column, DataTable, type DataTableProps, type DetailField, DetailGrid, type DetailGridProps, EntityHeader, type EntityHeaderProps, Field, type FieldProps, Gauge, type GaugeProps, Input, type InputProps, LangToggle, type LangToggleProps, Modal, type ModalProps, NavItem, type NavItemDef, type NavItemProps, PageHeader, type PageHeaderProps, type PlatformOption, PlatformSwitcher, type PlatformSwitcherProps, ProfileSection, RealtimeDot, type RealtimeDotProps, SearchInput, type SearchInputProps, Select, type SelectProps, type SeriesPoint, Sidebar, type SidebarProps, SidebarSection, type SidebarSectionProps, StatCard, type StatCardProps, StatusPill, type StatusPillProps, Switch, type SwitchProps, Toast, Topbar, type TopbarProps, UserDropdown, UserDropdownItem, type UserDropdownItemProps, type UserDropdownProps, cn, inputCls };
