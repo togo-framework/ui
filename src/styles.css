@@ -12,6 +12,10 @@
  * @font-face block and fall back to Inter/system-ui.
  */
 
+/* Enter/exit animation utilities (animate-in/out, fade/zoom/slide) used by the
+ * overlay components (Dialog, DropdownMenu, Sheet, Popover, Tooltip, Accordion). */
+@import "tw-animate-css";
+
 /* ── Lusail Font Family (Arabic + Latin bilingual) ── */
 @font-face {
   font-family: 'Lusail';
