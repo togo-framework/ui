@@ -286,21 +286,22 @@
   --pz-shadow-glow-intense: 0 0 50px hsl(170 72% 36% / 0.40), 0 0 80px hsl(170 72% 36% / 0.20);
 }
 
-/* ── Global resets (apply via @layer base in product globals.css) ── */
-/* Products should add this in their own globals.css:
- *
- *   @layer base {
- *     * { @apply border-border; }
- *     body {
- *       @apply bg-background text-foreground antialiased;
- *       font-family: 'Lusail', 'Inter', system-ui, sans-serif;
- *       font-size: var(--font-size-base);
- *       line-height: var(--line-height-base);
- *       letter-spacing: 0.01em;
- *     }
- *     [dir="rtl"] body { font-family: var(--font-arabic), system-ui, sans-serif; }
- *   }
- */
+/* ── Global resets ──
+ * Tailwind v4 changed the default border/ring color to `currentColor`, so any
+ * component using a bare `border` would render a black/foreground-colored outline
+ * (especially visible in light mode). Default the border + ring + placeholder to
+ * the design tokens so every component is correct without the consumer adding it. */
+@layer base {
+  *, ::before, ::after {
+    border-color: hsl(var(--border));
+  }
+  * {
+    outline-color: hsl(var(--ring) / 0.5);
+  }
+  ::placeholder {
+    color: hsl(var(--muted-foreground));
+  }
+}
 
 /* ── RTL utilities (include in product @layer utilities) ── */
 /* [dir="rtl"] .rtl-flip { transform: scaleX(-1); }
