@@ -26,7 +26,7 @@ const preview: Preview = {
     (Story, ctx) => {
       const dir = ctx.globals.direction || "ltr";
       return (
-        <div dir={dir} className="tg-root" style={{ padding: 24, minHeight: "100%" }}>
+        <div dir={dir} className="tg-root dark" style={{ padding: 24, minHeight: "100%" }}>
           <Story />
         </div>
       );
