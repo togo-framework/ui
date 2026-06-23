@@ -11583,7 +11583,9 @@ var T2 = {
     screenshot: "Screenshot",
     submit: "Submit",
     picking: "Click any element to pin it \xB7 Esc to cancel",
-    empty: "No issues yet on this page."
+    empty: "No issues yet on this page.",
+    repin: "Re-pin",
+    clear: "Clear"
   },
   ar: {
     title: "\u0627\u0644\u0645\u0644\u0627\u062D\u0638\u0627\u062A",
@@ -11604,7 +11606,9 @@ var T2 = {
     screenshot: "\u0644\u0642\u0637\u0629 \u0634\u0627\u0634\u0629",
     submit: "\u0625\u0631\u0633\u0627\u0644",
     picking: "\u0627\u0646\u0642\u0631 \u0623\u064A \u0639\u0646\u0635\u0631 \u0644\u062A\u062B\u0628\u064A\u062A\u0647 \xB7 Esc \u0644\u0644\u0625\u0644\u063A\u0627\u0621",
-    empty: "\u0644\u0627 \u0645\u0634\u0643\u0644\u0627\u062A \u0639\u0644\u0649 \u0647\u0630\u0647 \u0627\u0644\u0635\u0641\u062D\u0629 \u0628\u0639\u062F."
+    empty: "\u0644\u0627 \u0645\u0634\u0643\u0644\u0627\u062A \u0639\u0644\u0649 \u0647\u0630\u0647 \u0627\u0644\u0635\u0641\u062D\u0629 \u0628\u0639\u062F.",
+    repin: "\u0625\u0639\u0627\u062F\u0629 \u0627\u0644\u062A\u062B\u0628\u064A\u062A",
+    clear: "\u0645\u0633\u062D"
   }
 };
 function cssPath(el) {
@@ -11822,12 +11826,29 @@ function FeedbackWidget({
           ] }),
           /* @__PURE__ */ jsxs65("div", { children: [
             /* @__PURE__ */ jsx77(Label, { className: "mb-1.5 block text-xs uppercase tracking-wide text-muted-foreground", children: t2.location }),
-            /* @__PURE__ */ jsxs65("div", { className: "flex items-center gap-2", children: [
-              /* @__PURE__ */ jsxs65(Button, { variant: "outline", size: "sm", className: "gap-1.5", onClick: startPin, children: [
-                /* @__PURE__ */ jsx77(MapPin2, { className: "h-3.5 w-3.5" }),
-                location ? `<${location.tag}>` : t2.pin
+            location ? /* @__PURE__ */ jsxs65("div", { className: "flex items-center gap-2 rounded-lg border border-border bg-muted/40 p-2", children: [
+              /* @__PURE__ */ jsx77("span", { className: "flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary", children: /* @__PURE__ */ jsx77(MapPin2, { className: "h-4 w-4" }) }),
+              /* @__PURE__ */ jsxs65("span", { className: "min-w-0 flex-1", children: [
+                /* @__PURE__ */ jsx77("span", { className: "block truncate text-sm font-medium", children: location.label || `<${location.tag}>` }),
+                /* @__PURE__ */ jsxs65("span", { className: "block truncate font-mono text-[10px] text-muted-foreground", children: [
+                  location.tag,
+                  " \xB7 ",
+                  location.selector
+                ] })
               ] }),
-              location && /* @__PURE__ */ jsx77(Button, { variant: "ghost", size: "sm", className: "h-7 w-7 rounded-full p-0", onClick: () => setLocation(null), children: /* @__PURE__ */ jsx77(X3, { className: "h-3.5 w-3.5" }) })
+              /* @__PURE__ */ jsx77(Button, { variant: "ghost", size: "sm", className: "h-7 shrink-0 px-2 text-xs", onClick: startPin, children: t2.repin }),
+              /* @__PURE__ */ jsx77(
+                "button",
+                {
+                  onClick: () => setLocation(null),
+                  "aria-label": t2.clear,
+                  className: "shrink-0 rounded p-1 text-muted-foreground hover:bg-accent hover:text-destructive",
+                  children: /* @__PURE__ */ jsx77(X3, { className: "h-4 w-4" })
+                }
+              )
+            ] }) : /* @__PURE__ */ jsxs65(Button, { variant: "outline", size: "sm", className: "gap-1.5", onClick: startPin, children: [
+              /* @__PURE__ */ jsx77(MapPin2, { className: "h-3.5 w-3.5" }),
+              t2.pin
             ] })
           ] }),
           /* @__PURE__ */ jsxs65("div", { children: [

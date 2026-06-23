@@ -61,12 +61,12 @@ const T = {
     report: "Report an issue", onPage: "On this page", issues: (n: number) => `${n} issue${n === 1 ? "" : "s"} on this page`,
     type: "Type", titleL: "Title", brief: "Brief description", details: "Details", detailsPh: "Steps to reproduce, expected vs actual, etc.",
     url: "Page URL", location: "Location", pin: "Pin location", attach: "Attachments", addFile: "Add file", screenshot: "Screenshot", submit: "Submit",
-    picking: "Click any element to pin it · Esc to cancel", empty: "No issues yet on this page." },
+    picking: "Click any element to pin it · Esc to cancel", empty: "No issues yet on this page.", repin: "Re-pin", clear: "Clear" },
   ar: { title: "الملاحظات", intro: "وجدت خطأ أو لديك فكرة أو سؤال حول هذه الصفحة؟ سيُرفق بالصفحة الحالية.",
     report: "أبلغ عن مشكلة", onPage: "على هذه الصفحة", issues: (n: number) => `${n} مشكلة على هذه الصفحة`,
     type: "النوع", titleL: "العنوان", brief: "وصف مختصر", details: "التفاصيل", detailsPh: "خطوات إعادة الإنتاج، المتوقع مقابل الفعلي…",
     url: "رابط الصفحة", location: "الموقع", pin: "تثبيت موقع", attach: "المرفقات", addFile: "إضافة ملف", screenshot: "لقطة شاشة", submit: "إرسال",
-    picking: "انقر أي عنصر لتثبيته · Esc للإلغاء", empty: "لا مشكلات على هذه الصفحة بعد." },
+    picking: "انقر أي عنصر لتثبيته · Esc للإلغاء", empty: "لا مشكلات على هذه الصفحة بعد.", repin: "إعادة التثبيت", clear: "مسح" },
 };
 
 function cssPath(el: Element): string {
@@ -250,12 +250,26 @@ export function FeedbackWidget({
               </div>
               <div>
                 <Label className="mb-1.5 block text-xs uppercase tracking-wide text-muted-foreground">{t.location}</Label>
-                <div className="flex items-center gap-2">
+                {location ? (
+                  <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 p-2">
+                    <span className="flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                      <MapPin className="h-4 w-4" />
+                    </span>
+                    <span className="min-w-0 flex-1">
+                      <span className="block truncate text-sm font-medium">{location.label || `<${location.tag}>`}</span>
+                      <span className="block truncate font-mono text-[10px] text-muted-foreground">{location.tag} · {location.selector}</span>
+                    </span>
+                    <Button variant="ghost" size="sm" className="h-7 shrink-0 px-2 text-xs" onClick={startPin}>{t.repin}</Button>
+                    <button onClick={() => setLocation(null)} aria-label={t.clear}
+                      className="shrink-0 rounded p-1 text-muted-foreground hover:bg-accent hover:text-destructive">
+                      <X className="h-4 w-4" />
+                    </button>
+                  </div>
+                ) : (
                   <Button variant="outline" size="sm" className="gap-1.5" onClick={startPin}>
-                    <MapPin className="h-3.5 w-3.5" />{location ? `<${location.tag}>` : t.pin}
+                    <MapPin className="h-3.5 w-3.5" />{t.pin}
                   </Button>
-                  {location && <Button variant="ghost" size="sm" className="h-7 w-7 rounded-full p-0" onClick={() => setLocation(null)}><X className="h-3.5 w-3.5" /></Button>}
-                </div>
+                )}
               </div>
               <div>
                 <Label className="mb-1.5 block text-xs uppercase tracking-wide text-muted-foreground">{t.attach}</Label>
