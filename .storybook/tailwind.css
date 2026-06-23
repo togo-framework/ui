@@ -1,0 +1,9 @@
+@import "tailwindcss";
+@import "../src/styles.css";
+
+/* Storybook canvas: dark, Lusail. */
+body {
+  font-family: var(--tg-font);
+  background: #020617;
+  color: #e2e8f0;
+}
