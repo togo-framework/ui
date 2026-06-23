@@ -8,9 +8,9 @@ import {
   SheetDescription,
   SheetFooter,
   SheetClose,
-} from "../ui/sheet";
-import { Button } from "../ui/button";
-import { Badge } from "../ui/badge";
+} from "../components/ui/sheet";
+import { Button } from "../components/ui/button";
+import { Badge } from "../components/ui/badge";
 
 const meta: Meta = {
   title: "Primitives/Sheet",

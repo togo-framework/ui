@@ -13,9 +13,9 @@ import {
   SidebarGroupContent,
   SidebarTrigger,
   SidebarInset,
-} from "../ui/sidebar";
+} from "../components/ui/sidebar";
 import { LayoutDashboard, Users, AlertTriangle, FileText, Settings, Shield } from "lucide-react";
-import { Badge } from "../ui/badge";
+import { Badge } from "../components/ui/badge";
 
 const meta: Meta = {
   title: "Primitives/Sidebar",

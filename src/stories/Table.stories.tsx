@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { Badge } from "../ui/badge";
+import { Badge } from "../components/ui/badge";
 import {
   Table,
   TableHeader,
@@ -9,7 +9,7 @@ import {
   TableCell,
   TableCaption,
   TableFooter,
-} from "../ui/table";
+} from "../components/ui/table";
 
 const meta: Meta = {
   title: "Primitives/Table",

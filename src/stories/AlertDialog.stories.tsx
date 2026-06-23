@@ -9,8 +9,8 @@ import {
   AlertDialogFooter,
   AlertDialogAction,
   AlertDialogCancel,
-} from "../ui/alert-dialog";
-import { Button } from "../ui/button";
+} from "../components/ui/alert-dialog";
+import { Button } from "../components/ui/button";
 
 const meta: Meta = {
   title: "Primitives/AlertDialog",

@@ -12,8 +12,8 @@ import {
   DropdownMenuSub,
   DropdownMenuSubTrigger,
   DropdownMenuSubContent,
-} from "../ui/dropdown-menu";
-import { Button } from "../ui/button";
+} from "../components/ui/dropdown-menu";
+import { Button } from "../components/ui/button";
 import { MoreHorizontal, User, Settings, LogOut, Download } from "lucide-react";
 
 const meta: Meta = {

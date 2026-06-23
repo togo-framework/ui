@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
-import { HoverCard, HoverCardTrigger, HoverCardContent } from "../ui/hover-card";
-import { Badge } from "../ui/badge";
-import { Avatar, AvatarFallback } from "../ui/avatar";
-import { Button } from "../ui/button";
+import { HoverCard, HoverCardTrigger, HoverCardContent } from "../components/ui/hover-card";
+import { Badge } from "../components/ui/badge";
+import { Avatar, AvatarFallback } from "../components/ui/avatar";
+import { Button } from "../components/ui/button";
 
 const meta: Meta = {
   title: "Primitives/HoverCard",

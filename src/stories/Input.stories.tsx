@@ -1,8 +1,8 @@
 import type { Meta, StoryObj } from "@storybook/react";
 import { expect, userEvent, within } from "@storybook/test";
 import { Search } from "lucide-react";
-import { Input } from "../ui/input";
-import { Label } from "../ui/label";
+import { Input } from "../components/ui/input";
+import { Label } from "../components/ui/label";
 
 const meta: Meta<typeof Input> = {
   title: "Primitives/Input",
