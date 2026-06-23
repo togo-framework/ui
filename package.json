@@ -14,14 +14,20 @@
     },
     "./styles.css": "./dist/styles.css"
   },
-  "files": ["dist", "public"],
-  "sideEffects": ["**/*.css"],
+  "files": [
+    "dist",
+    "public"
+  ],
+  "sideEffects": [
+    "**/*.css"
+  ],
   "scripts": {
     "build": "tsup",
     "dev": "tsup --watch",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prepare": "tsup"
   },
   "peerDependencies": {
     "react": ">=18",
