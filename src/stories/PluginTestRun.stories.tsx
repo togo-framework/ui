@@ -3,7 +3,7 @@ import { TestRunPanel } from '../components/plugin-detail'
 import { fakeRunRequest } from './_fixtures/plugin'
 
 const meta: Meta<typeof TestRunPanel> = {
-  title: 'Plugins/Test Run',
+  title: "Components/Plugin Test Run",
   component: TestRunPanel,
   parameters: { layout: 'padded' },
 }

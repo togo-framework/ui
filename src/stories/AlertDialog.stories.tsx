@@ -13,7 +13,7 @@ import {
 import { Button } from "../components/ui/button";
 
 const meta: Meta = {
-  title: "Primitives/AlertDialog",
+  title: "Components/AlertDialog",
   tags: ["autodocs"],
   parameters: { layout: "centered" },
 };

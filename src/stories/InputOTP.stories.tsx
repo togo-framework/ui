@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { InputOTP, InputOTPGroup, InputOTPSlot, InputOTPSeparator } from "../components/ui/input-otp";
 
 const meta: Meta = {
-  title: "Primitives/InputOTP",
+  title: "Components/InputOTP",
   tags: ["autodocs"],
   parameters: { layout: "centered" },
 };

@@ -17,7 +17,7 @@ import { Button } from "../components/ui/button";
 import { MoreHorizontal, User, Settings, LogOut, Download } from "lucide-react";
 
 const meta: Meta = {
-  title: "Primitives/DropdownMenu",
+  title: "Components/DropdownMenu",
   tags: ["autodocs"],
   parameters: { layout: "centered" },
 };

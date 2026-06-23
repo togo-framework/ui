@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { ProfileView } from "../components/profile/ProfileView";
 
 const meta: Meta<typeof ProfileView> = {
-  title: "Auth/Profile",
+  title: "Pages/Profile",
   component: ProfileView,
   tags: ["autodocs"],
   parameters: {

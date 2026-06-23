@@ -3,7 +3,7 @@ import { IssueDetail } from "../components/errors";
 import { SAMPLE_ISSUES } from "./_fixtures/errors";
 
 const meta: Meta<typeof IssueDetail> = {
-  title: "Logs/Issue Detail",
+  title: "Components/Issue Detail",
   component: IssueDetail,
   parameters: { docs: { story: { inline: false, height: "640px" } } },
 };

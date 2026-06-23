@@ -3,7 +3,7 @@ import { DirectionalArrow } from "../components/ui/directional-arrow";
 import { Button } from "../components/ui/button";
 
 const meta: Meta<typeof DirectionalArrow> = {
-  title: "Primitives/Directional Arrow",
+  title: "Components/Directional Arrow",
   component: DirectionalArrow,
   tags: ["autodocs"],
   argTypes: {

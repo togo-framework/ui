@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import SentraLoading from "../components/ui/sentra-loading";
 import { Skeleton } from "../components/ui/skeleton";
 
-const meta: Meta = { title: "Feedback/Loading", tags: ["autodocs"] };
+const meta: Meta = { title: "Components/Loading", tags: ["autodocs"] };
 export default meta;
 
 export const Spinner: StoryObj = { render: () => <SentraLoading /> };

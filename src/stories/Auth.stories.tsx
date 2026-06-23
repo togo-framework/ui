@@ -119,7 +119,7 @@ const defaultAuthClient = makeMockAuthClient(700, 'success', 'all-methods')
 // ── AuthFlow — full flow wrapper ──────────────────────────────────────────────
 
 const AuthFlowMeta: Meta<typeof AuthFlow> = {
-  title: "Auth/AuthFlow",
+  title: "Pages/Auth Flow",
   component: AuthFlow,
   tags: ['autodocs'],
   parameters: {

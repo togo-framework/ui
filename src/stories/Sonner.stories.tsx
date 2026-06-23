@@ -3,7 +3,7 @@ import { Toaster as SonnerToaster, toast as sonnerToast } from "../components/ui
 import { Button } from "../components/ui/button";
 
 const meta: Meta = {
-  title: "Primitives/Sonner (Toast)",
+  title: "Components/Sonner (Toast)",
   tags: ["autodocs"],
   parameters: { layout: "centered" },
   decorators: [

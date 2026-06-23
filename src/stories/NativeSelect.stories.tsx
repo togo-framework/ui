@@ -2,7 +2,7 @@ import type { Meta, StoryObj } from "@storybook/react";
 import { NativeSelect } from "../components/ui/native-select";
 
 const meta: Meta<typeof NativeSelect> = {
-  title: "Primitives/Native Select",
+  title: "Components/Native Select",
   component: NativeSelect,
   tags: ["autodocs"],
   parameters: { layout: "centered" },

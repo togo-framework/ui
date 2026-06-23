@@ -6,7 +6,7 @@ import {
 
 // Workflow manager — step nodes, the read-only pipeline, and the drag-and-drop editor.
 const meta: Meta<typeof WorkflowStepNode> = {
-  title: 'Workflow/Workflow',
+  title: "Components/Workflow",
   component: WorkflowStepNode,
   parameters: { layout: 'padded' },
 }

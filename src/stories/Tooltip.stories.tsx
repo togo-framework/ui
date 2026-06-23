@@ -4,7 +4,7 @@ import { Button } from "../components/ui/button";
 import { Info } from "lucide-react";
 
 const meta: Meta = {
-  title: "Primitives/Tooltip",
+  title: "Components/Tooltip",
   tags: ["autodocs"],
   parameters: { layout: "centered" },
   decorators: [(Story) => <TooltipProvider><Story /></TooltipProvider>],

@@ -185,7 +185,7 @@ const bulkActions_en: DataTableBulkAction[] = [
 // ── Meta ──────────────────────────────────────────────────────────────────────
 
 const meta: Meta<typeof DataTable> = {
-  title: "Primitives/DataTable",
+  title: "Components/DataTable",
   component: DataTable as React.ComponentType,
   tags: ['autodocs'],
   parameters: {

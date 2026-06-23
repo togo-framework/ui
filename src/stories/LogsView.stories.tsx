@@ -147,7 +147,7 @@ const ControlledLogsView = ({
 // ─── Meta ─────────────────────────────────────────────────────────────────────
 
 const meta: Meta<typeof LogsView> = {
-  title: 'Logs/LogsView',
+  title: "Components/Logs View",
   component: LogsView,
   tags: ['autodocs'],
   parameters: {

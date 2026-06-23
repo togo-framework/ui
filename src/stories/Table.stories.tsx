@@ -12,7 +12,7 @@ import {
 } from "../components/ui/table";
 
 const meta: Meta = {
-  title: "Primitives/Table",
+  title: "Components/Table",
   tags: ["autodocs"],
 };
 

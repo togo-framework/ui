@@ -3,7 +3,7 @@ import * as React from "react";
 import { IconPicker } from "../components/pickers/IconPicker";
 
 const meta: Meta<typeof IconPicker> = {
-  title: "Pickers/IconPicker",
+  title: "Components/Icon Picker",
   component: IconPicker,
   tags: ["autodocs"],
 };

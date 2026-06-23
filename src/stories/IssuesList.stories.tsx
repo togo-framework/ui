@@ -5,7 +5,7 @@ import type { ErrorFilter, IssueSort, Issue } from "../components/errors";
 import { SAMPLE_ISSUES } from "./_fixtures/errors";
 
 const meta: Meta<typeof IssuesList> = {
-  title: "Logs/Issues List",
+  title: "Components/Issues List",
   component: IssuesList,
   parameters: { docs: { story: { inline: false, height: "560px" } } },
 };

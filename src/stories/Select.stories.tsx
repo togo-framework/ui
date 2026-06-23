@@ -11,7 +11,7 @@ import {
 import { Label } from "../components/ui/label";
 
 const meta: Meta = {
-  title: "Primitives/Select",
+  title: "Components/Select",
   tags: ["autodocs"],
 };
 
