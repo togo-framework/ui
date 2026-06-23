@@ -56,8 +56,11 @@ export * from "./components/plugin";
 // ── plugin detail + workflow manager (steps pipeline/editor) ──
 export * from "./components/plugin-detail";
 
-// ── logs viewer ──
+// ── logs viewer (raw / live-tail) ──
 export * from "./components/logs";
+
+// ── error tracking (Sentry-style: issues list + detail + page) ──
+export * from "./components/errors";
 
 // ── realtime loading ──
 export { default as SentraLoading } from "./components/ui/sentra-loading";

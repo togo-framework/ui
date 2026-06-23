@@ -16,6 +16,13 @@
  * overlay components (Dialog, DropdownMenu, Sheet, Popover, Tooltip, Accordion). */
 @import "tw-animate-css";
 
+/* Class-based dark mode: `dark:` utilities follow the `.dark` class (toggled on
+ * <html>), NOT the OS prefers-color-scheme. Without this, components using
+ * `dark:` variants render their dark styles whenever the OS is dark — even in
+ * light mode — causing low-contrast text. This keeps `dark:` in sync with the
+ * token theming (which is also `.dark`-driven). */
+@custom-variant dark (&:where(.dark, .dark *));
+
 /* ── Lusail Font Family (Arabic + Latin bilingual) ── */
 @font-face {
   font-family: 'Lusail';

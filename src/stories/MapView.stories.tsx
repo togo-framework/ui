@@ -5,7 +5,7 @@ const meta: Meta<typeof MapView> = {
   title: "Map/MapView",
   component: MapView,
   tags: ["autodocs"],
-  parameters: { fullBleed: true, docs: { description: { component: "Real OpenStreetMap via leaflet (SSR-safe, client-only)." } } },
+  parameters: { fullBleed: true, docs: { story: { inline: false, height: "520px" }, description: { component: "Real OpenStreetMap via leaflet (SSR-safe, client-only)." } } },
 };
 export default meta;
 type Story = StoryObj<typeof MapView>;

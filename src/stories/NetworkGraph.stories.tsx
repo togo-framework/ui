@@ -5,6 +5,7 @@ const meta: Meta<typeof NetworkGraph> = {
   title: "Network/NetworkGraph",
   component: NetworkGraph,
   tags: ["autodocs"],
+  parameters: { docs: { story: { inline: false, height: "460px" } } },
 };
 export default meta;
 

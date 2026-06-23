@@ -156,11 +156,14 @@ import { Button, Dialog, DataTable } from "@togo-framework/ui";
 | [PluginSparkline](./PluginSparkline.md) · [SourceBadge](./SourceBadge.md) | Activity sparkline + source badge. |
 | [PluginDetailLayout](./PluginDetailLayout.md) · [PluginAppearanceSection](./PluginAppearanceSection.md) · [TestRunPanel](./TestRunPanel.md) | Plugin detail page parts. |
 
-## Logs
+## Logs & Error Tracking
 
 | Component | Description |
 |---|---|
-| [LogsView](./LogsView.md) | Realtime/streamed, filterable log viewer. |
+| [LogsView](./LogsView.md) | Realtime/streamed, filterable raw log viewer. |
+| [ErrorTrackingPage](./ErrorTrackingPage.md) | Sentry-style error page (issues list + detail, master/detail). |
+| [IssuesList](./IssuesList.md) | Sentry issues table: level, title/culprit, frequency, events/users, assignee. |
+| [IssueDetail](./IssueDetail.md) | Error detail: stack trace (source context), breadcrumbs, tags, frequency chart. |
 
 ## Feedback / Loading
 

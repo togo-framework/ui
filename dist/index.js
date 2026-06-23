@@ -8777,9 +8777,366 @@ var LogsView = ({
 };
 LogsView.displayName = "LogsView";
 
+// src/components/errors/IssuesList.tsx
+import { Search as Search6 } from "lucide-react";
+
+// src/components/errors/shared.ts
+function levelTone(level) {
+  switch (level) {
+    case "fatal":
+    case "error":
+      return "danger";
+    case "warning":
+      return "warning";
+    case "info":
+      return "info";
+    default:
+      return "neutral";
+  }
+}
+function relTime(iso) {
+  try {
+    return formatRelativeTime(iso);
+  } catch {
+    return iso;
+  }
+}
+var STR = {
+  en: {
+    issues: "Issues",
+    search: "Search errors\u2026",
+    allLevels: "All levels",
+    environment: "Environment",
+    allEnvs: "All environments",
+    range: "Time range",
+    events: "Events",
+    users: "Users",
+    lastSeen: "Last seen",
+    firstSeen: "First seen",
+    assignee: "Assignee",
+    noIssues: "No errors \u{1F389}",
+    resolve: "Resolve",
+    ignore: "Ignore",
+    resolved: "Resolved",
+    ignored: "Ignored",
+    unresolved: "Unresolved",
+    stackTrace: "Stack trace",
+    breadcrumbs: "Breadcrumbs",
+    tags: "Tags",
+    overview: "Overview",
+    occurrences: "Occurrences",
+    inApp: "In app",
+    selectIssue: "Select an issue to see details",
+    sortLastSeen: "Last seen",
+    sortFirstSeen: "First seen",
+    sortEvents: "Events",
+    sortUsers: "Users",
+    title: "Error",
+    culprit: "Location"
+  },
+  ar: {
+    issues: "\u0627\u0644\u0623\u062E\u0637\u0627\u0621",
+    search: "\u0627\u0628\u062D\u062B \u0641\u064A \u0627\u0644\u0623\u062E\u0637\u0627\u0621\u2026",
+    allLevels: "\u0643\u0644 \u0627\u0644\u0645\u0633\u062A\u0648\u064A\u0627\u062A",
+    environment: "\u0627\u0644\u0628\u064A\u0626\u0629",
+    allEnvs: "\u0643\u0644 \u0627\u0644\u0628\u064A\u0626\u0627\u062A",
+    range: "\u0627\u0644\u0646\u0637\u0627\u0642 \u0627\u0644\u0632\u0645\u0646\u064A",
+    events: "\u0627\u0644\u0623\u062D\u062F\u0627\u062B",
+    users: "\u0627\u0644\u0645\u0633\u062A\u062E\u062F\u0645\u0648\u0646",
+    lastSeen: "\u0622\u062E\u0631 \u0638\u0647\u0648\u0631",
+    firstSeen: "\u0623\u0648\u0644 \u0638\u0647\u0648\u0631",
+    assignee: "\u0627\u0644\u0645\u064F\u0633\u0646\u064E\u062F",
+    noIssues: "\u0644\u0627 \u0623\u062E\u0637\u0627\u0621 \u{1F389}",
+    resolve: "\u062D\u0644\u0651",
+    ignore: "\u062A\u062C\u0627\u0647\u0644",
+    resolved: "\u0645\u064F\u062D\u064E\u0644",
+    ignored: "\u0645\u064F\u062A\u062C\u0627\u0647\u064E\u0644",
+    unresolved: "\u063A\u064A\u0631 \u0645\u064F\u062D\u064E\u0644",
+    stackTrace: "\u062A\u062A\u0628\u0651\u0639 \u0627\u0644\u0645\u0643\u062F\u0651\u0633",
+    breadcrumbs: "\u0641\u062A\u0627\u062A \u0627\u0644\u062A\u062A\u0628\u0651\u0639",
+    tags: "\u0627\u0644\u0648\u0633\u0648\u0645",
+    overview: "\u0646\u0638\u0631\u0629 \u0639\u0627\u0645\u0629",
+    occurrences: "\u0645\u0631\u0627\u062A \u0627\u0644\u062D\u062F\u0648\u062B",
+    inApp: "\u062F\u0627\u062E\u0644 \u0627\u0644\u062A\u0637\u0628\u064A\u0642",
+    selectIssue: "\u0627\u062E\u062A\u0631 \u062E\u0637\u0623\u064B \u0644\u0639\u0631\u0636 \u0627\u0644\u062A\u0641\u0627\u0635\u064A\u0644",
+    sortLastSeen: "\u0622\u062E\u0631 \u0638\u0647\u0648\u0631",
+    sortFirstSeen: "\u0623\u0648\u0644 \u0638\u0647\u0648\u0631",
+    sortEvents: "\u0627\u0644\u0623\u062D\u062F\u0627\u062B",
+    sortUsers: "\u0627\u0644\u0645\u0633\u062A\u062E\u062F\u0645\u0648\u0646",
+    title: "\u0627\u0644\u062E\u0637\u0623",
+    culprit: "\u0627\u0644\u0645\u0648\u0642\u0639"
+  }
+};
+
+// src/components/errors/IssuesList.tsx
+import { jsx as jsx51, jsxs as jsxs45 } from "react/jsx-runtime";
+var LEVELS = ["fatal", "error", "warning", "info", "debug"];
+function Spark({ values }) {
+  if (!values || values.length === 0) return /* @__PURE__ */ jsx51("div", { className: "h-7 w-20" });
+  const max = Math.max(...values, 1);
+  return /* @__PURE__ */ jsx51("div", { className: "flex h-7 w-20 items-end gap-px", "aria-hidden": true, children: values.map((v, i) => /* @__PURE__ */ jsx51("span", { className: "flex-1 rounded-sm bg-muted-foreground/40", style: { height: `${Math.max(8, v / max * 100)}%` } }, i)) });
+}
+function IssuesList({
+  issues,
+  selectedId,
+  onSelectIssue,
+  language = "en",
+  filter = {},
+  onFilterChange,
+  sort = "lastSeen",
+  onSortChange,
+  environments = [],
+  className
+}) {
+  const t2 = STR[language];
+  const dir = language === "ar" ? "rtl" : "ltr";
+  const setFilter = (patch) => onFilterChange?.({ ...filter, ...patch });
+  return /* @__PURE__ */ jsxs45("div", { dir, className: cn("flex h-full flex-col", className), children: [
+    /* @__PURE__ */ jsxs45("div", { className: "flex flex-wrap items-center gap-2 border-b border-border p-3", children: [
+      /* @__PURE__ */ jsxs45("div", { className: "relative min-w-[180px] flex-1", children: [
+        /* @__PURE__ */ jsx51(Search6, { className: "pointer-events-none absolute top-1/2 size-4 -translate-y-1/2 text-muted-foreground ltr:left-2.5 rtl:right-2.5" }),
+        /* @__PURE__ */ jsx51(
+          Input,
+          {
+            value: filter.q ?? "",
+            onChange: (e) => setFilter({ q: e.target.value }),
+            placeholder: t2.search,
+            className: "ltr:pl-8 rtl:pr-8"
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsxs45(Select, { value: filter.levels?.[0] ?? "all", onValueChange: (v) => setFilter({ levels: v === "all" ? void 0 : [v] }), children: [
+        /* @__PURE__ */ jsx51(SelectTrigger, { className: "w-[130px]", children: /* @__PURE__ */ jsx51(SelectValue, { placeholder: t2.allLevels }) }),
+        /* @__PURE__ */ jsxs45(SelectContent, { children: [
+          /* @__PURE__ */ jsx51(SelectItem, { value: "all", children: t2.allLevels }),
+          LEVELS.map((l) => /* @__PURE__ */ jsx51(SelectItem, { value: l, className: "capitalize", children: l }, l))
+        ] })
+      ] }),
+      environments.length > 0 && /* @__PURE__ */ jsxs45(Select, { value: filter.environment ?? "all", onValueChange: (v) => setFilter({ environment: v === "all" ? void 0 : v }), children: [
+        /* @__PURE__ */ jsx51(SelectTrigger, { className: "w-[150px]", children: /* @__PURE__ */ jsx51(SelectValue, { placeholder: t2.allEnvs }) }),
+        /* @__PURE__ */ jsxs45(SelectContent, { children: [
+          /* @__PURE__ */ jsx51(SelectItem, { value: "all", children: t2.allEnvs }),
+          environments.map((e) => /* @__PURE__ */ jsx51(SelectItem, { value: e, children: e }, e))
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs45(Select, { value: sort, onValueChange: (v) => onSortChange?.(v), children: [
+        /* @__PURE__ */ jsx51(SelectTrigger, { className: "w-[140px]", children: /* @__PURE__ */ jsx51(SelectValue, {}) }),
+        /* @__PURE__ */ jsxs45(SelectContent, { children: [
+          /* @__PURE__ */ jsx51(SelectItem, { value: "lastSeen", children: t2.sortLastSeen }),
+          /* @__PURE__ */ jsx51(SelectItem, { value: "firstSeen", children: t2.sortFirstSeen }),
+          /* @__PURE__ */ jsx51(SelectItem, { value: "count", children: t2.sortEvents }),
+          /* @__PURE__ */ jsx51(SelectItem, { value: "userCount", children: t2.sortUsers })
+        ] })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxs45("div", { className: "hidden items-center gap-3 border-b border-border bg-muted/30 px-4 py-2 text-xs font-medium uppercase tracking-wide text-muted-foreground md:flex", children: [
+      /* @__PURE__ */ jsx51("span", { className: "flex-1", children: t2.title }),
+      /* @__PURE__ */ jsx51("span", { className: "w-20 text-center", children: t2.events }),
+      /* @__PURE__ */ jsxs45("span", { className: "w-24 text-center", children: [
+        t2.events,
+        " / ",
+        t2.users
+      ] }),
+      /* @__PURE__ */ jsx51("span", { className: "w-24 text-end", children: t2.lastSeen })
+    ] }),
+    /* @__PURE__ */ jsx51("div", { className: "min-h-0 flex-1 overflow-auto", children: issues.length === 0 ? /* @__PURE__ */ jsx51("div", { className: "p-10 text-center text-sm text-muted-foreground", children: t2.noIssues }) : issues.map((iss) => {
+      const active = iss.id === selectedId;
+      const initial = (iss.assignee?.name || iss.assignee?.email || "?").charAt(0).toUpperCase();
+      return /* @__PURE__ */ jsxs45(
+        "button",
+        {
+          onClick: () => onSelectIssue?.(iss),
+          className: cn(
+            "flex w-full items-center gap-3 border-b border-border/60 px-4 py-3 text-start transition hover:bg-muted/40",
+            active && "bg-primary/5 ltr:border-s-2 ltr:border-s-primary rtl:border-e-2 rtl:border-e-primary"
+          ),
+          children: [
+            /* @__PURE__ */ jsxs45("div", { className: "min-w-0 flex-1", children: [
+              /* @__PURE__ */ jsxs45("div", { className: "flex items-center gap-2", children: [
+                /* @__PURE__ */ jsx51(StatusBadge, { tone: levelTone(iss.level), children: /* @__PURE__ */ jsx51("span", { className: "uppercase", children: iss.level }) }),
+                /* @__PURE__ */ jsx51("span", { className: "truncate text-sm font-semibold", children: iss.title })
+              ] }),
+              iss.culprit && /* @__PURE__ */ jsx51("p", { className: "mt-0.5 truncate font-mono text-xs text-muted-foreground", children: iss.culprit }),
+              /* @__PURE__ */ jsxs45("div", { className: "mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground", children: [
+                iss.environment && /* @__PURE__ */ jsx51("span", { children: iss.environment }),
+                iss.status && iss.status !== "unresolved" && /* @__PURE__ */ jsx51("span", { className: "capitalize", children: iss.status === "resolved" ? t2.resolved : t2.ignored }),
+                /* @__PURE__ */ jsx51("span", { className: "md:hidden", children: relTime(iss.lastSeen) })
+              ] })
+            ] }),
+            /* @__PURE__ */ jsx51("div", { className: "hidden md:block", children: /* @__PURE__ */ jsx51(Spark, { values: iss.frequency }) }),
+            /* @__PURE__ */ jsxs45("div", { className: "hidden w-20 text-center md:block", children: [
+              /* @__PURE__ */ jsx51("div", { className: "text-sm font-semibold tabular-nums", children: iss.count.toLocaleString() }),
+              /* @__PURE__ */ jsx51("div", { className: "text-[11px] text-muted-foreground", children: t2.events })
+            ] }),
+            /* @__PURE__ */ jsxs45("div", { className: "hidden w-24 text-center md:block", children: [
+              /* @__PURE__ */ jsx51("div", { className: "text-sm font-semibold tabular-nums", children: (iss.userCount ?? 0).toLocaleString() }),
+              /* @__PURE__ */ jsx51("div", { className: "text-[11px] text-muted-foreground", children: t2.users })
+            ] }),
+            /* @__PURE__ */ jsxs45("div", { className: "hidden w-24 items-center justify-end gap-2 md:flex", children: [
+              /* @__PURE__ */ jsx51("span", { className: "text-xs text-muted-foreground", children: relTime(iss.lastSeen) }),
+              iss.assignee && /* @__PURE__ */ jsxs45(Avatar, { className: "size-6", children: [
+                iss.assignee.avatarUrl && /* @__PURE__ */ jsx51(AvatarImage, { src: iss.assignee.avatarUrl, alt: initial }),
+                /* @__PURE__ */ jsx51(AvatarFallback, { className: "text-[10px]", children: initial })
+              ] })
+            ] })
+          ]
+        },
+        iss.id
+      );
+    }) })
+  ] });
+}
+
+// src/components/errors/IssueDetail.tsx
+import * as React12 from "react";
+import { ChevronRight as ChevronRight5, CheckCircle2 as CheckCircle22, BellOff } from "lucide-react";
+import { jsx as jsx52, jsxs as jsxs46 } from "react/jsx-runtime";
+function Stat({ label, value }) {
+  return /* @__PURE__ */ jsxs46("div", { className: "rounded-lg border border-border bg-card px-3 py-2", children: [
+    /* @__PURE__ */ jsx52("div", { className: "text-[11px] uppercase tracking-wide text-muted-foreground", children: label }),
+    /* @__PURE__ */ jsx52("div", { className: "text-sm font-semibold tabular-nums", children: value })
+  ] });
+}
+function Frame({ frame }) {
+  const [open, setOpen] = React12.useState(Boolean(frame.inApp && frame.context?.length));
+  const loc = [frame.filename, frame.lineno].filter(Boolean).join(":") + (frame.colno ? `:${frame.colno}` : "");
+  return /* @__PURE__ */ jsxs46(Collapsible, { open, onOpenChange: setOpen, className: cn("border-b border-border/60", !frame.inApp && "opacity-70"), children: [
+    /* @__PURE__ */ jsxs46(CollapsibleTrigger, { className: "flex w-full items-center gap-2 px-3 py-2 text-start hover:bg-muted/40", children: [
+      /* @__PURE__ */ jsx52(ChevronRight5, { className: cn("size-3.5 shrink-0 text-muted-foreground transition-transform", open && "rotate-90") }),
+      /* @__PURE__ */ jsxs46("span", { className: "truncate font-mono text-xs", children: [
+        /* @__PURE__ */ jsx52("span", { className: "text-foreground", children: loc }),
+        frame.function && /* @__PURE__ */ jsxs46("span", { className: "text-muted-foreground", children: [
+          " in ",
+          frame.function
+        ] })
+      ] }),
+      frame.inApp && /* @__PURE__ */ jsx52(Badge, { className: "ms-auto shrink-0 text-[10px]", children: "in app" })
+    ] }),
+    frame.context && frame.context.length > 0 && /* @__PURE__ */ jsx52(CollapsibleContent, { children: /* @__PURE__ */ jsx52("pre", { className: "overflow-auto bg-muted/30 px-3 py-2 font-mono text-xs leading-5", children: frame.context.map((c) => /* @__PURE__ */ jsxs46("div", { className: cn("flex gap-3", c.current && "-mx-3 bg-destructive/10 px-3"), children: [
+      /* @__PURE__ */ jsx52("span", { className: "w-8 shrink-0 select-none text-end text-muted-foreground", children: c.line }),
+      /* @__PURE__ */ jsx52("span", { className: cn(c.current ? "text-foreground" : "text-muted-foreground"), children: c.text })
+    ] }, c.line)) }) })
+  ] });
+}
+function BreadcrumbRow({ b }) {
+  return /* @__PURE__ */ jsxs46("div", { className: "flex items-start gap-3 border-b border-border/60 px-3 py-2 text-xs", children: [
+    /* @__PURE__ */ jsx52("span", { className: "w-16 shrink-0 font-mono text-muted-foreground", children: relTime(b.timestamp) }),
+    b.category && /* @__PURE__ */ jsx52(Badge, { className: "shrink-0 text-[10px]", children: b.category }),
+    /* @__PURE__ */ jsx52("span", { className: "min-w-0 flex-1 break-words text-foreground", children: b.message })
+  ] });
+}
+function IssueDetail({ issue, language = "en", onResolve, onIgnore, className }) {
+  const t2 = STR[language];
+  const dir = language === "ar" ? "rtl" : "ltr";
+  const chart = (issue.frequency ?? []).map((value, i) => ({ label: String(i), value }));
+  return /* @__PURE__ */ jsxs46("div", { dir, className: cn("flex h-full flex-col", className), children: [
+    /* @__PURE__ */ jsxs46("div", { className: "border-b border-border p-4", children: [
+      /* @__PURE__ */ jsxs46("div", { className: "flex items-start justify-between gap-4", children: [
+        /* @__PURE__ */ jsxs46("div", { className: "min-w-0", children: [
+          /* @__PURE__ */ jsxs46("div", { className: "flex items-center gap-2", children: [
+            /* @__PURE__ */ jsx52(StatusBadge, { tone: levelTone(issue.level), children: /* @__PURE__ */ jsx52("span", { className: "uppercase", children: issue.level }) }),
+            /* @__PURE__ */ jsx52("h2", { className: "truncate text-base font-semibold", children: issue.title })
+          ] }),
+          issue.culprit && /* @__PURE__ */ jsx52("p", { className: "mt-1 truncate font-mono text-xs text-muted-foreground", children: issue.culprit })
+        ] }),
+        /* @__PURE__ */ jsxs46("div", { className: "flex shrink-0 gap-2", children: [
+          /* @__PURE__ */ jsxs46(Button, { variant: "outline", size: "sm", onClick: () => onResolve?.(issue), children: [
+            /* @__PURE__ */ jsx52(CheckCircle22, { className: "size-4" }),
+            " ",
+            t2.resolve
+          ] }),
+          /* @__PURE__ */ jsxs46(Button, { variant: "ghost", size: "sm", onClick: () => onIgnore?.(issue), children: [
+            /* @__PURE__ */ jsx52(BellOff, { className: "size-4" }),
+            " ",
+            t2.ignore
+          ] })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs46("div", { className: "mt-3 grid grid-cols-2 gap-2 sm:grid-cols-4", children: [
+        /* @__PURE__ */ jsx52(Stat, { label: t2.events, value: issue.count.toLocaleString() }),
+        /* @__PURE__ */ jsx52(Stat, { label: t2.users, value: (issue.userCount ?? 0).toLocaleString() }),
+        /* @__PURE__ */ jsx52(Stat, { label: t2.firstSeen, value: relTime(issue.firstSeen) }),
+        /* @__PURE__ */ jsx52(Stat, { label: t2.lastSeen, value: relTime(issue.lastSeen) })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxs46("div", { className: "min-h-0 flex-1 overflow-auto p-4", children: [
+      chart.length > 0 && /* @__PURE__ */ jsxs46("div", { className: "mb-4", children: [
+        /* @__PURE__ */ jsx52("div", { className: "mb-2 text-xs font-medium uppercase tracking-wide text-muted-foreground", children: t2.occurrences }),
+        /* @__PURE__ */ jsx52(MiniBarChart, { data: chart, height: 120 })
+      ] }),
+      /* @__PURE__ */ jsxs46(Tabs, { defaultValue: "stack", children: [
+        /* @__PURE__ */ jsxs46(TabsList, { children: [
+          /* @__PURE__ */ jsx52(TabsTrigger, { value: "stack", children: t2.stackTrace }),
+          /* @__PURE__ */ jsx52(TabsTrigger, { value: "breadcrumbs", children: t2.breadcrumbs }),
+          /* @__PURE__ */ jsx52(TabsTrigger, { value: "tags", children: t2.tags })
+        ] }),
+        /* @__PURE__ */ jsx52(TabsContent, { value: "stack", children: /* @__PURE__ */ jsx52("div", { className: "overflow-hidden rounded-lg border border-border", children: (issue.stack ?? []).length === 0 ? /* @__PURE__ */ jsx52("p", { className: "p-4 text-sm text-muted-foreground", children: "\u2014" }) : issue.stack.map((f, i) => /* @__PURE__ */ jsx52(Frame, { frame: f }, i)) }) }),
+        /* @__PURE__ */ jsx52(TabsContent, { value: "breadcrumbs", children: /* @__PURE__ */ jsx52("div", { className: "overflow-hidden rounded-lg border border-border", children: (issue.breadcrumbs ?? []).length === 0 ? /* @__PURE__ */ jsx52("p", { className: "p-4 text-sm text-muted-foreground", children: "\u2014" }) : issue.breadcrumbs.map((b, i) => /* @__PURE__ */ jsx52(BreadcrumbRow, { b }, i)) }) }),
+        /* @__PURE__ */ jsx52(TabsContent, { value: "tags", children: /* @__PURE__ */ jsx52("div", { className: "flex flex-wrap gap-2", children: (issue.tags ?? []).length === 0 ? /* @__PURE__ */ jsx52("p", { className: "text-sm text-muted-foreground", children: "\u2014" }) : issue.tags.map((tag) => /* @__PURE__ */ jsxs46("span", { className: "inline-flex items-center gap-1.5 rounded-md border border-border bg-card px-2 py-1 text-xs", children: [
+          /* @__PURE__ */ jsx52("span", { className: "text-muted-foreground", children: tag.key }),
+          /* @__PURE__ */ jsx52("span", { className: "font-medium", children: tag.value })
+        ] }, tag.key)) }) })
+      ] })
+    ] })
+  ] });
+}
+
+// src/components/errors/ErrorTrackingPage.tsx
+import * as React13 from "react";
+import { ArrowLeft as ArrowLeft5 } from "lucide-react";
+import { jsx as jsx53, jsxs as jsxs47 } from "react/jsx-runtime";
+function ErrorTrackingPage({
+  issues,
+  language = "en",
+  filter,
+  onFilterChange,
+  sort,
+  onSortChange,
+  environments,
+  onResolve,
+  onIgnore,
+  selectedId,
+  onSelectIssue,
+  className
+}) {
+  const t2 = STR[language];
+  const dir = language === "ar" ? "rtl" : "ltr";
+  const [internal, setInternal] = React13.useState(null);
+  const activeId = selectedId !== void 0 ? selectedId : internal;
+  const active = issues.find((i) => i.id === activeId) ?? null;
+  const select = (iss) => {
+    if (selectedId === void 0) setInternal(iss.id);
+    onSelectIssue?.(iss);
+  };
+  return /* @__PURE__ */ jsxs47("div", { dir, className: cn("flex h-[100vh] max-h-full overflow-hidden bg-background text-foreground", className), children: [
+    /* @__PURE__ */ jsx53("div", { className: cn("min-w-0 flex-1 border-border md:max-w-md md:flex-none md:border-e lg:max-w-lg", active && "hidden md:flex md:flex-col"), children: /* @__PURE__ */ jsx53(
+      IssuesList,
+      {
+        issues,
+        selectedId: activeId,
+        onSelectIssue: select,
+        language,
+        filter,
+        onFilterChange,
+        sort,
+        onSortChange,
+        environments
+      }
+    ) }),
+    /* @__PURE__ */ jsx53("div", { className: cn("min-w-0 flex-1", !active && "hidden md:flex md:items-center md:justify-center"), children: active ? /* @__PURE__ */ jsxs47("div", { className: "flex h-full flex-col", children: [
+      /* @__PURE__ */ jsx53("div", { className: "border-b border-border p-2 md:hidden", children: /* @__PURE__ */ jsxs47(Button, { variant: "ghost", size: "sm", onClick: () => selectedId === void 0 ? setInternal(null) : onSelectIssue?.(active), children: [
+        /* @__PURE__ */ jsx53(ArrowLeft5, { className: "size-4 rtl:rotate-180" }),
+        " ",
+        t2.issues
+      ] }) }),
+      /* @__PURE__ */ jsx53(IssueDetail, { issue: active, language, onResolve, onIgnore, className: "min-h-0 flex-1" })
+    ] }) : /* @__PURE__ */ jsx53("p", { className: "hidden p-10 text-center text-sm text-muted-foreground md:block", children: t2.selectIssue }) })
+  ] });
+}
+
 // src/components/ui/sentra-loading.tsx
 import * as LucideIcons2 from "lucide-react";
-import { jsx as jsx51, jsxs as jsxs45 } from "react/jsx-runtime";
+import { jsx as jsx54, jsxs as jsxs48 } from "react/jsx-runtime";
 var SentraLoading = ({
   language = "en",
   dir = "ltr",
@@ -8794,7 +9151,7 @@ var SentraLoading = ({
   if (iconName) {
     Icon = LucideIcons2[iconName];
   }
-  return /* @__PURE__ */ jsxs45(
+  return /* @__PURE__ */ jsxs48(
     "div",
     {
       className: "min-h-screen flex flex-col items-center justify-center gap-6 bg-background",
@@ -8802,31 +9159,31 @@ var SentraLoading = ({
       "aria-label": isAr ? "\u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u0645\u064A\u0644" : "Loading",
       role: "status",
       children: [
-        /* @__PURE__ */ jsxs45("div", { className: "relative flex h-24 w-24 items-center justify-center", children: [
-          /* @__PURE__ */ jsx51("span", { className: "absolute h-20 w-20 rounded-full bg-primary/20 blur-xl animate-pulse" }),
-          /* @__PURE__ */ jsx51(
+        /* @__PURE__ */ jsxs48("div", { className: "relative flex h-24 w-24 items-center justify-center", children: [
+          /* @__PURE__ */ jsx54("span", { className: "absolute h-20 w-20 rounded-full bg-primary/20 blur-xl animate-pulse" }),
+          /* @__PURE__ */ jsx54(
             "span",
             {
               className: "absolute h-24 w-24 rounded-full border border-primary/25 border-t-primary/90 animate-spin",
               style: { animationDuration: "2.5s" }
             }
           ),
-          /* @__PURE__ */ jsx51(
+          /* @__PURE__ */ jsx54(
             "span",
             {
               className: "absolute h-[4.2rem] w-[4.2rem] rounded-full border border-primary/15 border-b-primary/60 animate-spin",
               style: { animationDuration: "1.8s", animationDirection: "reverse" }
             }
           ),
-          Icon ? /* @__PURE__ */ jsx51(Icon, { className: "relative h-10 w-10 text-primary animate-pulse", "aria-hidden": true }) : null
+          Icon ? /* @__PURE__ */ jsx54(Icon, { className: "relative h-10 w-10 text-primary animate-pulse", "aria-hidden": true }) : null
         ] }),
-        /* @__PURE__ */ jsx51("h1", { className: "text-xl font-semibold text-foreground tracking-wide", children: name }),
-        /* @__PURE__ */ jsxs45("div", { className: "flex items-center gap-1.5", "aria-hidden": true, children: [
-          /* @__PURE__ */ jsx51("span", { className: "h-1.5 w-1.5 rounded-full bg-primary/80 animate-bounce", style: { animationDelay: "-0.3s" } }),
-          /* @__PURE__ */ jsx51("span", { className: "h-1.5 w-1.5 rounded-full bg-primary/60 animate-bounce", style: { animationDelay: "-0.15s" } }),
-          /* @__PURE__ */ jsx51("span", { className: "h-1.5 w-1.5 rounded-full bg-primary/40 animate-bounce" })
+        /* @__PURE__ */ jsx54("h1", { className: "text-xl font-semibold text-foreground tracking-wide", children: name }),
+        /* @__PURE__ */ jsxs48("div", { className: "flex items-center gap-1.5", "aria-hidden": true, children: [
+          /* @__PURE__ */ jsx54("span", { className: "h-1.5 w-1.5 rounded-full bg-primary/80 animate-bounce", style: { animationDelay: "-0.3s" } }),
+          /* @__PURE__ */ jsx54("span", { className: "h-1.5 w-1.5 rounded-full bg-primary/60 animate-bounce", style: { animationDelay: "-0.15s" } }),
+          /* @__PURE__ */ jsx54("span", { className: "h-1.5 w-1.5 rounded-full bg-primary/40 animate-bounce" })
         ] }),
-        /* @__PURE__ */ jsx51("span", { className: "sr-only", children: isAr ? "\u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u0645\u064A\u0644..." : "Loading..." })
+        /* @__PURE__ */ jsx54("span", { className: "sr-only", children: isAr ? "\u062C\u0627\u0631\u064A \u0627\u0644\u062A\u062D\u0645\u064A\u0644..." : "Loading..." })
       ]
     }
   );
@@ -8836,15 +9193,15 @@ var sentra_loading_default = SentraLoading;
 
 // src/components/ui/contextual-skeleton.tsx
 import { Loader2 as Loader28 } from "lucide-react";
-import { jsx as jsx52, jsxs as jsxs46 } from "react/jsx-runtime";
+import { jsx as jsx55, jsxs as jsxs49 } from "react/jsx-runtime";
 var LINE_WIDTHS = ["w-full", "w-5/6", "w-4/6", "w-3/4", "w-2/3"];
-var DefaultBody = ({ lines }) => /* @__PURE__ */ jsx52("div", { className: "space-y-3", children: Array.from({ length: lines }, (_, i) => /* @__PURE__ */ jsx52(Skeleton, { className: `h-4 ${LINE_WIDTHS[i % LINE_WIDTHS.length]}` }, i)) });
-var GridBody = () => /* @__PURE__ */ jsx52("div", { className: "space-y-3", children: [1, 2, 3].map((i) => /* @__PURE__ */ jsx52(Skeleton, { className: "h-16 w-full" }, i)) });
-var TimelineBody = () => /* @__PURE__ */ jsx52("div", { className: "space-y-4", children: [1, 2, 3].map((i) => /* @__PURE__ */ jsxs46("div", { className: "flex gap-3", children: [
-  /* @__PURE__ */ jsx52(Skeleton, { className: "w-2.5 h-2.5 rounded-full mt-1.5 shrink-0" }),
-  /* @__PURE__ */ jsxs46("div", { className: "flex-1 space-y-1", children: [
-    /* @__PURE__ */ jsx52(Skeleton, { className: "h-3 w-20" }),
-    /* @__PURE__ */ jsx52(Skeleton, { className: "h-4 w-full" })
+var DefaultBody = ({ lines }) => /* @__PURE__ */ jsx55("div", { className: "space-y-3", children: Array.from({ length: lines }, (_, i) => /* @__PURE__ */ jsx55(Skeleton, { className: `h-4 ${LINE_WIDTHS[i % LINE_WIDTHS.length]}` }, i)) });
+var GridBody = () => /* @__PURE__ */ jsx55("div", { className: "space-y-3", children: [1, 2, 3].map((i) => /* @__PURE__ */ jsx55(Skeleton, { className: "h-16 w-full" }, i)) });
+var TimelineBody = () => /* @__PURE__ */ jsx55("div", { className: "space-y-4", children: [1, 2, 3].map((i) => /* @__PURE__ */ jsxs49("div", { className: "flex gap-3", children: [
+  /* @__PURE__ */ jsx55(Skeleton, { className: "w-2.5 h-2.5 rounded-full mt-1.5 shrink-0" }),
+  /* @__PURE__ */ jsxs49("div", { className: "flex-1 space-y-1", children: [
+    /* @__PURE__ */ jsx55(Skeleton, { className: "h-3 w-20" }),
+    /* @__PURE__ */ jsx55(Skeleton, { className: "h-4 w-full" })
   ] })
 ] }, i)) });
 var ContextualSkeleton = ({
@@ -8854,20 +9211,20 @@ var ContextualSkeleton = ({
   language = "en"
 }) => {
   const lang = language === "ar" ? "ar" : "en";
-  return /* @__PURE__ */ jsxs46("div", { className: "space-y-3", "aria-busy": "true", children: [
-    /* @__PURE__ */ jsxs46("div", { className: "flex items-center gap-2 text-xs text-muted-foreground", children: [
-      /* @__PURE__ */ jsx52(Loader28, { className: "w-3.5 h-3.5 animate-spin text-primary", "aria-hidden": "true" }),
-      /* @__PURE__ */ jsx52("span", { children: description[lang] })
+  return /* @__PURE__ */ jsxs49("div", { className: "space-y-3", "aria-busy": "true", children: [
+    /* @__PURE__ */ jsxs49("div", { className: "flex items-center gap-2 text-xs text-muted-foreground", children: [
+      /* @__PURE__ */ jsx55(Loader28, { className: "w-3.5 h-3.5 animate-spin text-primary", "aria-hidden": "true" }),
+      /* @__PURE__ */ jsx55("span", { children: description[lang] })
     ] }),
-    variant === "timeline" ? /* @__PURE__ */ jsx52(TimelineBody, {}) : variant === "grid" ? /* @__PURE__ */ jsx52(GridBody, {}) : /* @__PURE__ */ jsx52(DefaultBody, { lines })
+    variant === "timeline" ? /* @__PURE__ */ jsx55(TimelineBody, {}) : variant === "grid" ? /* @__PURE__ */ jsx55(GridBody, {}) : /* @__PURE__ */ jsx55(DefaultBody, { lines })
   ] });
 };
 ContextualSkeleton.displayName = "ContextualSkeleton";
 
 // src/components/ui/section-skeleton.tsx
-import { jsx as jsx53, jsxs as jsxs47 } from "react/jsx-runtime";
+import { jsx as jsx56, jsxs as jsxs50 } from "react/jsx-runtime";
 var SectionSkeleton = ({ title, rows = 3 }) => {
-  return /* @__PURE__ */ jsxs47(
+  return /* @__PURE__ */ jsxs50(
     Card,
     {
       className: "bg-card border-border",
@@ -8875,8 +9232,8 @@ var SectionSkeleton = ({ title, rows = 3 }) => {
       "aria-label": title || "Loading",
       "data-testid": title ? `section-skeleton-${title.toLowerCase().replace(/\s+/g, "-")}` : "section-skeleton",
       children: [
-        title && /* @__PURE__ */ jsx53(CardHeader, { className: "pb-3", children: /* @__PURE__ */ jsx53(Skeleton, { className: "h-4 w-40" }) }),
-        /* @__PURE__ */ jsx53(CardContent, { className: "space-y-2 pt-4", children: Array.from({ length: rows }).map((_, i) => /* @__PURE__ */ jsx53(
+        title && /* @__PURE__ */ jsx56(CardHeader, { className: "pb-3", children: /* @__PURE__ */ jsx56(Skeleton, { className: "h-4 w-40" }) }),
+        /* @__PURE__ */ jsx56(CardContent, { className: "space-y-2 pt-4", children: Array.from({ length: rows }).map((_, i) => /* @__PURE__ */ jsx56(
           Skeleton,
           {
             className: "h-4 rounded-md",
@@ -8962,7 +9319,7 @@ function applyBrand(root, tokens = {}) {
 
 // src/theme/BrandingProvider.tsx
 import { createContext, useContext, useEffect as useEffect17 } from "react";
-import { jsx as jsx54 } from "react/jsx-runtime";
+import { jsx as jsx57 } from "react/jsx-runtime";
 var BrandContext = createContext({
   primaryHex: SENTRA_BRAND.primaryHex,
   accentHex: SENTRA_BRAND.accentHex,
@@ -8994,7 +9351,7 @@ var BrandingProvider = ({
     iconName: iconName ?? null,
     productName: productName ?? ""
   };
-  return /* @__PURE__ */ jsx54(BrandContext.Provider, { value: contextValue, children });
+  return /* @__PURE__ */ jsx57(BrandContext.Provider, { value: contextValue, children });
 };
 BrandingProvider.displayName = "BrandingProvider";
 
@@ -9002,7 +9359,7 @@ BrandingProvider.displayName = "BrandingProvider";
 import {
   createContext as createContext2,
   useContext as useContext2,
-  useState as useState28,
+  useState as useState30,
   useCallback as useCallback11,
   useEffect as useEffect18
 } from "react";
@@ -9252,7 +9609,7 @@ var i18n_default = i18n;
 
 // src/i18n/LanguageProvider.tsx
 import { useTranslation } from "react-i18next";
-import { jsx as jsx55 } from "react/jsx-runtime";
+import { jsx as jsx58 } from "react/jsx-runtime";
 var LanguageContext = createContext2(null);
 initI18n();
 var LANG_STORAGE_KEY = "sentra:lang";
@@ -9275,7 +9632,7 @@ var LanguageProvider = ({
   initialLanguage = "en",
   onLanguageChange
 }) => {
-  const [language, setLanguageState] = useState28(initialLanguage);
+  const [language, setLanguageState] = useState30(initialLanguage);
   const applyDirToDocument = useCallback11((l) => {
     if (typeof document === "undefined") return;
     document.documentElement.dir = l === "ar" ? "rtl" : "ltr";
@@ -9328,7 +9685,7 @@ var LanguageProvider = ({
     seedLanguage,
     t: t2
   };
-  return /* @__PURE__ */ jsx55(LanguageContext.Provider, { value, children });
+  return /* @__PURE__ */ jsx58(LanguageContext.Provider, { value, children });
 };
 LanguageProvider.displayName = "LanguageProvider";
 var useT2 = () => {
@@ -9472,6 +9829,7 @@ export {
   DynamicIcon,
   EmptyState,
   EntityNetworkGraph,
+  ErrorTrackingPage,
   EventMapPanel,
   ForgotForm_default as ForgotForm,
   Form,
@@ -9490,6 +9848,8 @@ export {
   InputOTPGroup,
   InputOTPSeparator,
   InputOTPSlot,
+  IssueDetail,
+  IssuesList,
   LANG_COOKIE_NAME,
   Label,
   LanguageProvider,
@@ -9656,6 +10016,7 @@ export {
   hexToHSL,
   isHSL,
   isValidColor,
+  levelTone,
   navigationMenuTriggerStyle,
   nudgeL,
   resolveIcon,
