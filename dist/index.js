@@ -11554,40 +11554,59 @@ MotorFeedbackLauncher.displayName = "MotorFeedbackLauncher";
 
 // src/components/feedback/FeedbackWidget.tsx
 import * as React19 from "react";
-import { MessageSquarePlus as MessageSquarePlus4, Crosshair, X as X3, Trash2 as Trash24, Bug, Lightbulb, HelpCircle } from "lucide-react";
+import { MessageSquarePlus as MessageSquarePlus4, X as X3, MapPin as MapPin2, Paperclip, Camera, ChevronLeft as ChevronLeft2, ChevronRight as ChevronRight7 } from "lucide-react";
 import { Fragment as Fragment17, jsx as jsx77, jsxs as jsxs65 } from "react/jsx-runtime";
+var KINDS = [
+  { key: "bug", en: "Bug", ar: "\u062E\u0637\u0623", cls: "text-red-500", sel: "border-red-500 bg-red-500/10 text-red-500" },
+  { key: "feature", en: "Feature", ar: "\u0645\u064A\u0632\u0629", cls: "text-blue-500", sel: "border-blue-500 bg-blue-500/10 text-blue-500" },
+  { key: "question", en: "Question", ar: "\u0633\u0624\u0627\u0644", cls: "text-amber-500", sel: "border-amber-500 bg-amber-500/10 text-amber-500" },
+  { key: "discussion", en: "Discussion", ar: "\u0646\u0642\u0627\u0634", cls: "text-purple-500", sel: "border-purple-500 bg-purple-500/10 text-purple-500" }
+];
+var kindOf = (k) => KINDS.find((x) => x.key === k);
 var T2 = {
   en: {
     title: "Feedback",
-    newTab: "New",
-    listTab: "List",
-    pick: "Pick an element",
-    picking: "Click any element to attach it \xB7 Esc to cancel",
-    attached: "Attached",
-    clear: "Clear",
-    comment: "What's the feedback?",
-    placeholder: "Describe the bug, idea, or question\u2026",
-    submit: "Send feedback",
-    empty: "No feedback yet.",
-    kinds: { bug: "Bug", idea: "Idea", question: "Question" }
+    intro: "Found a bug, have an idea, or want to ask something about this page? It's attached to the page you are on.",
+    report: "Report an issue",
+    onPage: "On this page",
+    issues: (n) => `${n} issue${n === 1 ? "" : "s"} on this page`,
+    type: "Type",
+    titleL: "Title",
+    brief: "Brief description",
+    details: "Details",
+    detailsPh: "Steps to reproduce, expected vs actual, etc.",
+    url: "Page URL",
+    location: "Location",
+    pin: "Pin location",
+    attach: "Attachments",
+    addFile: "Add file",
+    screenshot: "Screenshot",
+    submit: "Submit",
+    picking: "Click any element to pin it \xB7 Esc to cancel",
+    empty: "No issues yet on this page."
   },
   ar: {
-    title: "\u0645\u0644\u0627\u062D\u0638\u0627\u062A",
-    newTab: "\u062C\u062F\u064A\u062F",
-    listTab: "\u0627\u0644\u0642\u0627\u0626\u0645\u0629",
-    pick: "\u0627\u062E\u062A\u0631 \u0639\u0646\u0635\u0631\u064B\u0627",
-    picking: "\u0627\u0646\u0642\u0631 \u0623\u064A \u0639\u0646\u0635\u0631 \u0644\u0625\u0631\u0641\u0627\u0642\u0647 \xB7 Esc \u0644\u0644\u0625\u0644\u063A\u0627\u0621",
-    attached: "\u0645\u064F\u0631\u0641\u0642",
-    clear: "\u0645\u0633\u062D",
-    comment: "\u0645\u0627 \u0647\u064A \u0627\u0644\u0645\u0644\u0627\u062D\u0638\u0629\u061F",
-    placeholder: "\u0635\u0641 \u0627\u0644\u062E\u0637\u0623 \u0623\u0648 \u0627\u0644\u0641\u0643\u0631\u0629 \u0623\u0648 \u0627\u0644\u0633\u0624\u0627\u0644\u2026",
+    title: "\u0627\u0644\u0645\u0644\u0627\u062D\u0638\u0627\u062A",
+    intro: "\u0648\u062C\u062F\u062A \u062E\u0637\u0623 \u0623\u0648 \u0644\u062F\u064A\u0643 \u0641\u0643\u0631\u0629 \u0623\u0648 \u0633\u0624\u0627\u0644 \u062D\u0648\u0644 \u0647\u0630\u0647 \u0627\u0644\u0635\u0641\u062D\u0629\u061F \u0633\u064A\u064F\u0631\u0641\u0642 \u0628\u0627\u0644\u0635\u0641\u062D\u0629 \u0627\u0644\u062D\u0627\u0644\u064A\u0629.",
+    report: "\u0623\u0628\u0644\u063A \u0639\u0646 \u0645\u0634\u0643\u0644\u0629",
+    onPage: "\u0639\u0644\u0649 \u0647\u0630\u0647 \u0627\u0644\u0635\u0641\u062D\u0629",
+    issues: (n) => `${n} \u0645\u0634\u0643\u0644\u0629 \u0639\u0644\u0649 \u0647\u0630\u0647 \u0627\u0644\u0635\u0641\u062D\u0629`,
+    type: "\u0627\u0644\u0646\u0648\u0639",
+    titleL: "\u0627\u0644\u0639\u0646\u0648\u0627\u0646",
+    brief: "\u0648\u0635\u0641 \u0645\u062E\u062A\u0635\u0631",
+    details: "\u0627\u0644\u062A\u0641\u0627\u0635\u064A\u0644",
+    detailsPh: "\u062E\u0637\u0648\u0627\u062A \u0625\u0639\u0627\u062F\u0629 \u0627\u0644\u0625\u0646\u062A\u0627\u062C\u060C \u0627\u0644\u0645\u062A\u0648\u0642\u0639 \u0645\u0642\u0627\u0628\u0644 \u0627\u0644\u0641\u0639\u0644\u064A\u2026",
+    url: "\u0631\u0627\u0628\u0637 \u0627\u0644\u0635\u0641\u062D\u0629",
+    location: "\u0627\u0644\u0645\u0648\u0642\u0639",
+    pin: "\u062A\u062B\u0628\u064A\u062A \u0645\u0648\u0642\u0639",
+    attach: "\u0627\u0644\u0645\u0631\u0641\u0642\u0627\u062A",
+    addFile: "\u0625\u0636\u0627\u0641\u0629 \u0645\u0644\u0641",
+    screenshot: "\u0644\u0642\u0637\u0629 \u0634\u0627\u0634\u0629",
     submit: "\u0625\u0631\u0633\u0627\u0644",
-    empty: "\u0644\u0627 \u062A\u0648\u062C\u062F \u0645\u0644\u0627\u062D\u0638\u0627\u062A \u0628\u0639\u062F.",
-    kinds: { bug: "\u062E\u0637\u0623", idea: "\u0641\u0643\u0631\u0629", question: "\u0633\u0624\u0627\u0644" }
+    picking: "\u0627\u0646\u0642\u0631 \u0623\u064A \u0639\u0646\u0635\u0631 \u0644\u062A\u062B\u0628\u064A\u062A\u0647 \xB7 Esc \u0644\u0644\u0625\u0644\u063A\u0627\u0621",
+    empty: "\u0644\u0627 \u0645\u0634\u0643\u0644\u0627\u062A \u0639\u0644\u0649 \u0647\u0630\u0647 \u0627\u0644\u0635\u0641\u062D\u0629 \u0628\u0639\u062F."
   }
 };
-var KIND_ICON2 = { bug: Bug, idea: Lightbulb, question: HelpCircle };
-var KIND_TONE = { bug: "danger", idea: "info", question: "warning" };
 function cssPath(el) {
   const parts = [];
   let node = el;
@@ -11600,11 +11619,6 @@ function cssPath(el) {
     }
     const cls = (node.getAttribute("class") || "").trim().split(/\s+/).filter(Boolean).slice(0, 2);
     if (cls.length) part += "." + cls.join(".");
-    const parent = node.parentElement;
-    if (parent) {
-      const sibs = Array.from(parent.children).filter((c) => c.tagName === node.tagName);
-      if (sibs.length > 1) part += `:nth-of-type(${sibs.indexOf(node) + 1})`;
-    }
     parts.unshift(part);
     node = node.parentElement;
   }
@@ -11612,12 +11626,15 @@ function cssPath(el) {
 }
 function FeedbackWidget({
   items = [],
+  pageUrl,
   onSubmit,
-  onDelete,
+  onSelectIssue,
+  onScreenshot,
   language = "en",
   open: openProp,
   onOpenChange,
-  className
+  className,
+  pageSize = 5
 }) {
   const t2 = T2[language];
   const isRTL = language === "ar";
@@ -11627,12 +11644,18 @@ function FeedbackWidget({
     setInternalOpen(v);
     onOpenChange?.(v);
   };
-  const [tab, setTab] = React19.useState("new");
+  const [reporting, setReporting] = React19.useState(false);
   const [kind, setKind] = React19.useState("bug");
-  const [comment, setComment] = React19.useState("");
-  const [picked, setPicked] = React19.useState(null);
+  const [title, setTitle] = React19.useState("");
+  const [details, setDetails] = React19.useState("");
+  const [location, setLocation] = React19.useState(null);
+  const [attachments, setAttachments] = React19.useState([]);
+  const [selectedId, setSelectedId] = React19.useState(items[0]?.id ?? null);
+  const [page, setPage] = React19.useState(0);
   const [picking, setPicking] = React19.useState(false);
   const [hl, setHl] = React19.useState(null);
+  const fileRef = React19.useRef(null);
+  const url = pageUrl ?? (typeof window !== "undefined" ? window.location.href : "");
   React19.useEffect(() => {
     if (!picking) return;
     const ignore = (el) => !el || el.closest("[data-feedback-ui]");
@@ -11645,54 +11668,62 @@ function FeedbackWidget({
       if (ignore(el)) return;
       e.preventDefault();
       e.stopPropagation();
-      setPicked({ selector: cssPath(el), tag: el.tagName.toLowerCase(), text: (el.textContent || "").trim().slice(0, 60) || void 0 });
+      setLocation({ selector: cssPath(el), tag: el.tagName.toLowerCase(), label: (el.textContent || "").trim().slice(0, 40) || void 0 });
       setPicking(false);
       setHl(null);
-      setOpen(true);
+      setReporting(true);
     };
     const key = (e) => {
       if (e.key === "Escape") {
         setPicking(false);
         setHl(null);
-        setOpen(true);
+        setReporting(true);
       }
     };
     document.addEventListener("mousemove", move, true);
     document.addEventListener("click", click, true);
     document.addEventListener("keydown", key, true);
-    const prevCursor = document.body.style.cursor;
+    const prev = document.body.style.cursor;
     document.body.style.cursor = "crosshair";
     return () => {
       document.removeEventListener("mousemove", move, true);
       document.removeEventListener("click", click, true);
       document.removeEventListener("keydown", key, true);
-      document.body.style.cursor = prevCursor;
+      document.body.style.cursor = prev;
     };
   }, [picking]);
-  function startPicking() {
-    setOpen(false);
+  function startPin() {
+    setReporting(false);
     setPicking(true);
   }
-  function submit() {
-    if (!comment.trim()) return;
-    onSubmit?.({ kind, comment: comment.trim(), element: picked ?? void 0 });
-    setComment("");
-    setPicked(null);
-    setTab("list");
+  async function takeScreenshot() {
+    const name = await onScreenshot?.() ?? "screenshot.png";
+    if (name) setAttachments((a) => [...a, { name, kind: "screenshot" }]);
   }
+  function onFiles(e) {
+    const files = Array.from(e.target.files ?? []);
+    setAttachments((a) => [...a, ...files.map((f) => ({ name: f.name, kind: "file" }))]);
+    e.target.value = "";
+  }
+  function submit() {
+    if (!title.trim()) return;
+    onSubmit?.({ kind, title: title.trim(), details: details.trim() || void 0, pageUrl: url, location: location ?? void 0, attachments });
+    setTitle("");
+    setDetails("");
+    setLocation(null);
+    setAttachments([]);
+    setKind("bug");
+    setReporting(false);
+  }
+  const pages = Math.max(1, Math.ceil(items.length / pageSize));
+  const shown = items.slice(page * pageSize, page * pageSize + pageSize);
   return /* @__PURE__ */ jsxs65("div", { "data-feedback-ui": true, dir: isRTL ? "rtl" : "ltr", className, children: [
     picking && /* @__PURE__ */ jsxs65(Fragment17, { children: [
-      /* @__PURE__ */ jsxs65("div", { className: "fixed inset-x-0 top-0 z-[10000] bg-primary px-4 py-2 text-center text-sm font-medium text-primary-foreground", children: [
-        /* @__PURE__ */ jsx77(Crosshair, { className: "me-2 inline h-4 w-4" }),
+      /* @__PURE__ */ jsxs65("div", { className: "fixed inset-x-0 top-0 z-[10001] bg-primary px-4 py-2 text-center text-sm font-medium text-primary-foreground", children: [
+        /* @__PURE__ */ jsx77(MapPin2, { className: "me-2 inline h-4 w-4" }),
         t2.picking
       ] }),
-      hl && /* @__PURE__ */ jsx77(
-        "div",
-        {
-          className: "pointer-events-none fixed z-[9999] rounded border-2 border-primary bg-primary/10",
-          style: { top: hl.top, left: hl.left, width: hl.width, height: hl.height }
-        }
-      )
+      hl && /* @__PURE__ */ jsx77("div", { className: "pointer-events-none fixed z-[10000] rounded border-2 border-primary bg-primary/10", style: { top: hl.top, left: hl.left, width: hl.width, height: hl.height } })
     ] }),
     openProp === void 0 && !open && !picking && /* @__PURE__ */ jsx77(
       "button",
@@ -11703,83 +11734,120 @@ function FeedbackWidget({
         children: /* @__PURE__ */ jsx77(MessageSquarePlus4, { className: "h-5 w-5" })
       }
     ),
-    open && /* @__PURE__ */ jsxs65("div", { className: "fixed bottom-5 end-5 z-[9991] flex max-h-[70vh] w-80 flex-col overflow-hidden rounded-xl border border-border bg-card shadow-2xl", children: [
-      /* @__PURE__ */ jsxs65("div", { className: "flex items-center justify-between border-b border-border px-4 py-2.5", children: [
-        /* @__PURE__ */ jsx77("span", { className: "font-semibold", children: t2.title }),
-        /* @__PURE__ */ jsx77("button", { onClick: () => setOpen(false), className: "rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground", children: /* @__PURE__ */ jsx77(X3, { className: "h-4 w-4" }) })
-      ] }),
-      /* @__PURE__ */ jsx77("div", { className: "flex gap-1 border-b border-border p-1", children: ["new", "list"].map((tb) => /* @__PURE__ */ jsx77(
-        Button,
-        {
-          size: "sm",
-          variant: tab === tb ? "secondary" : "ghost",
-          className: "h-7 flex-1",
-          onClick: () => setTab(tb),
-          children: tb === "new" ? t2.newTab : `${t2.listTab} (${items.length})`
-        },
-        tb
-      )) }),
-      tab === "new" ? /* @__PURE__ */ jsxs65("div", { className: "space-y-3 overflow-y-auto p-4", children: [
-        /* @__PURE__ */ jsx77("div", { className: "flex gap-1.5", children: ["bug", "idea", "question"].map((k) => {
-          const Icon = KIND_ICON2[k];
-          return /* @__PURE__ */ jsxs65(
-            Button,
-            {
-              size: "sm",
-              variant: kind === k ? "default" : "outline",
-              className: "h-8 flex-1 gap-1.5",
-              onClick: () => setKind(k),
-              children: [
-                /* @__PURE__ */ jsx77(Icon, { className: "h-3.5 w-3.5" }),
-                t2.kinds[k]
-              ]
-            },
-            k
-          );
-        }) }),
-        /* @__PURE__ */ jsx77("div", { className: "space-y-1.5", children: picked ? /* @__PURE__ */ jsxs65("div", { className: "flex items-center justify-between gap-2 rounded-lg border border-border bg-muted/40 p-2", children: [
-          /* @__PURE__ */ jsxs65("span", { className: "min-w-0", children: [
-            /* @__PURE__ */ jsxs65("span", { className: "block text-xs font-medium", children: [
-              t2.attached,
-              ": ",
-              /* @__PURE__ */ jsxs65("code", { className: "text-primary", children: [
-                "<",
-                picked.tag,
-                ">"
-              ] })
-            ] }),
-            /* @__PURE__ */ jsx77("span", { className: "block truncate font-mono text-[10px] text-muted-foreground", children: picked.selector })
-          ] }),
-          /* @__PURE__ */ jsx77("button", { onClick: () => setPicked(null), className: "shrink-0 text-xs text-muted-foreground hover:text-destructive", children: t2.clear })
-        ] }) : /* @__PURE__ */ jsxs65(Button, { variant: "outline", className: "w-full gap-2", onClick: startPicking, children: [
-          /* @__PURE__ */ jsx77(Crosshair, { className: "h-4 w-4" }),
-          t2.pick
-        ] }) }),
-        /* @__PURE__ */ jsxs65("div", { className: "space-y-1.5", children: [
-          /* @__PURE__ */ jsx77(Label, { htmlFor: "fb-comment", children: t2.comment }),
-          /* @__PURE__ */ jsx77(Textarea, { id: "fb-comment", rows: 4, value: comment, onChange: (e) => setComment(e.target.value), placeholder: t2.placeholder })
+    open && !picking && /* @__PURE__ */ jsxs65(Fragment17, { children: [
+      /* @__PURE__ */ jsx77("div", { className: "fixed inset-0 z-[9991] bg-black/40", onClick: () => setOpen(false) }),
+      /* @__PURE__ */ jsxs65("aside", { className: "fixed inset-y-0 end-0 z-[9992] flex w-[380px] max-w-[90vw] flex-col border-s border-border bg-card text-card-foreground shadow-2xl", children: [
+        /* @__PURE__ */ jsxs65("div", { className: "flex items-center justify-between border-b border-border px-5 py-3.5", children: [
+          /* @__PURE__ */ jsx77("span", { className: "text-lg font-semibold", children: t2.title }),
+          /* @__PURE__ */ jsx77("button", { onClick: () => setOpen(false), className: "rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground", children: /* @__PURE__ */ jsx77(X3, { className: "h-4 w-4" }) })
         ] }),
-        /* @__PURE__ */ jsx77(Button, { className: "w-full", disabled: !comment.trim(), onClick: submit, children: t2.submit })
-      ] }) : /* @__PURE__ */ jsx77("div", { className: "space-y-2 overflow-y-auto p-3", children: items.length === 0 ? /* @__PURE__ */ jsx77("p", { className: "p-6 text-center text-sm text-muted-foreground", children: t2.empty }) : items.map((it) => {
-        const Icon = KIND_ICON2[it.kind];
-        return /* @__PURE__ */ jsxs65("div", { className: "rounded-lg border border-border p-2.5", children: [
-          /* @__PURE__ */ jsxs65("div", { className: "mb-1 flex items-center justify-between gap-2", children: [
-            /* @__PURE__ */ jsxs65(StatusBadge, { tone: KIND_TONE[it.kind], children: [
-              /* @__PURE__ */ jsx77(Icon, { className: "h-3 w-3" }),
-              " ",
-              t2.kinds[it.kind]
-            ] }),
-            onDelete && /* @__PURE__ */ jsx77("button", { onClick: () => onDelete(it.id), className: "text-muted-foreground hover:text-destructive", children: /* @__PURE__ */ jsx77(Trash24, { className: "h-3.5 w-3.5" }) })
+        /* @__PURE__ */ jsxs65("div", { className: "flex-1 overflow-y-auto p-5", children: [
+          /* @__PURE__ */ jsx77("p", { className: "mb-4 text-sm text-muted-foreground", children: t2.intro }),
+          /* @__PURE__ */ jsx77(Button, { className: "w-full", onClick: () => setReporting(true), children: t2.report }),
+          /* @__PURE__ */ jsx77("p", { className: "mb-2 mt-6 text-xs font-medium uppercase tracking-wide text-muted-foreground", children: t2.onPage }),
+          /* @__PURE__ */ jsxs65("div", { className: "mb-2 flex items-center justify-between", children: [
+            /* @__PURE__ */ jsx77("span", { className: "text-sm text-muted-foreground", children: t2.issues(items.length) }),
+            pages > 1 && /* @__PURE__ */ jsxs65("span", { className: "flex items-center gap-1", children: [
+              /* @__PURE__ */ jsx77(Button, { size: "sm", variant: "outline", className: "h-6 w-6 p-0", disabled: page === 0, onClick: () => setPage((p) => p - 1), children: /* @__PURE__ */ jsx77(ChevronLeft2, { className: "h-3.5 w-3.5 rtl:rotate-180" }) }),
+              /* @__PURE__ */ jsxs65("span", { className: "text-xs text-muted-foreground", children: [
+                page + 1,
+                "/",
+                pages
+              ] }),
+              /* @__PURE__ */ jsx77(Button, { size: "sm", variant: "outline", className: "h-6 w-6 p-0", disabled: page >= pages - 1, onClick: () => setPage((p) => p + 1), children: /* @__PURE__ */ jsx77(ChevronRight7, { className: "h-3.5 w-3.5 rtl:rotate-180" }) })
+            ] })
           ] }),
-          /* @__PURE__ */ jsx77("p", { className: "text-sm", children: it.comment }),
-          it.element && /* @__PURE__ */ jsxs65("p", { className: "mt-1 truncate font-mono text-[10px] text-muted-foreground", children: [
-            "<",
-            it.element.tag,
-            "> ",
-            it.element.selector
+          /* @__PURE__ */ jsx77("div", { className: "space-y-1.5", children: shown.length === 0 ? /* @__PURE__ */ jsx77("p", { className: "py-6 text-center text-sm text-muted-foreground", children: t2.empty }) : shown.map((it) => {
+            const k = kindOf(it.kind);
+            return /* @__PURE__ */ jsxs65(
+              "button",
+              {
+                onClick: () => {
+                  setSelectedId(it.id);
+                  onSelectIssue?.(it.id);
+                },
+                className: cn(
+                  "flex w-full items-center gap-2.5 rounded-lg border px-3 py-2 text-start transition hover:bg-accent",
+                  selectedId === it.id ? "border-primary bg-primary/5" : "border-border"
+                ),
+                children: [
+                  /* @__PURE__ */ jsxs65("span", { className: "font-mono text-[11px] text-muted-foreground", children: [
+                    "#",
+                    it.id
+                  ] }),
+                  /* @__PURE__ */ jsx77("span", { className: cn("rounded px-1.5 py-0.5 text-[10px] font-semibold", k.cls, "bg-current/10"), style: { backgroundColor: "transparent" }, children: /* @__PURE__ */ jsx77("span", { className: k.cls, children: isRTL ? k.ar : k.en }) }),
+                  /* @__PURE__ */ jsx77("span", { className: "min-w-0 flex-1 truncate text-sm", children: it.title })
+                ]
+              },
+              it.id
+            );
+          }) })
+        ] })
+      ] })
+    ] }),
+    reporting && !picking && /* @__PURE__ */ jsxs65("div", { className: "fixed inset-0 z-[9995] flex items-center justify-center p-4", onClick: () => setReporting(false), children: [
+      /* @__PURE__ */ jsx77("div", { className: "absolute inset-0 bg-black/60" }),
+      /* @__PURE__ */ jsxs65("div", { className: "relative flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-2xl", onClick: (e) => e.stopPropagation(), children: [
+        /* @__PURE__ */ jsxs65("div", { className: "flex items-center justify-between border-b border-border px-5 py-3.5", children: [
+          /* @__PURE__ */ jsx77("span", { className: "text-lg font-semibold", children: t2.report }),
+          /* @__PURE__ */ jsx77("button", { onClick: () => setReporting(false), className: "rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground", children: /* @__PURE__ */ jsx77(X3, { className: "h-4 w-4" }) })
+        ] }),
+        /* @__PURE__ */ jsxs65("div", { className: "space-y-4 overflow-y-auto px-5 py-4", children: [
+          /* @__PURE__ */ jsxs65("div", { children: [
+            /* @__PURE__ */ jsx77(Label, { className: "mb-1.5 block text-xs uppercase tracking-wide text-muted-foreground", children: t2.type }),
+            /* @__PURE__ */ jsx77("div", { className: "flex flex-wrap gap-2", children: KINDS.map((k) => /* @__PURE__ */ jsx77(
+              "button",
+              {
+                onClick: () => setKind(k.key),
+                className: cn("rounded-full border px-3 py-1 text-sm font-medium transition", kind === k.key ? k.sel : cn("border-border", k.cls, "opacity-80 hover:opacity-100")),
+                children: isRTL ? k.ar : k.en
+              },
+              k.key
+            )) })
+          ] }),
+          /* @__PURE__ */ jsxs65("div", { children: [
+            /* @__PURE__ */ jsxs65(Label, { htmlFor: "fb-title", className: "mb-1.5 block text-xs uppercase tracking-wide text-muted-foreground", children: [
+              t2.titleL,
+              " *"
+            ] }),
+            /* @__PURE__ */ jsx77(Input, { id: "fb-title", value: title, onChange: (e) => setTitle(e.target.value), placeholder: t2.brief })
+          ] }),
+          /* @__PURE__ */ jsxs65("div", { children: [
+            /* @__PURE__ */ jsx77(Label, { htmlFor: "fb-details", className: "mb-1.5 block text-xs uppercase tracking-wide text-muted-foreground", children: t2.details }),
+            /* @__PURE__ */ jsx77(Textarea, { id: "fb-details", rows: 4, value: details, onChange: (e) => setDetails(e.target.value), placeholder: t2.detailsPh })
+          ] }),
+          /* @__PURE__ */ jsxs65("div", { children: [
+            /* @__PURE__ */ jsx77(Label, { className: "mb-1.5 block text-xs uppercase tracking-wide text-muted-foreground", children: t2.url }),
+            /* @__PURE__ */ jsx77(Input, { value: url, readOnly: true, className: "font-mono text-xs text-muted-foreground" })
+          ] }),
+          /* @__PURE__ */ jsxs65("div", { children: [
+            /* @__PURE__ */ jsx77(Label, { className: "mb-1.5 block text-xs uppercase tracking-wide text-muted-foreground", children: t2.location }),
+            /* @__PURE__ */ jsxs65("div", { className: "flex items-center gap-2", children: [
+              /* @__PURE__ */ jsxs65(Button, { variant: "outline", size: "sm", className: "gap-1.5", onClick: startPin, children: [
+                /* @__PURE__ */ jsx77(MapPin2, { className: "h-3.5 w-3.5" }),
+                location ? `<${location.tag}>` : t2.pin
+              ] }),
+              location && /* @__PURE__ */ jsx77(Button, { variant: "ghost", size: "sm", className: "h-7 w-7 rounded-full p-0", onClick: () => setLocation(null), children: /* @__PURE__ */ jsx77(X3, { className: "h-3.5 w-3.5" }) })
+            ] })
+          ] }),
+          /* @__PURE__ */ jsxs65("div", { children: [
+            /* @__PURE__ */ jsx77(Label, { className: "mb-1.5 block text-xs uppercase tracking-wide text-muted-foreground", children: t2.attach }),
+            /* @__PURE__ */ jsxs65("div", { className: "flex flex-wrap items-center gap-2", children: [
+              /* @__PURE__ */ jsx77("input", { ref: fileRef, type: "file", multiple: true, className: "hidden", onChange: onFiles }),
+              /* @__PURE__ */ jsxs65(Button, { variant: "outline", size: "sm", className: "gap-1.5", onClick: () => fileRef.current?.click(), children: [
+                /* @__PURE__ */ jsx77(Paperclip, { className: "h-3.5 w-3.5" }),
+                t2.addFile
+              ] }),
+              /* @__PURE__ */ jsxs65(Button, { variant: "outline", size: "sm", className: "gap-1.5", onClick: takeScreenshot, children: [
+                /* @__PURE__ */ jsx77(Camera, { className: "h-3.5 w-3.5" }),
+                t2.screenshot
+              ] }),
+              attachments.map((a, i) => /* @__PURE__ */ jsx77("span", { className: "rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground", children: a.name }, i))
+            ] })
           ] })
-        ] }, it.id);
-      }) })
+        ] }),
+        /* @__PURE__ */ jsx77("div", { className: "border-t border-border p-4", children: /* @__PURE__ */ jsx77(Button, { className: "w-full", disabled: !title.trim(), onClick: submit, children: t2.submit }) })
+      ] })
     ] })
   ] });
 }
@@ -11803,7 +11871,7 @@ import {
   arrayMove as arrayMove2
 } from "@dnd-kit/sortable";
 import { CSS as CSS3 } from "@dnd-kit/utilities";
-import { GripVertical as GripVertical3, Settings2 as Settings23, Trash2 as Trash25, Plus as Plus3 } from "lucide-react";
+import { GripVertical as GripVertical3, Settings2 as Settings23, Trash2 as Trash24, Plus as Plus3 } from "lucide-react";
 import { Fragment as Fragment18, jsx as jsx78, jsxs as jsxs66 } from "react/jsx-runtime";
 var T3 = {
   en: {
@@ -11926,7 +11994,7 @@ function DynamicSection({
       section.badge && /* @__PURE__ */ jsx78(Badge, { children: section.badge }),
       editMode && /* @__PURE__ */ jsxs66(Fragment18, { children: [
         /* @__PURE__ */ jsx78(Button, { variant: "ghost", size: "sm", className: "h-7 w-7 p-0", "aria-label": t2.edit, onClick: () => setEditing(true), children: /* @__PURE__ */ jsx78(Settings23, { className: "h-4 w-4" }) }),
-        onRemove && /* @__PURE__ */ jsx78(Button, { variant: "ghost", size: "sm", className: "h-7 w-7 p-0 text-destructive", "aria-label": "Remove", onClick: onRemove, children: /* @__PURE__ */ jsx78(Trash25, { className: "h-4 w-4" }) })
+        onRemove && /* @__PURE__ */ jsx78(Button, { variant: "ghost", size: "sm", className: "h-7 w-7 p-0 text-destructive", "aria-label": "Remove", onClick: onRemove, children: /* @__PURE__ */ jsx78(Trash24, { className: "h-4 w-4" }) })
       ] })
     ] }),
     /* @__PURE__ */ jsx78("div", { className: "text-sm text-muted-foreground", children: section.content ?? /* @__PURE__ */ jsx78("span", { className: "italic opacity-70", children: t2.empty }) }),
@@ -12029,12 +12097,12 @@ import {
   useCallback as useCallback15,
   useContext as useContext3,
   useEffect as useEffect26,
-  useRef as useRef15,
+  useRef as useRef16,
   useState as useState43
 } from "react";
 
 // src/components/copilot/UnifiedCopilotDock.tsx
-import { useState as useState42, useRef as useRef14, useEffect as useEffect25, useCallback as useCallback14, useMemo as useMemo11 } from "react";
+import { useState as useState42, useRef as useRef15, useEffect as useEffect25, useCallback as useCallback14, useMemo as useMemo11 } from "react";
 import {
   Send,
   Sparkles as Sparkles7,
@@ -12051,7 +12119,7 @@ import {
   MoreVertical,
   Brain as Brain3,
   Zap as Zap2,
-  Lightbulb as Lightbulb2,
+  Lightbulb,
   PanelLeft,
   PanelRight,
   PanelBottom,
@@ -12062,7 +12130,7 @@ import {
   ChevronDown as ChevronDown10,
   AtSign,
   Terminal as Terminal2,
-  Trash2 as Trash26
+  Trash2 as Trash25
 } from "lucide-react";
 
 // src/components/copilot/AgentSteps.tsx
@@ -12407,8 +12475,8 @@ StreamErrorBanner.displayName = "StreamErrorBanner";
 var StreamErrorBanner_default = StreamErrorBanner;
 
 // src/components/chat/ChatToolbar.tsx
-import { useState as useState39, useRef as useRef13, useCallback as useCallback12, useEffect as useEffect23 } from "react";
-import { Globe as Globe5, Newspaper as Newspaper2, Microscope as Microscope2, Paperclip, ChevronDown as ChevronDown9, Brain as Brain2, Zap } from "lucide-react";
+import { useState as useState39, useRef as useRef14, useCallback as useCallback12, useEffect as useEffect23 } from "react";
+import { Globe as Globe5, Newspaper as Newspaper2, Microscope as Microscope2, Paperclip as Paperclip2, ChevronDown as ChevronDown9, Brain as Brain2, Zap } from "lucide-react";
 
 // src/components/chat/FilePreviewChip.tsx
 import { X as X4, FileText as FileText3, Image, File } from "lucide-react";
@@ -12472,7 +12540,7 @@ var ChatToolbar = ({
   language = "en",
   onUploadReady
 }) => {
-  const fileInputRef = useRef13(null);
+  const fileInputRef = useRef14(null);
   const [uploading, setUploading] = useState39(false);
   const [uploadError, setUploadError] = useState39(null);
   const isAr = language === "ar";
@@ -12627,7 +12695,7 @@ var ChatToolbar = ({
           disabled: disabled || uploading,
           className: "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-fast ease-standard border bg-transparent text-muted-foreground border-border hover:bg-muted hover:text-foreground",
           children: [
-            /* @__PURE__ */ jsx82(Paperclip, { className: `w-3.5 h-3.5 ${uploading ? "animate-spin" : ""}` }),
+            /* @__PURE__ */ jsx82(Paperclip2, { className: `w-3.5 h-3.5 ${uploading ? "animate-spin" : ""}` }),
             attachments.length > 0 ? `${attachments.length}` : isAr ? "\u0625\u0631\u0641\u0627\u0642" : "Attach"
           ]
         }
@@ -12816,7 +12884,7 @@ import {
   TrendingUp,
   BookOpen,
   Calendar as Calendar2,
-  ChevronRight as ChevronRight7,
+  ChevronRight as ChevronRight8,
   Shield as Shield3,
   Building2,
   User as UserIcon,
@@ -12915,7 +12983,7 @@ var EntityChip = ({
       children: [
         /* @__PURE__ */ jsx84(Icon, { className: "w-3 h-3 shrink-0" }),
         /* @__PURE__ */ jsx84("span", { className: "truncate max-w-[140px]", children: name }),
-        slug && onNavigate && /* @__PURE__ */ jsx84(ChevronRight7, { className: "w-3 h-3 shrink-0 opacity-50 rtl:rotate-180" })
+        slug && onNavigate && /* @__PURE__ */ jsx84(ChevronRight8, { className: "w-3 h-3 shrink-0 opacity-50 rtl:rotate-180" })
       ]
     }
   );
@@ -12969,7 +13037,7 @@ var NarrativeCard = ({
       children: /* @__PURE__ */ jsxs72("div", { className: "flex items-start gap-2", children: [
         /* @__PURE__ */ jsx84(BookOpen, { className: "w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" }),
         /* @__PURE__ */ jsx84("div", { className: "min-w-0 flex-1", children: /* @__PURE__ */ jsx84("p", { className: "text-xs font-medium text-foreground line-clamp-2", children: title }) }),
-        /* @__PURE__ */ jsx84(ChevronRight7, { className: "w-3.5 h-3.5 text-amber-400/50 shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-fast ease-standard rtl:rotate-180" })
+        /* @__PURE__ */ jsx84(ChevronRight8, { className: "w-3.5 h-3.5 text-amber-400/50 shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-fast ease-standard rtl:rotate-180" })
       ] })
     }
   );
@@ -12994,7 +13062,7 @@ var EventChip = ({
       children: [
         /* @__PURE__ */ jsx84(Calendar2, { className: "w-3 h-3 shrink-0" }),
         /* @__PURE__ */ jsx84("span", { className: "truncate max-w-[200px]", children: title }),
-        slug && onNavigate && /* @__PURE__ */ jsx84(ChevronRight7, { className: "w-3 h-3 shrink-0 opacity-50 rtl:rotate-180" })
+        slug && onNavigate && /* @__PURE__ */ jsx84(ChevronRight8, { className: "w-3 h-3 shrink-0 opacity-50 rtl:rotate-180" })
       ]
     }
   );
@@ -13239,15 +13307,15 @@ var UnifiedCopilotDock = ({
   const [atMenuOpen, setAtMenuOpen] = useState42(false);
   const [slashQuery, setSlashQuery] = useState42("");
   const [atQuery, setAtQuery] = useState42("");
-  const slashMenuRef = useRef14(null);
-  const atMenuRef = useRef14(null);
+  const slashMenuRef = useRef15(null);
+  const atMenuRef = useRef15(null);
   const [toolsPanelOpen, setToolsPanelOpen] = useState42(false);
-  const prevIsStreamingRef = useRef14(false);
-  const messagesEndRef = useRef14(null);
-  const inputRef = useRef14(null);
-  const pendingAutoSendRef = useRef14(null);
-  const dragCounterRef = useRef14(0);
-  const toolbarUploadRef = useRef14(null);
+  const prevIsStreamingRef = useRef15(false);
+  const messagesEndRef = useRef15(null);
+  const inputRef = useRef15(null);
+  const pendingAutoSendRef = useRef15(null);
+  const dragCounterRef = useRef15(0);
+  const toolbarUploadRef = useRef15(null);
   const getInitialDockPosition = () => {
     try {
       const saved = localStorage.getItem("sentra-copilot-dock-position");
@@ -13684,7 +13752,7 @@ var UnifiedCopilotDock = ({
                               className: "shrink-0 me-1.5 p-1 rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all duration-fast ease-standard",
                               title: t2("copilot:deleteConversation"),
                               "aria-label": t2("copilot:deleteConversation"),
-                              children: /* @__PURE__ */ jsx85(Trash26, { className: "w-3 h-3" })
+                              children: /* @__PURE__ */ jsx85(Trash25, { className: "w-3 h-3" })
                             }
                           )
                         ]
@@ -13783,7 +13851,7 @@ var UnifiedCopilotDock = ({
                 if (message.hidden && message.role === "user") {
                   const insightText = message.content.match(/"([^"]+)"/)?.[1] || t2("copilot:insightFromDashboard");
                   return /* @__PURE__ */ jsx85("div", { className: "flex justify-center py-1", children: /* @__PURE__ */ jsxs73("div", { className: "inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/5 border border-primary/20 rounded-full text-[11px] text-primary/70 max-w-[90%]", children: [
-                    /* @__PURE__ */ jsx85(Lightbulb2, { className: "w-3 h-3 shrink-0" }),
+                    /* @__PURE__ */ jsx85(Lightbulb, { className: "w-3 h-3 shrink-0" }),
                     /* @__PURE__ */ jsx85("span", { className: "truncate", dir: "auto", children: insightText })
                   ] }) }, message.id);
                 }
@@ -14312,9 +14380,9 @@ var CopilotProvider = ({
   const [streamError, setStreamError] = useState43(null);
   const [sessionId, setSessionId] = useState43(null);
   const [sessionTitle, setSessionTitle] = useState43(void 0);
-  const lastPayloadRef = useRef15(null);
-  const abortRef = useRef15(null);
-  const clientRef = useRef15(injectedClient ?? null);
+  const lastPayloadRef = useRef16(null);
+  const abortRef = useRef16(null);
+  const clientRef = useRef16(injectedClient ?? null);
   clientRef.current = injectedClient ?? null;
   useEffect26(() => {
     let cancelled = false;
@@ -14745,7 +14813,7 @@ var CopilotLauncher = ({
 CopilotLauncher.displayName = "CopilotLauncher";
 
 // src/components/copilot/ChatThread.tsx
-import { useRef as useRef16, useEffect as useEffect27 } from "react";
+import { useRef as useRef17, useEffect as useEffect27 } from "react";
 import { User as User2, Sparkles as Sparkles10 } from "lucide-react";
 
 // src/components/copilot/StreamingMessage.tsx
@@ -14847,7 +14915,7 @@ var ChatThread = ({
   dir
 }) => {
   const isRTL = dir === "rtl" || dir === void 0 && language === "ar";
-  const bottomRef = useRef16(null);
+  const bottomRef = useRef17(null);
   useEffect27(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length, streamingText]);

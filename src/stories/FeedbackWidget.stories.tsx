@@ -11,28 +11,37 @@ const meta: Meta<typeof FeedbackWidget> = {
     layout: "fullscreen",
     fullBleed: true,
     docs: {
-      story: { inline: false, height: "600px" },
+      story: { inline: false, height: "640px" },
       description: {
         component:
-          "FeedbackWidget — a self-contained feedback tool (no external SDK). The floating " +
-          "button opens a panel; **Pick an element** lets you click any element on the page to " +
-          "attach it to the report; submissions go to a List tab. Bilingual EN/AR, token-themed.",
+          "FeedbackWidget — the Motor-style feedback surface, self-contained (no external SDK). " +
+          "A side panel lists issues on the page + a **Report an issue** modal (Type pills · Title · " +
+          "Details · Page URL · **Pin location** to select any element on the current page · Attachments). " +
+          "Bilingual EN/AR, token-themed.",
       },
     },
   },
 };
 export default meta;
 
+const SEED: FeedbackItem[] = [
+  { id: "106", kind: "bug", title: "Navigation Overload" },
+  { id: "79", kind: "bug", title: "Github doc linking" },
+  { id: "61", kind: "feature", title: "Opportunity Matcher" },
+  { id: "48", kind: "feature", title: "online" },
+  { id: "12", kind: "feature", title: "Portfolio" },
+];
+
 function Demo({ language }: { language: "en" | "ar" }) {
-  const [items, setItems] = useState<FeedbackItem[]>([]);
+  const [items, setItems] = useState<FeedbackItem[]>(SEED);
   const ar = language === "ar";
   return (
     <div dir={ar ? "rtl" : "ltr"} className="min-h-screen bg-background p-8 text-foreground">
       <h1 className="mb-1 text-2xl font-semibold">{ar ? "صفحة تجريبية" : "Sample page"}</h1>
       <p className="mb-6 text-sm text-muted-foreground">
         {ar
-          ? "افتح زر الملاحظات (في الزاوية) ← «اختر عنصرًا» ← انقر أي عنصر هنا لإرفاقه."
-          : 'Open the feedback button (corner) → "Pick an element" → click any element here to attach it.'}
+          ? "افتح زر الملاحظات ← «أبلغ عن مشكلة» ← «تثبيت موقع» ← انقر أي عنصر في الصفحة لإرفاقه."
+          : 'Open the feedback button → "Report an issue" → "Pin location" → click any element on this page to attach it.'}
       </p>
       <div className="grid max-w-3xl gap-4 sm:grid-cols-2">
         <Card padded><CardTitle>{ar ? "الإيرادات" : "Revenue"}</CardTitle><p className="mt-2 text-3xl font-bold">$24,500</p></Card>
@@ -46,8 +55,9 @@ function Demo({ language }: { language: "en" | "ar" }) {
       <FeedbackWidget
         language={language}
         items={items}
-        onSubmit={(i) => setItems((p) => [{ ...i, id: String(p.length + 1) + Date.now(), createdAt: "now" }, ...p])}
-        onDelete={(id) => setItems((p) => p.filter((x) => x.id !== id))}
+        pageUrl="https://myapp.example.com/dashboard"
+        onSubmit={(i) => setItems((p) => [{ ...i, id: String(100 + p.length), createdAt: "now" }, ...p])}
+        onScreenshot={() => "screenshot.png"}
       />
     </div>
   );
