@@ -1645,9 +1645,12 @@ interface WorkflowStepNodeProps {
     onAdd?: (containerPath: StepPath, kind: string) => void;
     addableKinds?: string[];
     renderEditor?: (step: AnyStep, path: StepPath) => React.ReactNode;
+    /** Plain-language mode for non-technical readers (friendly badge + sentence,
+     * no raw SQL/code). Default: true. Pass false for the developer view. */
+    humanize?: boolean;
 }
 declare const WorkflowStepNode: {
-    ({ step, path, depth, isRTL, metrics, editingPath, onEditRequest, onDelete, onMove, onAdd, addableKinds, renderEditor, }: WorkflowStepNodeProps): React$1.JSX.Element;
+    ({ step, path, depth, isRTL, metrics, editingPath, onEditRequest, onDelete, onMove, onAdd, addableKinds, renderEditor, humanize, }: WorkflowStepNodeProps): React$1.JSX.Element;
     displayName: string;
 };
 

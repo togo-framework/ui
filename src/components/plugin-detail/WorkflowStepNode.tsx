@@ -106,10 +106,105 @@ const STEP_ICONS: Record<string, React.ElementType> = {
 
 // ── Inline summary per kind ───────────────────────────────────────────────────
 
-const StepSummary = ({ step, isRTL }: { step: AnyStep; isRTL: boolean }) => {
+// ── Human-readable helpers (plain-language mode for non-technical readers) ──────
+
+// Friendly labels per step category (EN, AR).
+const CATEGORY_LABEL: Record<StepCategory, [string, string]> = {
+  trigger:   ['Schedule', 'الجدولة'],
+  condition: ['Condition', 'شرط'],
+  query:     ['Read data', 'قراءة البيانات'],
+  loop:      ['Repeat', 'تكرار'],
+  ai:        ['AI', 'ذكاء اصطناعي'],
+  output:    ['Save', 'حفظ'],
+  transform: ['Transform', 'تحويل'],
+  generic:   ['Step', 'خطوة'],
+}
+
+// "step-3" → "Step 3" / "الخطوة ٣"
+const friendlyStepNo = (id: string, isRTL: boolean): string => {
+  const n = /(\d+)\s*$/.exec(String(id))?.[1]
+  if (!n) return ''
+  return isRTL ? `الخطوة ${n}` : `Step ${n}`
+}
+
+// "15m" → "15 minutes" / "كل ١٥ دقيقة"
+const humanSchedule = (raw: unknown, isRTL: boolean): string => {
+  const m = /^(\d+)\s*([smhd])$/.exec(String(raw ?? '').trim())
+  if (!m) return String(raw ?? '')
+  const n = Number(m[1])
+  const U: Record<string, [string, string, string, string]> = {
+    s: ['second', 'seconds', 'ثانية', 'ثوانٍ'],
+    m: ['minute', 'minutes', 'دقيقة', 'دقائق'],
+    h: ['hour', 'hours', 'ساعة', 'ساعات'],
+    d: ['day', 'days', 'يوم', 'أيام'],
+  }
+  const u = U[m[2]]
+  if (isRTL) return `${n} ${n === 1 ? u[2] : u[3]}`
+  return n === 1 ? u[0] : `${n} ${u[1]}`
+}
+
+// strip $, schema prefix, and snake/kebab → spaced words: "public.raw_envelopes" → "raw envelopes"
+const humanName = (s: unknown): string =>
+  String(s ?? '').replace(/^\$/, '').replace(/^[a-z0-9]+\./i, '').replace(/[_-]+/g, ' ').trim()
+
+// One plain-language sentence describing what a step does.
+function humanStepSummary(step: AnyStep, isRTL: boolean): string {
+  const kind: string = step.kind ?? step.type ?? '?'
+  const t = (en: string, ar: string) => (isRTL ? ar : en)
+  switch (kind) {
+    case 'cron_trigger': {
+      const s = humanSchedule(step.schedule ?? step.interval, isRTL)
+      return t(`Runs automatically every ${s}`, `يعمل تلقائيًا كل ${s}`)
+    }
+    case 'if':
+      return t('Continues only when the condition is met', 'يكمل فقط عند تحقّق الشرط')
+    case 'for_each':
+      return t('Repeats the next steps for each item', 'يكرّر الخطوات التالية لكل عنصر')
+    case 'sql_select': {
+      const from = humanName(parseFromTable(step.query ?? '') ?? '')
+      const lim = parseLimit(step.query ?? '')
+      const count = lim != null ? t(`up to ${lim} records`, `حتى ${lim} سجل`) : t('records', 'السجلات')
+      return from
+        ? t(`Looks up ${count} from ${from}`, `يجلب ${count} من ${from}`)
+        : t(`Looks up ${count}`, `يجلب ${count}`)
+    }
+    case 'sql_insert': {
+      const tb = humanName(step.table)
+      return tb ? t(`Saves the results as ${tb}`, `يحفظ النتائج كـ ${tb}`) : t('Saves the results', 'يحفظ النتائج')
+    }
+    case 'sql_update': {
+      const tb = humanName(step.table)
+      return t(`Updates ${tb || 'the records'}`, `يحدّث ${tb || 'السجلات'}`)
+    }
+    case 'gemini_call':
+    case 'adk_call': {
+      const task = humanName(step.prompt_slug ?? step.prompt_id ?? '')
+      return task
+        ? t(`Uses AI to ${task}`, `يستخدم الذكاء الاصطناعي لـ ${task}`)
+        : t('Uses AI to analyze the data', 'يستخدم الذكاء الاصطناعي لتحليل البيانات')
+    }
+    case 'http_request':
+    case 'http_call':
+      return t('Calls an external service', 'يستدعي خدمة خارجية')
+    case 'send_email':
+    case 'email':
+      return t('Sends an email notification', 'يرسل إشعارًا عبر البريد الإلكتروني')
+    case 'webhook':
+      return t('Sends a webhook notification', 'يرسل إشعار ويب هوك')
+    default:
+      return t(`Runs the “${humanName(kind)}” step`, `ينفّذ خطوة «${humanName(kind)}»`)
+  }
+}
+
+const StepSummary = ({ step, isRTL, humanize }: { step: AnyStep; isRTL: boolean; humanize?: boolean }) => {
   const lbl = (en: string, ar: string) => (isRTL ? ar : en)
   const [showQuery, setShowQuery] = useState(false)
   const kind: string = step.kind ?? '?'
+
+  // Plain-language mode: one friendly sentence, no raw SQL/code.
+  if (humanize) {
+    return <span className="text-xs text-foreground/80">{humanStepSummary(step, isRTL)}</span>
+  }
 
   if (kind === 'cron_trigger') {
     const schedule = step.schedule ?? step.interval ?? '?'
@@ -352,6 +447,9 @@ export interface WorkflowStepNodeProps {
   onAdd?: (containerPath: StepPath, kind: string) => void
   addableKinds?: string[]
   renderEditor?: (step: AnyStep, path: StepPath) => React.ReactNode
+  /** Plain-language mode for non-technical readers (friendly badge + sentence,
+   * no raw SQL/code). Default: true. Pass false for the developer view. */
+  humanize?: boolean
 }
 
 export const WorkflowStepNode = ({
@@ -367,6 +465,7 @@ export const WorkflowStepNode = ({
   onAdd,
   addableKinds = [],
   renderEditor,
+  humanize = true,
 }: WorkflowStepNodeProps) => {
   const lbl = (en: string, ar: string) => (isRTL ? ar : en)
   const kind: string = step.kind ?? step.type ?? '?'
@@ -401,6 +500,7 @@ export const WorkflowStepNode = ({
             onAdd={onAdd}
             addableKinds={addableKinds}
             renderEditor={renderEditor}
+            humanize={humanize}
           />
         </div>
       ))}
@@ -430,11 +530,17 @@ export const WorkflowStepNode = ({
 
           <div className="flex-1 min-w-0 space-y-1">
             <div className="flex items-center gap-1.5 flex-wrap">
-              <Badge variant="secondary" className={cn('h-4 rounded-sm font-mono text-[10px] px-1', styles.badge)}>{kind}</Badge>
-              {stepId && <span className="text-[10px] text-muted-foreground/50 font-mono">{stepId}</span>}
+              <Badge variant="secondary" className={cn('h-4 rounded-sm text-[10px] px-1', !humanize && 'font-mono', styles.badge)}>
+                {humanize ? lbl(CATEGORY_LABEL[category][0], CATEGORY_LABEL[category][1]) : kind}
+              </Badge>
+              {stepId && (
+                <span className={cn('text-[10px] text-muted-foreground/50', !humanize && 'font-mono')}>
+                  {humanize ? friendlyStepNo(stepId, isRTL) : stepId}
+                </span>
+              )}
               {m && <MetricsChip runs={m.runs} errors={m.errors} />}
             </div>
-            <StepSummary step={step} isRTL={isRTL} />
+            <StepSummary step={step} isRTL={isRTL} humanize={humanize} />
           </div>
 
           <div className="flex items-center gap-0.5 shrink-0">

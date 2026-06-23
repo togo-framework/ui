@@ -6107,10 +6107,86 @@ var STEP_ICONS = {
   translate: Languages,
   http_call: Globe
 };
-var StepSummary = ({ step, isRTL }) => {
+var CATEGORY_LABEL = {
+  trigger: ["Schedule", "\u0627\u0644\u062C\u062F\u0648\u0644\u0629"],
+  condition: ["Condition", "\u0634\u0631\u0637"],
+  query: ["Read data", "\u0642\u0631\u0627\u0621\u0629 \u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A"],
+  loop: ["Repeat", "\u062A\u0643\u0631\u0627\u0631"],
+  ai: ["AI", "\u0630\u0643\u0627\u0621 \u0627\u0635\u0637\u0646\u0627\u0639\u064A"],
+  output: ["Save", "\u062D\u0641\u0638"],
+  transform: ["Transform", "\u062A\u062D\u0648\u064A\u0644"],
+  generic: ["Step", "\u062E\u0637\u0648\u0629"]
+};
+var friendlyStepNo = (id, isRTL) => {
+  const n = /(\d+)\s*$/.exec(String(id))?.[1];
+  if (!n) return "";
+  return isRTL ? `\u0627\u0644\u062E\u0637\u0648\u0629 ${n}` : `Step ${n}`;
+};
+var humanSchedule = (raw, isRTL) => {
+  const m = /^(\d+)\s*([smhd])$/.exec(String(raw ?? "").trim());
+  if (!m) return String(raw ?? "");
+  const n = Number(m[1]);
+  const U = {
+    s: ["second", "seconds", "\u062B\u0627\u0646\u064A\u0629", "\u062B\u0648\u0627\u0646\u064D"],
+    m: ["minute", "minutes", "\u062F\u0642\u064A\u0642\u0629", "\u062F\u0642\u0627\u0626\u0642"],
+    h: ["hour", "hours", "\u0633\u0627\u0639\u0629", "\u0633\u0627\u0639\u0627\u062A"],
+    d: ["day", "days", "\u064A\u0648\u0645", "\u0623\u064A\u0627\u0645"]
+  };
+  const u = U[m[2]];
+  if (isRTL) return `${n} ${n === 1 ? u[2] : u[3]}`;
+  return n === 1 ? u[0] : `${n} ${u[1]}`;
+};
+var humanName = (s) => String(s ?? "").replace(/^\$/, "").replace(/^[a-z0-9]+\./i, "").replace(/[_-]+/g, " ").trim();
+function humanStepSummary(step, isRTL) {
+  const kind = step.kind ?? step.type ?? "?";
+  const t2 = (en, ar) => isRTL ? ar : en;
+  switch (kind) {
+    case "cron_trigger": {
+      const s = humanSchedule(step.schedule ?? step.interval, isRTL);
+      return t2(`Runs automatically every ${s}`, `\u064A\u0639\u0645\u0644 \u062A\u0644\u0642\u0627\u0626\u064A\u064B\u0627 \u0643\u0644 ${s}`);
+    }
+    case "if":
+      return t2("Continues only when the condition is met", "\u064A\u0643\u0645\u0644 \u0641\u0642\u0637 \u0639\u0646\u062F \u062A\u062D\u0642\u0651\u0642 \u0627\u0644\u0634\u0631\u0637");
+    case "for_each":
+      return t2("Repeats the next steps for each item", "\u064A\u0643\u0631\u0651\u0631 \u0627\u0644\u062E\u0637\u0648\u0627\u062A \u0627\u0644\u062A\u0627\u0644\u064A\u0629 \u0644\u0643\u0644 \u0639\u0646\u0635\u0631");
+    case "sql_select": {
+      const from = humanName(parseFromTable(step.query ?? "") ?? "");
+      const lim = parseLimit(step.query ?? "");
+      const count = lim != null ? t2(`up to ${lim} records`, `\u062D\u062A\u0649 ${lim} \u0633\u062C\u0644`) : t2("records", "\u0627\u0644\u0633\u062C\u0644\u0627\u062A");
+      return from ? t2(`Looks up ${count} from ${from}`, `\u064A\u062C\u0644\u0628 ${count} \u0645\u0646 ${from}`) : t2(`Looks up ${count}`, `\u064A\u062C\u0644\u0628 ${count}`);
+    }
+    case "sql_insert": {
+      const tb = humanName(step.table);
+      return tb ? t2(`Saves the results as ${tb}`, `\u064A\u062D\u0641\u0638 \u0627\u0644\u0646\u062A\u0627\u0626\u062C \u0643\u0640 ${tb}`) : t2("Saves the results", "\u064A\u062D\u0641\u0638 \u0627\u0644\u0646\u062A\u0627\u0626\u062C");
+    }
+    case "sql_update": {
+      const tb = humanName(step.table);
+      return t2(`Updates ${tb || "the records"}`, `\u064A\u062D\u062F\u0651\u062B ${tb || "\u0627\u0644\u0633\u062C\u0644\u0627\u062A"}`);
+    }
+    case "gemini_call":
+    case "adk_call": {
+      const task = humanName(step.prompt_slug ?? step.prompt_id ?? "");
+      return task ? t2(`Uses AI to ${task}`, `\u064A\u0633\u062A\u062E\u062F\u0645 \u0627\u0644\u0630\u0643\u0627\u0621 \u0627\u0644\u0627\u0635\u0637\u0646\u0627\u0639\u064A \u0644\u0640 ${task}`) : t2("Uses AI to analyze the data", "\u064A\u0633\u062A\u062E\u062F\u0645 \u0627\u0644\u0630\u0643\u0627\u0621 \u0627\u0644\u0627\u0635\u0637\u0646\u0627\u0639\u064A \u0644\u062A\u062D\u0644\u064A\u0644 \u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A");
+    }
+    case "http_request":
+    case "http_call":
+      return t2("Calls an external service", "\u064A\u0633\u062A\u062F\u0639\u064A \u062E\u062F\u0645\u0629 \u062E\u0627\u0631\u062C\u064A\u0629");
+    case "send_email":
+    case "email":
+      return t2("Sends an email notification", "\u064A\u0631\u0633\u0644 \u0625\u0634\u0639\u0627\u0631\u064B\u0627 \u0639\u0628\u0631 \u0627\u0644\u0628\u0631\u064A\u062F \u0627\u0644\u0625\u0644\u0643\u062A\u0631\u0648\u0646\u064A");
+    case "webhook":
+      return t2("Sends a webhook notification", "\u064A\u0631\u0633\u0644 \u0625\u0634\u0639\u0627\u0631 \u0648\u064A\u0628 \u0647\u0648\u0643");
+    default:
+      return t2(`Runs the \u201C${humanName(kind)}\u201D step`, `\u064A\u0646\u0641\u0651\u0630 \u062E\u0637\u0648\u0629 \xAB${humanName(kind)}\xBB`);
+  }
+}
+var StepSummary = ({ step, isRTL, humanize }) => {
   const lbl = (en, ar) => isRTL ? ar : en;
   const [showQuery, setShowQuery] = useState22(false);
   const kind = step.kind ?? "?";
+  if (humanize) {
+    return /* @__PURE__ */ jsx44("span", { className: "text-xs text-foreground/80", children: humanStepSummary(step, isRTL) });
+  }
   if (kind === "cron_trigger") {
     const schedule = step.schedule ?? step.interval ?? "?";
     const minSec = step.min_interval_sec;
@@ -6363,7 +6439,8 @@ var WorkflowStepNode = ({
   onMove,
   onAdd,
   addableKinds = [],
-  renderEditor
+  renderEditor,
+  humanize = true
 }) => {
   const lbl = (en, ar) => isRTL ? ar : en;
   const kind = step.kind ?? step.type ?? "?";
@@ -6394,7 +6471,8 @@ var WorkflowStepNode = ({
           onMove,
           onAdd,
           addableKinds,
-          renderEditor
+          renderEditor,
+          humanize
         }
       )
     ] }, child.id ?? ci)),
@@ -6415,11 +6493,11 @@ var WorkflowStepNode = ({
             /* @__PURE__ */ jsx44("div", { className: cn("mt-0.5 shrink-0", styles.icon), children: /* @__PURE__ */ jsx44(IconCmp, { className: "h-3.5 w-3.5", "aria-hidden": true }) }),
             /* @__PURE__ */ jsxs38("div", { className: "flex-1 min-w-0 space-y-1", children: [
               /* @__PURE__ */ jsxs38("div", { className: "flex items-center gap-1.5 flex-wrap", children: [
-                /* @__PURE__ */ jsx44(Badge, { variant: "secondary", className: cn("h-4 rounded-sm font-mono text-[10px] px-1", styles.badge), children: kind }),
-                stepId && /* @__PURE__ */ jsx44("span", { className: "text-[10px] text-muted-foreground/50 font-mono", children: stepId }),
+                /* @__PURE__ */ jsx44(Badge, { variant: "secondary", className: cn("h-4 rounded-sm text-[10px] px-1", !humanize && "font-mono", styles.badge), children: humanize ? lbl(CATEGORY_LABEL[category][0], CATEGORY_LABEL[category][1]) : kind }),
+                stepId && /* @__PURE__ */ jsx44("span", { className: cn("text-[10px] text-muted-foreground/50", !humanize && "font-mono"), children: humanize ? friendlyStepNo(stepId, isRTL) : stepId }),
                 m && /* @__PURE__ */ jsx44(MetricsChip, { runs: m.runs, errors: m.errors })
               ] }),
-              /* @__PURE__ */ jsx44(StepSummary, { step, isRTL })
+              /* @__PURE__ */ jsx44(StepSummary, { step, isRTL, humanize })
             ] }),
             /* @__PURE__ */ jsxs38("div", { className: "flex items-center gap-0.5 shrink-0", children: [
               onMove && /* @__PURE__ */ jsxs38(Fragment10, { children: [
