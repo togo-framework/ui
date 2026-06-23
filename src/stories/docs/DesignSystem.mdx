@@ -1,0 +1,39 @@
+import { Meta } from '@storybook/blocks';
+
+<Meta title="Design System/Tokens" />
+
+# Design tokens
+
+Every component reads **semantic CSS variables** (defined in `styles.css`), never raw
+colors. This is what makes theming global. The tokens are HSL-channel values exposed as
+Tailwind v4 color utilities.
+
+## Semantic colors
+
+| Token | Utility | Role |
+|---|---|---|
+| `--background` / `--foreground` | `bg-background` / `text-foreground` | page surface + text |
+| `--card` / `--card-foreground` | `bg-card` | raised surfaces (tables, panels) |
+| `--popover` / `--popover-foreground` | `bg-popover` | overlays (menus, dialogs) |
+| `--primary` / `--primary-foreground` | `bg-primary` | brand action color |
+| `--secondary` / `--secondary-foreground` | `bg-secondary` | secondary action |
+| `--muted` / `--muted-foreground` | `text-muted-foreground` | subdued text/fills |
+| `--accent` / `--accent-foreground` | `bg-accent` | hover/active fills |
+| `--destructive` / `--destructive-foreground` | `bg-destructive` | danger |
+| `--border` / `--input` / `--ring` | `border-border` / `border-input` / `ring-ring` | lines + focus |
+| `--success` / `--warning` / `--info` | — | status |
+| `--sidebar-*` | — | sidebar surfaces |
+
+## Radius & type
+
+- `--radius` drives `rounded-sm/md/lg`. Default `0.5rem`.
+- Font: **Lusail** (`--tg-font`), Arabic + Latin, weights 300–700.
+
+## Rules for using the kit
+
+1. **Never hard-code colors** in app code that wraps these components — use the same
+   tokens (`bg-card`, `text-muted-foreground`, …) so your UI flips with the theme.
+2. The only "always-the-same" colors are intentional: modal **scrims** (`bg-black/80`) and
+   logo chips. Everything else is token-driven.
+
+Use the **Theme** and **Direction** toolbar switches above to see tokens respond.
