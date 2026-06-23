@@ -1371,10 +1371,16 @@ interface NetworkGraphProps {
     className?: string;
     /** Map a group → CSS color. Falls back to a token palette. */
     groupColor?: (group: string | undefined) => string;
+    /** Node circle radius. */
+    nodeRadius?: number;
+    /** Fired when a node is clicked (not dragged). */
+    onNodeClick?: (node: GraphNode) => void;
 }
-/** NetworkGraph — a dependency-free SVG graph with a deterministic force layout
- * (circular seed + fixed iterations; no randomness). Pass `nodes` + `links`. */
-declare function NetworkGraph({ nodes, links, width, height, className, groupColor, }: NetworkGraphProps): React$1.JSX.Element;
+/** NetworkGraph — a dependency-free, **live force-directed** SVG graph with
+ * **draggable** nodes. Nodes repel, links act as springs, and the layout settles;
+ * dragging a node pins it to the pointer and reheats the simulation so the graph
+ * reacts dynamically. Pass `nodes` + `links`. */
+declare function NetworkGraph({ nodes, links, width, height, className, groupColor, nodeRadius, onNodeClick, }: NetworkGraphProps): React$1.JSX.Element;
 
 type TEntityType = "government" | "individual" | "media" | "institution" | "state" | "organization" | "event" | "venue" | "persona" | "person" | "coalition";
 type TSentiment = "positive" | "negative" | "neutral" | "unknown";
