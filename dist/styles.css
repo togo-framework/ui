@@ -333,10 +333,47 @@
   --color-sidebar-accent-foreground: hsl(var(--sidebar-accent-foreground));
   --color-sidebar-border: hsl(var(--sidebar-border));
   --color-sidebar-ring: hsl(var(--sidebar-ring));
+
+  /* prism color "sets" — brand / gold / ai / alert / extras */
+  --color-background-medium: hsl(var(--background-medium));
+  --color-brand: hsl(var(--brand-primary));
+  --color-brand-glow: hsl(var(--brand-primary-glow));
+  --color-gold: hsl(var(--accent));
+  --color-gold-muted: hsl(var(--accent-muted));
+  --color-ai: hsl(var(--pz-ai, 251 68% 67%));
+  --color-ai-foreground: hsl(var(--pz-ai-foreground, 0 0% 100%));
+  --color-alert-amber: hsl(var(--alert-amber));
+  --color-alert-cyan: hsl(var(--alert-cyan));
+
+  /* radius scale */
   --radius-lg: var(--radius, 0.5rem);
   --radius-md: calc(var(--radius, 0.5rem) - 2px);
   --radius-sm: calc(var(--radius, 0.5rem) - 4px);
+
+  /* prism type scale */
+  --text-2xs: 0.6875rem;
+  --text-xs: 0.8125rem;
+  --text-sm: 0.875rem;
+  --text-base: 0.9375rem;
+  --text-lg: 1.0625rem;
+
+  /* breakpoints (mobile-first; xs = 375) */
+  --breakpoint-xs: 375px;
+
+  /* animations */
+  --animate-accordion-down: accordion-down 0.2s ease-out;
+  --animate-accordion-up: accordion-up 0.2s ease-out;
+  --animate-breathing: breathing 3s ease-in-out infinite;
+  --animate-pulse-brand: pulse-brand 2s ease-in-out infinite;
+  --animate-ai-pulse: ai-pulse 1.5s ease-in-out infinite;
 }
+
+/* keyframes referenced by the animation utilities above */
+@keyframes accordion-down { from { height: 0 } to { height: var(--radix-accordion-content-height) } }
+@keyframes accordion-up { from { height: var(--radix-accordion-content-height) } to { height: 0 } }
+@keyframes breathing { 0%, 100% { box-shadow: 0 0 15px -5px hsl(var(--brand-primary) / 0.3) } 50% { box-shadow: 0 0 25px -5px hsl(var(--brand-primary) / 0.5) } }
+@keyframes pulse-brand { 0%, 100% { box-shadow: 0 0 15px -5px hsl(var(--brand-primary) / 0.3) } 50% { box-shadow: 0 0 25px -5px hsl(var(--brand-primary) / 0.5) } }
+@keyframes ai-pulse { 0%, 100% { opacity: 1 } 50% { opacity: 0.5 } }
 
 /* ── togo kit root helper (used by Storybook canvas + optional app wrapper) ── */
 :root { --tg-font: "Lusail", ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }

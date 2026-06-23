@@ -1024,6 +1024,36 @@ declare const DynamicIcon: {
     displayName: string;
 };
 
+interface ProfileSession {
+    id: string;
+    device: string;
+    location?: string;
+    lastActive: string;
+    current?: boolean;
+}
+interface ProfileViewProps {
+    user: {
+        name?: string;
+        email: string;
+        avatarUrl?: string;
+        roles?: string[];
+    };
+    language?: "en" | "ar";
+    sessions?: ProfileSession[];
+    twoFactorEnabled?: boolean;
+    onSave?: (data: {
+        name: string;
+        email: string;
+    }) => void;
+    onChangePassword?: () => void;
+    onToggle2FA?: (enabled: boolean) => void;
+    onRevokeSession?: (id: string) => void;
+}
+/** ProfileView — a presentational account/security/sessions profile screen built from the
+ * kit primitives. Product-agnostic: pass user data + callbacks. RTL + bilingual via
+ * `language`; themed via tokens (dark/light). */
+declare function ProfileView({ user, language, sessions, twoFactorEnabled, onSave, onChangePassword, onToggle2FA, onRevokeSession, }: ProfileViewProps): React$1.JSX.Element;
+
 /**
  * brand.ts — Sentra dynamic theming primitives.
  *
@@ -1226,4 +1256,4 @@ declare const useLanguage: () => LanguageContextValue;
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { AppPageShell, type AppPageShellProps, AppSidebar, type AppSidebarProps, AuthCard, type AuthCardBrand, type AuthClient, AuthErrorAlert, AuthFlow, type AuthLayout, AuthStepHeader, type BarPoint, type BrandContextValue, type BrandTokens, BrandingProvider, type BrandingProviderProps, type CardFilter, CardGrid, type CardGridLabels, DataState, type DataStateLabels, type DataStateProps, DataTable, type DataTableBulkAction, type DataTableColumnFilter, type DataTableColumnMeta, type DataTableDensity, type DataTableFilterType, type DataTableLanguage, type DataTableProps, type DataTableSelectOption, type DataTableServerCallbacks, type DataTableServerState, DynamicIcon, EmptyState, type EmptyStateProps, ForgotForm, LANG_COOKIE_NAME, type LanguageContextValue, LanguageProvider, type LanguageProviderProps, LockScreen, type LockScreenProps, type LockScreenUser, LoginForm, type LoginResult, MiniBarChart, OTPBoxGroup, type OtpResult, PageHeader, type PageHeaderProps, PasswordInput, PasswordLockScreen, type PasswordLockScreenProps, type PasswordLockScreenUser, type PasswordRule, PasswordStrengthMeter, ResetForm, RouteProgress, type RouteProgressProps, SENTRA_BRAND, ServiceUnavailable, type ServiceUnavailableProps, SessionExpired, type SessionExpiredProps, type SidebarConversation, type SidebarUser, StatCard, type StatCardProps, StatusBadge, type StatusBadgeProps, type StatusBadgeTone, TwoFAForm, type UnlockCredentials, type Verify2FAResult, type View, ViewToggle, type ViewToggleProps, applyBrand, cn, computeRules, computeScore, hexToHSL, isHSL, isValidColor, nudgeL, statValueVariants, statusBadgeVariants, toHSLSafe, useBrand, useLanguage, useT };
+export { AppPageShell, type AppPageShellProps, AppSidebar, type AppSidebarProps, AuthCard, type AuthCardBrand, type AuthClient, AuthErrorAlert, AuthFlow, type AuthLayout, AuthStepHeader, type BarPoint, type BrandContextValue, type BrandTokens, BrandingProvider, type BrandingProviderProps, type CardFilter, CardGrid, type CardGridLabels, DataState, type DataStateLabels, type DataStateProps, DataTable, type DataTableBulkAction, type DataTableColumnFilter, type DataTableColumnMeta, type DataTableDensity, type DataTableFilterType, type DataTableLanguage, type DataTableProps, type DataTableSelectOption, type DataTableServerCallbacks, type DataTableServerState, DynamicIcon, EmptyState, type EmptyStateProps, ForgotForm, LANG_COOKIE_NAME, type LanguageContextValue, LanguageProvider, type LanguageProviderProps, LockScreen, type LockScreenProps, type LockScreenUser, LoginForm, type LoginResult, MiniBarChart, OTPBoxGroup, type OtpResult, PageHeader, type PageHeaderProps, PasswordInput, PasswordLockScreen, type PasswordLockScreenProps, type PasswordLockScreenUser, type PasswordRule, PasswordStrengthMeter, type ProfileSession, ProfileView, type ProfileViewProps, ResetForm, RouteProgress, type RouteProgressProps, SENTRA_BRAND, ServiceUnavailable, type ServiceUnavailableProps, SessionExpired, type SessionExpiredProps, type SidebarConversation, type SidebarUser, StatCard, type StatCardProps, StatusBadge, type StatusBadgeProps, type StatusBadgeTone, TwoFAForm, type UnlockCredentials, type Verify2FAResult, type View, ViewToggle, type ViewToggleProps, applyBrand, cn, computeRules, computeScore, hexToHSL, isHSL, isValidColor, nudgeL, statValueVariants, statusBadgeVariants, toHSLSafe, useBrand, useLanguage, useT };

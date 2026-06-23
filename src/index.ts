@@ -29,6 +29,10 @@ export * from "./components/layout/RouteProgress";
 // ── Nav ──
 export { DynamicIcon } from "./components/nav/DynamicIcon";
 
+// ── profile ──
+export { ProfileView } from "./components/profile/ProfileView";
+export type { ProfileViewProps, ProfileSession } from "./components/profile/ProfileView";
+
 // ── Theme (multi-theme color system) ──
 export * from "./theme";
 

@@ -4030,6 +4030,129 @@ function hClassToPx(className) {
   return void 0;
 }
 
+// src/components/profile/ProfileView.tsx
+import * as React4 from "react";
+import { ShieldCheck as ShieldCheck3, Monitor, LogOut as LogOut4 } from "lucide-react";
+import { jsx as jsx29, jsxs as jsxs24 } from "react/jsx-runtime";
+var T = {
+  en: {
+    account: "Account",
+    security: "Security",
+    sessions: "Sessions",
+    name: "Name",
+    email: "Email",
+    save: "Save changes",
+    password: "Password",
+    changePassword: "Change password",
+    twoFA: "Two-factor authentication",
+    twoFADesc: "Add an extra layer of security to your account.",
+    current: "This device",
+    revoke: "Revoke",
+    active: "Active sessions"
+  },
+  ar: {
+    account: "\u0627\u0644\u062D\u0633\u0627\u0628",
+    security: "\u0627\u0644\u0623\u0645\u0627\u0646",
+    sessions: "\u0627\u0644\u062C\u0644\u0633\u0627\u062A",
+    name: "\u0627\u0644\u0627\u0633\u0645",
+    email: "\u0627\u0644\u0628\u0631\u064A\u062F \u0627\u0644\u0625\u0644\u0643\u062A\u0631\u0648\u0646\u064A",
+    save: "\u062D\u0641\u0638 \u0627\u0644\u062A\u063A\u064A\u064A\u0631\u0627\u062A",
+    password: "\u0643\u0644\u0645\u0629 \u0627\u0644\u0645\u0631\u0648\u0631",
+    changePassword: "\u062A\u063A\u064A\u064A\u0631 \u0643\u0644\u0645\u0629 \u0627\u0644\u0645\u0631\u0648\u0631",
+    twoFA: "\u0627\u0644\u0645\u0635\u0627\u062F\u0642\u0629 \u0627\u0644\u062B\u0646\u0627\u0626\u064A\u0629",
+    twoFADesc: "\u0623\u0636\u0641 \u0637\u0628\u0642\u0629 \u062D\u0645\u0627\u064A\u0629 \u0625\u0636\u0627\u0641\u064A\u0629 \u0644\u062D\u0633\u0627\u0628\u0643.",
+    current: "\u0647\u0630\u0627 \u0627\u0644\u062C\u0647\u0627\u0632",
+    revoke: "\u0625\u0646\u0647\u0627\u0621",
+    active: "\u0627\u0644\u062C\u0644\u0633\u0627\u062A \u0627\u0644\u0646\u0634\u0637\u0629"
+  }
+};
+function ProfileView({
+  user,
+  language = "en",
+  sessions = [],
+  twoFactorEnabled = false,
+  onSave,
+  onChangePassword,
+  onToggle2FA,
+  onRevokeSession
+}) {
+  const t2 = T[language];
+  const [name, setName] = React4.useState(user.name ?? "");
+  const [email, setEmail] = React4.useState(user.email);
+  const initial = (user.name || user.email || "?").charAt(0).toUpperCase();
+  return /* @__PURE__ */ jsxs24("div", { className: "mx-auto max-w-3xl p-6", children: [
+    /* @__PURE__ */ jsxs24("div", { className: "mb-6 flex items-center gap-4", children: [
+      /* @__PURE__ */ jsxs24(Avatar, { className: "h-16 w-16", children: [
+        user.avatarUrl && /* @__PURE__ */ jsx29(AvatarImage, { src: user.avatarUrl, alt: user.name ?? user.email }),
+        /* @__PURE__ */ jsx29(AvatarFallback, { className: "text-lg", children: initial })
+      ] }),
+      /* @__PURE__ */ jsxs24("div", { className: "min-w-0", children: [
+        /* @__PURE__ */ jsx29("h1", { className: "truncate text-xl font-semibold", children: user.name || user.email }),
+        /* @__PURE__ */ jsx29("p", { className: "truncate text-sm text-muted-foreground", children: user.email }),
+        user.roles && user.roles.length > 0 && /* @__PURE__ */ jsx29("div", { className: "mt-1.5 flex flex-wrap gap-1.5", children: user.roles.map((r) => /* @__PURE__ */ jsx29(StatusBadge, { tone: "info", children: r }, r)) })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxs24(Tabs, { defaultValue: "account", children: [
+      /* @__PURE__ */ jsxs24(TabsList, { children: [
+        /* @__PURE__ */ jsx29(TabsTrigger, { value: "account", children: t2.account }),
+        /* @__PURE__ */ jsx29(TabsTrigger, { value: "security", children: t2.security }),
+        /* @__PURE__ */ jsx29(TabsTrigger, { value: "sessions", children: t2.sessions })
+      ] }),
+      /* @__PURE__ */ jsx29(TabsContent, { value: "account", children: /* @__PURE__ */ jsx29(Card, { children: /* @__PURE__ */ jsxs24(CardContent, { className: "space-y-4 pt-6", children: [
+        /* @__PURE__ */ jsxs24("div", { className: "space-y-1.5", children: [
+          /* @__PURE__ */ jsx29(Label, { htmlFor: "pv-name", children: t2.name }),
+          /* @__PURE__ */ jsx29(Input, { id: "pv-name", value: name, onChange: (e) => setName(e.target.value) })
+        ] }),
+        /* @__PURE__ */ jsxs24("div", { className: "space-y-1.5", children: [
+          /* @__PURE__ */ jsx29(Label, { htmlFor: "pv-email", children: t2.email }),
+          /* @__PURE__ */ jsx29(Input, { id: "pv-email", type: "email", value: email, onChange: (e) => setEmail(e.target.value) })
+        ] }),
+        /* @__PURE__ */ jsx29(Button, { onClick: () => onSave?.({ name, email }), children: t2.save })
+      ] }) }) }),
+      /* @__PURE__ */ jsx29(TabsContent, { value: "security", children: /* @__PURE__ */ jsx29(Card, { children: /* @__PURE__ */ jsxs24(CardContent, { className: "space-y-5 pt-6", children: [
+        /* @__PURE__ */ jsxs24("div", { className: "flex items-center justify-between gap-4", children: [
+          /* @__PURE__ */ jsx29("div", { children: /* @__PURE__ */ jsx29("p", { className: "text-sm font-medium", children: t2.password }) }),
+          /* @__PURE__ */ jsx29(Button, { variant: "outline", onClick: onChangePassword, children: t2.changePassword })
+        ] }),
+        /* @__PURE__ */ jsx29(Separator, {}),
+        /* @__PURE__ */ jsxs24("div", { className: "flex items-center justify-between gap-4", children: [
+          /* @__PURE__ */ jsxs24("div", { className: "flex items-start gap-3", children: [
+            /* @__PURE__ */ jsx29(ShieldCheck3, { className: "mt-0.5 h-5 w-5 text-muted-foreground" }),
+            /* @__PURE__ */ jsxs24("div", { children: [
+              /* @__PURE__ */ jsx29("p", { className: "text-sm font-medium", children: t2.twoFA }),
+              /* @__PURE__ */ jsx29("p", { className: "text-sm text-muted-foreground", children: t2.twoFADesc })
+            ] })
+          ] }),
+          /* @__PURE__ */ jsx29(Switch, { checked: twoFactorEnabled, onCheckedChange: (v) => onToggle2FA?.(v) })
+        ] })
+      ] }) }) }),
+      /* @__PURE__ */ jsx29(TabsContent, { value: "sessions", children: /* @__PURE__ */ jsxs24(Card, { children: [
+        /* @__PURE__ */ jsxs24(CardHeader, { children: [
+          /* @__PURE__ */ jsx29(CardTitle, { className: "text-base", children: t2.active }),
+          /* @__PURE__ */ jsx29(CardDescription, { children: sessions.length })
+        ] }),
+        /* @__PURE__ */ jsx29(CardContent, { className: "space-y-3", children: sessions.map((s) => /* @__PURE__ */ jsxs24("div", { className: "flex items-center justify-between gap-4 rounded-lg border border-border p-3", children: [
+          /* @__PURE__ */ jsxs24("div", { className: "flex items-center gap-3", children: [
+            /* @__PURE__ */ jsx29(Monitor, { className: "h-4 w-4 text-muted-foreground" }),
+            /* @__PURE__ */ jsxs24("div", { children: [
+              /* @__PURE__ */ jsxs24("p", { className: "text-sm font-medium", children: [
+                s.device,
+                s.current && /* @__PURE__ */ jsx29(StatusBadge, { tone: "success", className: "ms-2", children: t2.current })
+              ] }),
+              /* @__PURE__ */ jsx29("p", { className: "text-xs text-muted-foreground", children: [s.location, s.lastActive].filter(Boolean).join(" \xB7 ") })
+            ] })
+          ] }),
+          !s.current && /* @__PURE__ */ jsxs24(Button, { variant: "ghost", size: "sm", onClick: () => onRevokeSession?.(s.id), children: [
+            /* @__PURE__ */ jsx29(LogOut4, { className: "h-4 w-4" }),
+            " ",
+            t2.revoke
+          ] })
+        ] }, s.id)) })
+      ] }) })
+    ] })
+  ] });
+}
+
 // src/theme/brand.ts
 function isHSL(value) {
   return /^\d+(\.\d+)?\s+\d+(\.\d+)?%\s+\d+(\.\d+)?%$/.test(value.trim());
@@ -4102,7 +4225,7 @@ function applyBrand(root, tokens = {}) {
 
 // src/theme/BrandingProvider.tsx
 import { createContext, useContext, useEffect as useEffect9 } from "react";
-import { jsx as jsx29 } from "react/jsx-runtime";
+import { jsx as jsx30 } from "react/jsx-runtime";
 var BrandContext = createContext({
   primaryHex: SENTRA_BRAND.primaryHex,
   accentHex: SENTRA_BRAND.accentHex,
@@ -4134,7 +4257,7 @@ var BrandingProvider = ({
     iconName: iconName ?? null,
     productName: productName ?? ""
   };
-  return /* @__PURE__ */ jsx29(BrandContext.Provider, { value: contextValue, children });
+  return /* @__PURE__ */ jsx30(BrandContext.Provider, { value: contextValue, children });
 };
 BrandingProvider.displayName = "BrandingProvider";
 
@@ -4142,7 +4265,7 @@ BrandingProvider.displayName = "BrandingProvider";
 import {
   createContext as createContext2,
   useContext as useContext2,
-  useState as useState14,
+  useState as useState15,
   useCallback as useCallback5,
   useEffect as useEffect10
 } from "react";
@@ -4392,7 +4515,7 @@ var i18n_default = i18n;
 
 // src/i18n/LanguageProvider.tsx
 import { useTranslation } from "react-i18next";
-import { jsx as jsx30 } from "react/jsx-runtime";
+import { jsx as jsx31 } from "react/jsx-runtime";
 var LanguageContext = createContext2(null);
 initI18n();
 var LANG_STORAGE_KEY = "sentra:lang";
@@ -4415,7 +4538,7 @@ var LanguageProvider = ({
   initialLanguage = "en",
   onLanguageChange
 }) => {
-  const [language, setLanguageState] = useState14(initialLanguage);
+  const [language, setLanguageState] = useState15(initialLanguage);
   const applyDirToDocument = useCallback5((l) => {
     if (typeof document === "undefined") return;
     document.documentElement.dir = l === "ar" ? "rtl" : "ltr";
@@ -4468,7 +4591,7 @@ var LanguageProvider = ({
     seedLanguage,
     t: t2
   };
-  return /* @__PURE__ */ jsx30(LanguageContext.Provider, { value, children });
+  return /* @__PURE__ */ jsx31(LanguageContext.Provider, { value, children });
 };
 LanguageProvider.displayName = "LanguageProvider";
 var useT2 = () => {
@@ -4669,6 +4792,7 @@ export {
   Popover,
   PopoverContent,
   PopoverTrigger,
+  ProfileView,
   Progress,
   RadioGroup,
   RadioGroupItem,
