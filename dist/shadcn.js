@@ -249,7 +249,7 @@ import {
   useFormField,
   useOptionalSidebar,
   useSidebar
-} from "./chunk-27ZISTR6.js";
+} from "./chunk-XXP2ZYPY.js";
 export {
   Accordion,
   AccordionContent,
