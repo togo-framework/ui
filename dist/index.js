@@ -10351,6 +10351,245 @@ var useT2 = () => {
   return ctx;
 };
 var useLanguage = () => useT2();
+
+// src/components/sections/SectionBoard.tsx
+import * as React17 from "react";
+import {
+  DndContext as DndContext3,
+  DragOverlay as DragOverlay2,
+  closestCenter as closestCenter3,
+  KeyboardSensor as KeyboardSensor3,
+  PointerSensor as PointerSensor3,
+  useSensor as useSensor3,
+  useSensors as useSensors3
+} from "@dnd-kit/core";
+import {
+  SortableContext as SortableContext3,
+  sortableKeyboardCoordinates as sortableKeyboardCoordinates3,
+  useSortable as useSortable3,
+  verticalListSortingStrategy as verticalListSortingStrategy3,
+  arrayMove as arrayMove2
+} from "@dnd-kit/sortable";
+import { CSS as CSS3 } from "@dnd-kit/utilities";
+import { GripVertical as GripVertical3, Settings2 as Settings23, Trash2 as Trash24, Plus as Plus2 } from "lucide-react";
+import { Fragment as Fragment16, jsx as jsx62, jsxs as jsxs54 } from "react/jsx-runtime";
+var T2 = {
+  en: {
+    edit: "Edit section",
+    prompt: "Prompt",
+    model: "Model",
+    settings: "Settings",
+    addSetting: "Add setting",
+    key: "Key",
+    value: "Value",
+    save: "Save",
+    cancel: "Cancel",
+    addSection: "Add section",
+    noModel: "Default model",
+    empty: "No content."
+  },
+  ar: {
+    edit: "\u062A\u0639\u062F\u064A\u0644 \u0627\u0644\u0642\u0633\u0645",
+    prompt: "\u0627\u0644\u062A\u0648\u062C\u064A\u0647",
+    model: "\u0627\u0644\u0646\u0645\u0648\u0630\u062C",
+    settings: "\u0627\u0644\u0625\u0639\u062F\u0627\u062F\u0627\u062A",
+    addSetting: "\u0625\u0636\u0627\u0641\u0629 \u0625\u0639\u062F\u0627\u062F",
+    key: "\u0627\u0644\u0645\u0641\u062A\u0627\u062D",
+    value: "\u0627\u0644\u0642\u064A\u0645\u0629",
+    save: "\u062D\u0641\u0638",
+    cancel: "\u0625\u0644\u063A\u0627\u0621",
+    addSection: "\u0625\u0636\u0627\u0641\u0629 \u0642\u0633\u0645",
+    noModel: "\u0627\u0644\u0646\u0645\u0648\u0630\u062C \u0627\u0644\u0627\u0641\u062A\u0631\u0627\u0636\u064A",
+    empty: "\u0644\u0627 \u064A\u0648\u062C\u062F \u0645\u062D\u062A\u0648\u0649."
+  }
+};
+function SectionEditor({
+  open,
+  section,
+  models,
+  language,
+  onClose,
+  onSave
+}) {
+  const t2 = T2[language];
+  const [draft, setDraft] = React17.useState(section);
+  React17.useEffect(() => {
+    if (open) setDraft(section);
+  }, [open, section]);
+  const settings = Object.entries(draft.settings ?? {});
+  const setSetting = (i, key, value) => {
+    const next = [...settings];
+    next[i] = [key, value];
+    setDraft({ ...draft, settings: Object.fromEntries(next.filter(([k]) => k)) });
+  };
+  const addSetting = () => setDraft({ ...draft, settings: { ...draft.settings ?? {}, "": "" } });
+  return /* @__PURE__ */ jsx62(Dialog, { open, onOpenChange: (o) => !o && onClose(), children: /* @__PURE__ */ jsxs54(DialogContent, { children: [
+    /* @__PURE__ */ jsx62(DialogHeader, { children: /* @__PURE__ */ jsx62(DialogTitle, { children: draft.title || t2.edit }) }),
+    /* @__PURE__ */ jsxs54("div", { className: "space-y-4", children: [
+      /* @__PURE__ */ jsxs54("div", { className: "space-y-1.5", children: [
+        /* @__PURE__ */ jsx62(Label, { htmlFor: "sec-prompt", children: t2.prompt }),
+        /* @__PURE__ */ jsx62(
+          Textarea,
+          {
+            id: "sec-prompt",
+            rows: 4,
+            value: draft.prompt ?? "",
+            onChange: (e) => setDraft({ ...draft, prompt: e.target.value })
+          }
+        )
+      ] }),
+      /* @__PURE__ */ jsxs54("div", { className: "space-y-1.5", children: [
+        /* @__PURE__ */ jsx62(Label, { children: t2.model }),
+        /* @__PURE__ */ jsxs54(Select, { value: draft.model ?? "", onValueChange: (v) => setDraft({ ...draft, model: v }), children: [
+          /* @__PURE__ */ jsx62(SelectTrigger, { children: /* @__PURE__ */ jsx62(SelectValue, { placeholder: t2.noModel }) }),
+          /* @__PURE__ */ jsx62(SelectContent, { children: models.map((m) => /* @__PURE__ */ jsx62(SelectItem, { value: m.value, children: m.label ?? m.value }, m.value)) })
+        ] })
+      ] }),
+      /* @__PURE__ */ jsxs54("div", { className: "space-y-1.5", children: [
+        /* @__PURE__ */ jsx62(Label, { children: t2.settings }),
+        /* @__PURE__ */ jsxs54("div", { className: "space-y-2", children: [
+          settings.map(([k, v], i) => /* @__PURE__ */ jsxs54("div", { className: "flex gap-2", children: [
+            /* @__PURE__ */ jsx62(Input, { placeholder: t2.key, value: k, onChange: (e) => setSetting(i, e.target.value, v) }),
+            /* @__PURE__ */ jsx62(Input, { placeholder: t2.value, value: v, onChange: (e) => setSetting(i, k, e.target.value) })
+          ] }, i)),
+          /* @__PURE__ */ jsxs54(Button, { type: "button", variant: "ghost", size: "sm", onClick: addSetting, children: [
+            /* @__PURE__ */ jsx62(Plus2, { className: "h-3.5 w-3.5" }),
+            " ",
+            t2.addSetting
+          ] })
+        ] })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsxs54(DialogFooter, { children: [
+      /* @__PURE__ */ jsx62(Button, { variant: "secondary", onClick: onClose, children: t2.cancel }),
+      /* @__PURE__ */ jsx62(Button, { onClick: () => onSave(draft), children: t2.save })
+    ] })
+  ] }) });
+}
+function DynamicSection({
+  section,
+  editMode,
+  models = [],
+  language = "en",
+  onChange,
+  onRemove,
+  handleProps,
+  className
+}) {
+  const t2 = T2[language];
+  const [editing, setEditing] = React17.useState(false);
+  return /* @__PURE__ */ jsxs54(Card, { className: cn("space-y-3 p-4", className), children: [
+    /* @__PURE__ */ jsxs54("div", { className: "flex items-center gap-2", children: [
+      editMode && /* @__PURE__ */ jsx62(
+        "button",
+        {
+          type: "button",
+          "aria-label": "Drag to reorder",
+          className: "shrink-0 cursor-grab text-muted-foreground hover:text-foreground",
+          ...handleProps,
+          children: /* @__PURE__ */ jsx62(GripVertical3, { className: "h-4 w-4" })
+        }
+      ),
+      /* @__PURE__ */ jsx62("h3", { className: "min-w-0 flex-1 truncate text-sm font-semibold", children: section.title }),
+      section.badge && /* @__PURE__ */ jsx62(Badge, { children: section.badge }),
+      editMode && /* @__PURE__ */ jsxs54(Fragment16, { children: [
+        /* @__PURE__ */ jsx62(Button, { variant: "ghost", size: "sm", className: "h-7 w-7 p-0", "aria-label": t2.edit, onClick: () => setEditing(true), children: /* @__PURE__ */ jsx62(Settings23, { className: "h-4 w-4" }) }),
+        onRemove && /* @__PURE__ */ jsx62(Button, { variant: "ghost", size: "sm", className: "h-7 w-7 p-0 text-destructive", "aria-label": "Remove", onClick: onRemove, children: /* @__PURE__ */ jsx62(Trash24, { className: "h-4 w-4" }) })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx62("div", { className: "text-sm text-muted-foreground", children: section.content ?? /* @__PURE__ */ jsx62("span", { className: "italic opacity-70", children: t2.empty }) }),
+    editMode && (section.model || section.prompt) && /* @__PURE__ */ jsxs54("div", { className: "flex flex-wrap items-center gap-2 border-t border-border pt-2 text-[11px] text-muted-foreground", children: [
+      section.model && /* @__PURE__ */ jsx62(Badge, { variant: "outline", children: section.model }),
+      section.prompt && /* @__PURE__ */ jsx62("span", { className: "line-clamp-1 flex-1 font-mono opacity-70", children: section.prompt })
+    ] }),
+    /* @__PURE__ */ jsx62(
+      SectionEditor,
+      {
+        open: editing,
+        section,
+        models,
+        language,
+        onClose: () => setEditing(false),
+        onSave: (next) => {
+          onChange?.(next);
+          setEditing(false);
+        }
+      }
+    )
+  ] });
+}
+function SortableSection(props) {
+  const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable3({ id: props.id });
+  const style = { transform: CSS3.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
+  return /* @__PURE__ */ jsx62("div", { ref: setNodeRef, style, children: /* @__PURE__ */ jsx62(DynamicSection, { ...props, handleProps: { ...attributes, ...listeners } }) });
+}
+function SectionBoard({
+  sections,
+  editMode,
+  models = [],
+  language = "en",
+  columns = 1,
+  onChange,
+  onAddSection,
+  className
+}) {
+  const t2 = T2[language];
+  const isRTL = language === "ar";
+  const [activeId, setActiveId] = React17.useState(null);
+  const sensors = useSensors3(
+    useSensor3(PointerSensor3, { activationConstraint: { distance: 4 } }),
+    useSensor3(KeyboardSensor3, { coordinateGetter: sortableKeyboardCoordinates3 })
+  );
+  const update = (id, next) => onChange?.(sections.map((s) => s.id === id ? next : s));
+  const remove = (id) => onChange?.(sections.filter((s) => s.id !== id));
+  const onDragEnd = (e) => {
+    setActiveId(null);
+    const { active: active2, over } = e;
+    if (!over || active2.id === over.id) return;
+    const from = sections.findIndex((s) => s.id === active2.id);
+    const to = sections.findIndex((s) => s.id === over.id);
+    if (from < 0 || to < 0) return;
+    onChange?.(arrayMove2(sections, from, to));
+  };
+  const grid = cn("grid gap-3", columns === 2 ? "sm:grid-cols-2" : "grid-cols-1");
+  const active = sections.find((s) => s.id === activeId);
+  if (!editMode) {
+    return /* @__PURE__ */ jsx62("div", { dir: isRTL ? "rtl" : "ltr", className: cn(grid, className), children: sections.map((s) => /* @__PURE__ */ jsx62(DynamicSection, { section: s, language, models }, s.id)) });
+  }
+  return /* @__PURE__ */ jsxs54("div", { dir: isRTL ? "rtl" : "ltr", className: cn("space-y-3", className), children: [
+    /* @__PURE__ */ jsxs54(
+      DndContext3,
+      {
+        sensors,
+        collisionDetection: closestCenter3,
+        onDragStart: (e) => setActiveId(String(e.active.id)),
+        onDragEnd,
+        onDragCancel: () => setActiveId(null),
+        children: [
+          /* @__PURE__ */ jsx62(SortableContext3, { items: sections.map((s) => s.id), strategy: verticalListSortingStrategy3, children: /* @__PURE__ */ jsx62("div", { className: grid, children: sections.map((s) => /* @__PURE__ */ jsx62(
+            SortableSection,
+            {
+              id: s.id,
+              section: s,
+              editMode: true,
+              models,
+              language,
+              onChange: (next) => update(s.id, next),
+              onRemove: () => remove(s.id)
+            },
+            s.id
+          )) }) }),
+          /* @__PURE__ */ jsx62(DragOverlay2, { children: active ? /* @__PURE__ */ jsx62(DynamicSection, { section: active, editMode: true, models, language, className: "shadow-lg" }) : null })
+        ]
+      }
+    ),
+    onAddSection && /* @__PURE__ */ jsxs54(Button, { variant: "outline", className: "w-full border-dashed", onClick: onAddSection, children: [
+      /* @__PURE__ */ jsx62(Plus2, { className: "h-4 w-4" }),
+      " ",
+      t2.addSection
+    ] })
+  ] });
+}
 export {
   Accordion,
   AccordionContent,
@@ -10482,6 +10721,7 @@ export {
   DropdownMenuSubTrigger,
   DropdownMenuTrigger,
   DynamicIcon,
+  DynamicSection,
   EmptyState,
   EntityNetworkGraph,
   ErrorTrackingPage,
@@ -10583,6 +10823,7 @@ export {
   STEP_FIELD_REGISTRY,
   ScrollArea,
   ScrollBar,
+  SectionBoard,
   SectionSkeleton,
   Select,
   SelectContent,
