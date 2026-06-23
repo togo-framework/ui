@@ -9,6 +9,15 @@ import { twMerge } from "tailwind-merge";
 function cn(...inputs) {
   return twMerge(clsx(inputs));
 }
+function formatRelativeTime(isoString) {
+  const diff = Date.now() - new Date(isoString).getTime();
+  const mins = Math.floor(diff / 6e4);
+  if (mins < 1) return "just now";
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  return `${Math.floor(hours / 24)}d ago`;
+}
 
 // src/components/ui/accordion.tsx
 import { jsx, jsxs } from "react/jsx-runtime";
@@ -1928,6 +1937,7 @@ ToggleGroupItem.displayName = ToggleGroupPrimitive.Item.displayName;
 
 export {
   cn,
+  formatRelativeTime,
   Accordion,
   AccordionItem,
   AccordionTrigger,
@@ -2179,4 +2189,4 @@ export {
   ToggleGroup,
   ToggleGroupItem
 };
-//# sourceMappingURL=chunk-6W427NJL.js.map
+//# sourceMappingURL=chunk-27ZISTR6.js.map

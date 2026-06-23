@@ -5,6 +5,7 @@ import * as class_variance_authority_types from 'class-variance-authority/types'
 import { VariantProps } from 'class-variance-authority';
 import { ColumnDef, SortingState, ColumnFiltersState, PaginationState } from '@tanstack/react-table';
 export { ColumnDef, ColumnFiltersState, PaginationState, RowSelectionState, SortingState, VisibilityState } from '@tanstack/react-table';
+import { LucideIcon } from 'lucide-react';
 import { ClassValue } from 'clsx';
 export { toast } from 'sonner';
 export { useTranslation } from 'react-i18next';
@@ -1054,6 +1055,907 @@ interface ProfileViewProps {
  * `language`; themed via tokens (dark/light). */
 declare function ProfileView({ user, language, sessions, twoFactorEnabled, onSave, onChangePassword, onToggle2FA, onRevokeSession, }: ProfileViewProps): React$1.JSX.Element;
 
+interface ColorPickerProps {
+    /** Current color, hex (e.g. "#7c3aed"). */
+    value: string;
+    onChange: (hex: string) => void;
+    /** Preset swatches shown in the popover. */
+    presets?: string[];
+    /** Optional className for the trigger. */
+    className?: string;
+    disabled?: boolean;
+    "aria-label"?: string;
+}
+/** ColorPicker — a swatch trigger that opens a popover with a native color input,
+ * a hex field, and preset swatches. Presentational + controlled. */
+declare function ColorPicker({ value, onChange, presets, className, disabled, ...rest }: ColorPickerProps): React$1.JSX.Element;
+
+interface IconPickerProps {
+    /** Current icon name (lucide PascalCase, e.g. "Sparkles"). */
+    value?: string;
+    onChange: (name: string) => void;
+    /** Restrict to a custom icon list (defaults to a curated common set). */
+    icons?: string[];
+    className?: string;
+    disabled?: boolean;
+}
+/** IconPicker — a button that opens a searchable grid of lucide icons. Controlled
+ * by `value` (icon name) + `onChange`. Presentational + token-themed. */
+declare function IconPicker({ value, onChange, icons, className, disabled }: IconPickerProps): React$1.JSX.Element;
+
+interface MapMarker$1 {
+    lat: number;
+    lng: number;
+    label?: string;
+    /** Marker color (defaults to the brand primary). */
+    color?: string;
+}
+interface MapViewProps {
+    center: [number, number];
+    zoom?: number;
+    markers?: MapMarker$1[];
+    /** Height of the map container (CSS value). Default 360px. */
+    height?: number | string;
+    className?: string;
+    /** Tile attribution. Defaults to OpenStreetMap. */
+    attribution?: string;
+}
+/** MapView — a real OpenStreetMap powered by leaflet. SSR-safe (leaflet loads in an
+ * effect, client-only). Pass `center`, `zoom`, and `markers`. Themed container; the
+ * tiles are OSM raster. */
+declare function MapView({ center, zoom, markers, height, className, attribution, }: MapViewProps): React$1.JSX.Element;
+
+/**
+ * Map component types for sentra-ui.
+ *
+ * The map renderer itself is NOT included in this package to avoid bundling
+ * maplibre-gl (~600 KB gzipped WebGL runtime) as a hard dependency. Products
+ * supply the renderer via the `renderMap` prop (see MapPanel). This keeps the
+ * library tree-shaking-friendly: consumers that never show a map pay zero cost.
+ */
+/** A single geographic marker for the map. */
+interface MapMarker {
+    id: string;
+    /** Longitude */
+    lng: number;
+    /** Latitude */
+    lat: number;
+    /** Marker category — drives color + legend shape */
+    markerType: MapMarkerType;
+    /** English label shown in tooltip */
+    label: string;
+    /** Arabic label (RTL), falls back to label if absent */
+    label_ar?: string;
+    description?: string;
+    description_ar?: string;
+    /** Nominal size in pixels at zoom level 6 (data-driven) */
+    size?: number;
+}
+/** All marker types the map legend and styling system understand. */
+type MapMarkerType = 'strike' | 'launch_site' | 'proxy_force' | 'military_base' | 'air_defense' | 'nuclear' | 'naval' | 'infrastructure';
+type LegendShapeType = 'diamond' | 'burst' | 'chevron' | 'triangle' | 'hexagon' | 'ring' | 'pill' | 'square';
+interface LegendItem {
+    /** Marker type key — used to look up color and label */
+    type: MapMarkerType;
+    shape: LegendShapeType;
+}
+interface LegendGroup {
+    label: string;
+    label_ar: string;
+    items: LegendItem[];
+}
+type AlertSeverity = 'critical' | 'high' | 'medium' | 'low';
+interface AlertMapItem {
+    id: string;
+    slug: string;
+    title_en: string;
+    title_ar: string | null;
+    severity: AlertSeverity | null;
+    mode: string;
+    scope: string;
+    topics: string[];
+    updated_at: string;
+}
+/**
+ * Region preset — used by the region selector and the fly-to handler.
+ * The renderMap slot receives `initialRegion` so the product's map engine can
+ * set its initial viewport.
+ */
+interface MapRegionPreset {
+    key: string;
+    label: string;
+    label_ar: string;
+    latitude: number;
+    longitude: number;
+    zoom: number;
+}
+/**
+ * Layer toggle entry — sent to the LayersPanel and also passed to renderMap so
+ * the product can show/hide GeoJSON layers.
+ */
+interface MapLayer {
+    id: string;
+    label: string;
+    label_ar: string;
+    enabled: boolean;
+    color?: string;
+}
+/**
+ * The seam contract the renderMap prop must satisfy.
+ *
+ * The product supplies a renderer (e.g. <Map> from react-map-gl/maplibre) and
+ * receives the full state it needs to wire GeoJSON Sources and Layers. The
+ * sentra-ui package never imports react-map-gl or maplibre-gl.
+ */
+interface RenderMapContext {
+    /** Active layers; product hides/shows Source/Layer accordingly */
+    layers: Record<string, boolean>;
+    /** Markers to render as GeoJSON point features */
+    markers: MapMarker[];
+    /** Alert pins from the product's data fetch */
+    alerts: AlertMapItem[];
+    /** Currently active region preset */
+    activeRegion: MapRegionPreset;
+    /** Language code — 'en' | 'ar' */
+    language: string;
+    /** Text direction — 'ltr' | 'rtl' */
+    dir: 'ltr' | 'rtl';
+    /** Whether the host app is in dark theme */
+    isDark: boolean;
+}
+interface MapPanelProps {
+    /**
+     * The actual map renderer, supplied by the product.
+     *
+     * Receives full state via RenderMapContext. Return a React node that fills
+     * its container (w-full h-full). Example usage in sentra-next:
+     *
+     * ```tsx
+     * renderMap={(ctx) => (
+     *   <SituationMapEmbed
+     *     layers={ctx.layers}
+     *     alerts={ctx.alerts}
+     *     language={ctx.language}
+     *     isDark={ctx.isDark}
+     *   />
+     * )}
+     * ```
+     *
+     * If omitted, an informational placeholder is shown — useful in Storybook
+     * and tests.
+     */
+    renderMap?: (ctx: RenderMapContext) => React.ReactNode;
+    /** Markers passed to renderMap ctx — product builds these from its GeoJSON data */
+    markers?: MapMarker[];
+    /** Live alert pins — product fetches these from its bridge endpoint */
+    alerts?: AlertMapItem[];
+    /** Region presets for the region selector bar. Defaults to MENA presets. */
+    regionPresets?: MapRegionPreset[];
+    /** Layer definitions controlling the LayersPanel toggles */
+    layers?: MapLayer[];
+    /** Initial active region key — defaults to 'global' */
+    initialRegion?: string;
+    /** Active language code — 'en' | 'ar' */
+    language?: string;
+    /** Whether host is in dark theme — forwarded to renderMap ctx */
+    isDark?: boolean;
+    /** Called when a layer is toggled */
+    onLayerToggle?: (layerId: string, enabled: boolean) => void;
+    /** Called when alert count changes (useful for badge in host nav) */
+    onAlertCountChange?: (count: number) => void;
+    /** CSS class name applied to the root container */
+    className?: string;
+}
+
+interface MapLegendProps {
+    /** Language code — 'en' | 'ar'. Controls label language and RTL positioning. */
+    language?: string;
+    /** Override legend groups (marker types + shapes). Defaults to MENA presets. */
+    groups?: LegendGroup[];
+    /**
+     * Marker color map — keys are MapMarkerType strings, values are hex colors.
+     * Defaults to MARKER_COLORS from mapDefaults.
+     */
+    markerColors?: Partial<Record<MapMarkerType, string>>;
+    /**
+     * Marker label map — keys are MapMarkerType strings.
+     * Defaults to MARKER_LABELS from mapDefaults.
+     */
+    markerLabels?: Partial<Record<MapMarkerType, {
+        en: string;
+        ar: string;
+    }>>;
+    /** Additional class name on the root element */
+    className?: string;
+    /** Initially collapsed. Defaults to false (expanded). */
+    defaultCollapsed?: boolean;
+}
+declare const MapLegend: {
+    ({ language, groups, markerColors, markerLabels, className, defaultCollapsed, }: MapLegendProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+interface MapLayersPanelProps {
+    /** Layer toggle entries. Defaults to DEFAULT_LAYERS from mapDefaults. */
+    layers?: MapLayer[];
+    /** Language code — 'en' | 'ar' */
+    language?: string;
+    /** Called when a layer toggle changes */
+    onToggle?: (layerId: string, enabled: boolean) => void;
+    /** Additional class name on root */
+    className?: string;
+}
+declare const MapLayersPanel: {
+    ({ layers, language, onToggle, className, }: MapLayersPanelProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+/**
+ * MapPanel — chrome shell for the situation map view.
+ *
+ * Ported from app/src/components/situation-map/SituationMapEmbed.tsx.
+ *
+ * DESIGN DECISION — renderMap seam (option b from the porting spec):
+ * ──────────────────────────────────────────────────────────────────
+ * react-map-gl@7 + maplibre-gl@4 together add ~600 KB gzipped WebGL runtime.
+ * Bundling them into @prism/ui would force every product consumer to pay that
+ * cost even when no map is rendered (e.g. Scout's data-table views).
+ *
+ * Instead, MapPanel exposes a `renderMap` prop that receives a RenderMapContext
+ * object. The product (sentra-next) supplies the actual <Map> component from
+ * react-map-gl/maplibre, which it already depends on. sentra-ui ships zero
+ * map-library bytes.
+ *
+ * Everything else — region selector bar, time-range filter, layers panel,
+ * legend, alert sidebar — is real and fully ported here. The seam is only
+ * the WebGL canvas itself.
+ *
+ * Adaptations from source:
+ * - @/lib/utils        → ../../lib/utils
+ * - @/components/ui/*  → ../ui/*
+ * - useLanguage        → language / dir props
+ * - useTheme           → isDark prop
+ * - bridge + useQuery  → alerts prop (product fetches and passes)
+ * - WebSocket listener → onAlertCountChange callback
+ * - REGION_PRESETS     → regionPresets prop (defaults to DEFAULT_REGION_PRESETS)
+ * - LayersPanel / MapLegend → imported from this module
+ */
+
+declare const MapPanel: {
+    ({ renderMap, markers, alerts, regionPresets, layers: layersProp, initialRegion, language, isDark, onLayerToggle, onAlertCountChange, className, }: MapPanelProps): React__default.JSX.Element;
+    displayName: string;
+};
+
+interface EventMapPanelProps {
+    /** Structured location string — if absent the panel renders nothing */
+    location?: string | null;
+    /** Language code — 'en' | 'ar' */
+    language?: string;
+}
+declare const EventMapPanel: {
+    ({ location, language }: EventMapPanelProps): React$1.JSX.Element | null;
+    displayName: string;
+};
+
+/**
+ * Default configuration constants for the map components.
+ *
+ * These are the same values used in the source app (situation-map-data.ts /
+ * MapLegend.tsx) extracted here so map components are self-contained without
+ * depending on the app's data/ directory.
+ */
+
+declare const MARKER_COLORS: Record<MapMarkerType, string>;
+declare const MARKER_LABELS: Record<MapMarkerType, {
+    en: string;
+    ar: string;
+}>;
+declare const DEFAULT_LEGEND_GROUPS: LegendGroup[];
+declare const DEFAULT_REGION_PRESETS: MapRegionPreset[];
+declare const DEFAULT_LAYERS: MapLayer[];
+
+interface GraphNode {
+    id: string;
+    label?: string;
+    group?: string;
+}
+interface GraphLink {
+    source: string;
+    target: string;
+}
+interface NetworkGraphProps {
+    nodes: GraphNode[];
+    links: GraphLink[];
+    width?: number;
+    height?: number;
+    className?: string;
+    /** Map a group → CSS color. Falls back to a token palette. */
+    groupColor?: (group: string | undefined) => string;
+}
+/** NetworkGraph — a dependency-free SVG graph with a deterministic force layout
+ * (circular seed + fixed iterations; no randomness). Pass `nodes` + `links`. */
+declare function NetworkGraph({ nodes, links, width, height, className, groupColor, }: NetworkGraphProps): React$1.JSX.Element;
+
+type TEntityType = "government" | "individual" | "media" | "institution" | "state" | "organization" | "event" | "venue" | "persona" | "person" | "coalition";
+type TSentiment = "positive" | "negative" | "neutral" | "unknown";
+/** Network node/edge shapes for the graph renderer seam */
+interface NetworkNode {
+    id: string;
+    slug: string;
+    name_en: string;
+    name_ar?: string | null;
+    type: TEntityType;
+    sentiment?: TSentiment | null;
+    image_url?: string | null;
+}
+interface NetworkEdge {
+    source: string;
+    target: string;
+    weight: number;
+    relation?: string | null;
+}
+interface EntityNetwork {
+    nodes: NetworkNode[];
+    edges: NetworkEdge[];
+}
+
+interface EntityNetworkGraphProps {
+    /**
+     * SEAM — host renders the actual graph canvas inside this callback.
+     * Receives the network data so the canvas can build its own graphology Graph.
+     * If omitted, a "graph unavailable" placeholder is shown.
+     *
+     * Example (app side):
+     *   renderGraph={(network) => <EntityNetworkGraphCanvas slug={slug} network={network} />}
+     */
+    renderGraph?: (network: EntityNetwork) => React.ReactNode;
+    /** Network data fetched from GET /api/entities/{slug}/network */
+    network: EntityNetwork | null;
+    isLoading?: boolean;
+    isError?: boolean;
+    onRetry?: () => void;
+    language?: "en" | "ar";
+    isRTL?: boolean;
+}
+declare const EntityNetworkGraph: {
+    ({ renderGraph, network, isLoading, isError, onRetry, language, isRTL, }: EntityNetworkGraphProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+interface ActivityBucket {
+    n: number;
+}
+interface PluginCatalogEntry {
+    id: string;
+    slug: string | null;
+    name: string | null;
+    name_en: string | null;
+    name_ar: string | null;
+    description: string | null;
+    description_en: string | null;
+    description_ar: string | null;
+    plugin_type: string | null;
+    /** adk_artifact sub-kind: tool | skill | agent | mcp | memory | persona */
+    adk_kind?: string | null;
+    enabled_globally: boolean | null;
+    nav_icon: string | null;
+    nav_color: string | null;
+    last_active_at: string | null;
+    activity_count: number | null;
+    activity_series: ActivityBucket[] | null;
+    route: string | null;
+}
+interface SparklinePoint {
+    n: number;
+}
+
+interface PluginCardProps {
+    plugin: PluginCatalogEntry;
+    isRTL: boolean;
+    /**
+     * Resolved Lucide icon component for this plugin.
+     * Host calls resolveIcon(plugin.nav_icon) and passes the result here.
+     */
+    iconComponent?: LucideIcon;
+    /** When true, render a checkbox for multi-select. */
+    selectable?: boolean;
+    selected?: boolean;
+    onSelectChange?: (id: string, next: boolean) => void;
+    /**
+     * Called when the user clicks "Details". Host navigates to the detail page.
+     * Receives the plugin slug (or id) as argument.
+     */
+    onDetailClick?: (slugOrId: string) => void;
+    /**
+     * Called when the user clicks "Page" (external route link).
+     * Receives the route string from plugin.route.
+     */
+    onPageClick?: (route: string) => void;
+}
+declare const PluginCard: {
+    ({ plugin, isRTL, iconComponent: Icon, selectable, selected, onSelectChange, onDetailClick, onPageClick, }: PluginCardProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+interface PluginPageHeaderProps {
+    icon?: LucideIcon;
+    title_en: string;
+    title_ar: string;
+    subtitle_en?: string;
+    subtitle_ar?: string;
+    actions?: React.ReactNode;
+    /** Current UI language. */
+    language: "en" | "ar";
+}
+declare const PluginPageHeader: {
+    ({ icon: Icon, title_en, title_ar, subtitle_en, subtitle_ar, actions, language, }: PluginPageHeaderProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+interface PluginSectionCardProps {
+    icon?: LucideIcon;
+    title_en: string;
+    title_ar: string;
+    description_en?: string;
+    description_ar?: string;
+    /** Optional actions slot at the inline-end of the title row. */
+    actions?: React.ReactNode;
+    /** Adds destructive accent border for dangerous sections. */
+    destructive?: boolean;
+    className?: string;
+    children: React.ReactNode;
+    /** Current UI language. */
+    language: "en" | "ar";
+}
+declare const PluginSectionCard: {
+    ({ icon: Icon, title_en, title_ar, description_en, description_ar, actions, destructive, className, children, language, }: PluginSectionCardProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+interface PluginSparklineProps {
+    pluginId: string;
+    seriesData: SparklinePoint[];
+    hasSeriesData: boolean;
+    color: string;
+}
+declare const PluginSparkline: {
+    ({ pluginId, seriesData, hasSeriesData, color, }: PluginSparklineProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+type SourceBadgeVariant = 'pill' | 'compact';
+type SourceBadgeSize = 'xs' | 'sm' | 'md';
+interface SourceBadgeProps {
+    /** Display label (already localised by the product). */
+    label: string;
+    /** DynamicIcon name string — "si:openai", "lucide:zap", "bxl:reddit", a URL, etc. */
+    navIcon?: string | null;
+    /** Optional brand color (hex or CSS color) applied to the icon. */
+    color?: string;
+    variant?: SourceBadgeVariant;
+    href?: string;
+    size?: SourceBadgeSize;
+    className?: string;
+}
+declare const SourceBadge: {
+    ({ label, navIcon, color, variant, href, size, className, }: SourceBadgeProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+/** Appearance placement mode for a plugin. */
+type AppearanceMode = 'sidebar' | 'header' | 'sideover' | 'fixed' | 'hidden';
+/** Appearance fields passed into PluginAppearanceSection. */
+interface PluginAppearanceFields {
+    appearance_mode: AppearanceMode;
+    nav_order: number;
+    /** Only relevant for capability plugins. */
+    is_default_page?: boolean;
+    plugin_type?: string | null;
+}
+/** A single workflow step (raw JSONB shape). */
+type WorkflowStep = Record<string, any>;
+/** A single workflow source (raw JSONB shape). */
+type WorkflowSource = Record<string, any>;
+/** Tab definition for PluginDetailLayout. */
+interface PluginDetailTab {
+    key: string;
+    label_en: string;
+    label_ar: string;
+    icon?: React.ElementType;
+    /**
+     * Optional section group label (bilingual). Tabs sharing the same section_en
+     * render under one section header in the sub-sidebar (like the mofa-dev
+     * reference: "Overview" / "Settings"). Tabs with no section render in an
+     * unlabelled leading group. Order of first appearance defines section order.
+     */
+    section_en?: string;
+    section_ar?: string;
+}
+/** A pipeline stage for WorkflowPipeline. */
+interface PipelineLane {
+    key: string;
+    label_en: string;
+    label_ar: string;
+    cards: PipelineCard[];
+}
+/** A card inside a pipeline lane. */
+interface PipelineCard {
+    id: string;
+    title_en: string;
+    title_ar: string;
+    svc?: string;
+    isSynthetic?: boolean;
+    summary: {
+        label: string;
+        value: string;
+    }[];
+    metrics?: {
+        ok_rate: number;
+        p50_ms: number;
+        last_error?: string;
+    };
+}
+/** Pipeline model passed to WorkflowPipeline. */
+interface PipelineModel {
+    stages: PipelineLane[];
+    fetchBranches: PipelineCard[];
+}
+/** Metrics for a step keyed by step ID. */
+interface StepMetrics7d {
+    [stepId: string]: {
+        runs: number;
+        errors: number;
+        avg_duration_ms?: number;
+    };
+}
+/** Workflow palette for the Add Item dialog. */
+interface WorkflowPalette {
+    svc: Array<{
+        slug: string;
+        name_en: string;
+        name_ar: string;
+    }>;
+}
+
+type IconKind = 'lucide' | 'react-icons' | 'boxicons' | 'fallback';
+interface ResolvedIcon {
+    Component: React$1.ElementType;
+    kind: IconKind;
+}
+declare const resolveIcon: (navIcon: string | null | undefined) => ResolvedIcon;
+
+type StepPath = (number | string)[];
+type AnyStep = Record<string, any>;
+interface WorkflowStepNodeProps {
+    step: AnyStep;
+    path: StepPath;
+    depth: number;
+    isRTL: boolean;
+    metrics?: StepMetrics7d;
+    editingPath?: string | null;
+    onEditRequest?: (path: StepPath) => void;
+    onDelete?: (path: StepPath) => void;
+    onMove?: (path: StepPath, dir: -1 | 1) => void;
+    onAdd?: (containerPath: StepPath, kind: string) => void;
+    addableKinds?: string[];
+    renderEditor?: (step: AnyStep, path: StepPath) => React.ReactNode;
+}
+declare const WorkflowStepNode: {
+    ({ step, path, depth, isRTL, metrics, editingPath, onEditRequest, onDelete, onMove, onAdd, addableKinds, renderEditor, }: WorkflowStepNodeProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+declare const PIPELINE_STAGES: {
+    key: string;
+    label_en: string;
+    label_ar: string;
+}[];
+interface WorkflowPipelineProps {
+    model: PipelineModel;
+    /** Current UI direction. Default false (LTR). */
+    isRTL?: boolean;
+}
+declare const WorkflowPipeline: {
+    ({ model, isRTL }: WorkflowPipelineProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+interface WorkflowEditorProps {
+    /** Raw JSONB workflow_steps array from the DB. */
+    workflowSteps: WorkflowStep[];
+    /** Raw JSONB sources array from the DB. */
+    workflowSources: WorkflowSource[];
+    /** Plugin slug — used in source credential links. */
+    pluginSlug: string;
+    /** Current UI language. */
+    language: 'en' | 'ar';
+    /** Palette for Add dialog SVC items. */
+    palette?: WorkflowPalette;
+    /**
+     * Called when the operator clicks Save.
+     * Returns a Promise — reject to show an error toast.
+     */
+    onSave: (steps: WorkflowStep[], sources: WorkflowSource[]) => Promise<void>;
+}
+declare const WorkflowEditor: {
+    ({ workflowSteps, workflowSources, pluginSlug, language, palette, onSave, }: WorkflowEditorProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+interface PluginAppearanceSectionProps {
+    /** Current server state — seeds the form on mount / when changed. */
+    appearance: PluginAppearanceFields;
+    /** Called when the operator saves. Return type intentionally void — host handles async. */
+    onSave: (changed: Partial<PluginAppearanceFields>) => void;
+    /** Whether the host is currently persisting. */
+    isPending?: boolean;
+    /** Whether the last save resulted in an error. */
+    isError?: boolean;
+    errorMessage?: string;
+    /** Current UI language. */
+    language: 'en' | 'ar';
+}
+declare const PluginAppearanceSection: {
+    ({ appearance, onSave, isPending, isError, errorMessage, language, }: PluginAppearanceSectionProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+interface TestRunStep {
+    name: string;
+    status: 'ok' | 'error' | 'skipped' | string;
+    detail?: string;
+    duration_ms?: number;
+    count?: number;
+    error?: string;
+}
+interface TestRunSavedItem {
+    title?: string;
+    url?: string;
+    language?: string;
+    content_hash?: string;
+    envelope_id?: string;
+    source_id?: string;
+    region?: string;
+    content_en?: string;
+    content_ar?: string;
+    published_at?: string;
+    raw_payload?: any;
+}
+interface TestRunCompletePayload {
+    envelopes_saved: number;
+    saved: TestRunSavedItem[];
+}
+/** Callbacks for the SSE stream. */
+interface TestRunCallbacks {
+    onStep: (step: TestRunStep) => void;
+    onComplete: (payload: TestRunCompletePayload) => void;
+    onError: (err: {
+        error: string;
+    }) => void;
+}
+interface TestRunPanelProps {
+    /** Plugin slug — passed to onRunRequest. */
+    slug: string;
+    /** Max envelopes to save. Default 5. */
+    maxEnvelopes?: number;
+    /** If true, panel renders as an inline block rather than a Card. */
+    inline?: boolean;
+    /** Current UI language. */
+    language: 'en' | 'ar';
+    /**
+     * Host-provided SSE runner. Must return an AbortController.
+     * Signature mirrors sourceTestRunSSE from the bridge hooks.
+     */
+    onRunRequest: (slug: string, maxEnvelopes: number, callbacks: TestRunCallbacks) => AbortController;
+}
+declare const TestRunPanel: {
+    ({ slug, maxEnvelopes, inline, language, onRunRequest, }: TestRunPanelProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+interface PluginDetailIdentity {
+    slug?: string | null;
+    name?: string | null;
+    name_en?: string | null;
+    name_ar?: string | null;
+    description?: string | null;
+    description_en?: string | null;
+    description_ar?: string | null;
+    plugin_type?: string | null;
+    version?: string | null;
+    nav_icon?: string | null;
+    nav_color?: string | null;
+    enabled_globally?: boolean | null;
+}
+interface PluginActivitySummary {
+    last_active_at?: string | null;
+    activity_count?: number | null;
+    activity_series?: {
+        n: number;
+    }[];
+}
+interface PluginDetailLayoutProps {
+    /** Ordered tab list. */
+    tabs: PluginDetailTab[];
+    /** Currently active tab key. */
+    activeTab: string;
+    /** Called when the operator clicks a tab. */
+    onTabChange: (key: string) => void;
+    /** Content for the active tab. */
+    children: React.ReactNode;
+    /** Plugin identity for the hero. */
+    plugin: PluginDetailIdentity;
+    /** Optional activity data for the sparkline analytics block. */
+    activity?: PluginActivitySummary;
+    /** Whether identity data is still loading. */
+    isLoading?: boolean;
+    /** Whether identity fetch errored. */
+    isError?: boolean;
+    /** Current UI language. */
+    language: 'en' | 'ar';
+}
+declare const PluginHeroSkeleton: {
+    (): React$1.JSX.Element;
+    displayName: string;
+};
+interface PluginHeroProps {
+    plugin: PluginDetailIdentity;
+    activity?: PluginActivitySummary;
+    isRTL: boolean;
+}
+declare const PluginHero: {
+    ({ plugin, activity, isRTL }: PluginHeroProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+declare const PluginDetailLayout: {
+    ({ tabs, activeTab, onTabChange, children, plugin, activity, isLoading, isError, language, }: PluginDetailLayoutProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+/**
+ * types.ts — LogsView data contract
+ *
+ * Rule 25: product-agnostic seam — no fetching, no app/product imports.
+ * Data arrives entirely as props.
+ */
+type LogLevel = 'debug' | 'info' | 'warn' | 'error';
+interface ServiceLogRow {
+    id: string;
+    /** ISO 8601 timestamp */
+    ts: string;
+    level: LogLevel;
+    /** e.g. 'axon', 'scout-collector', 'firecrawl' */
+    service: string;
+    /** optional subsystem label */
+    component?: string;
+    msg: string;
+    traceId?: string;
+    requestId?: string;
+    userId?: string;
+    /** arbitrary structured metadata */
+    attrs?: Record<string, unknown>;
+}
+interface LogsFilter {
+    /** multiselect level filter — empty / undefined = all levels */
+    levels?: string[];
+    service?: string;
+    component?: string;
+    /** ISO date-time lower bound */
+    since?: string;
+    /** ISO date-time upper bound */
+    until?: string;
+    /** full-text search on msg */
+    q?: string;
+}
+interface LogsViewProps {
+    logs: ServiceLogRow[];
+    filters: LogsFilter;
+    onFilterChange: (f: LogsFilter) => void;
+    /** EN or AR — drives all chrome labels and RTL direction */
+    language: 'en' | 'ar';
+    loading?: boolean;
+    /** called when the user reaches the bottom / clicks "load more" */
+    onLoadMore?: () => void;
+    hasMore?: boolean;
+    /** options to populate the service dropdown */
+    services?: string[];
+    /** options to populate the component dropdown */
+    components?: string[];
+    /** whether live-tail polling is active */
+    liveTail?: boolean;
+    onToggleLiveTail?: (on: boolean) => void;
+    className?: string;
+}
+
+/**
+ * LogsView — presentational per-product log viewer
+ *
+ * Rule 25: purely presentational; NO data fetching, NO context reads,
+ *          NO product-specific imports. All data arrives as props.
+ * Rule 16: semantic tokens only (no hex), logical CSS properties (ms/me/ps/pe).
+ * Rule 8:  all chrome strings bilingual via `language` prop.
+ * Rule 7:  displayName set; event handlers prefixed `handle*`.
+ */
+
+declare const LogsView: {
+    ({ logs, filters, onFilterChange, language, loading, onLoadMore, hasMore, services, components, liveTail, onToggleLiveTail, className, }: LogsViewProps): React__default.JSX.Element;
+    displayName: string;
+};
+
+interface SentraLoadingProps {
+    language?: 'en' | 'ar';
+    dir?: 'ltr' | 'rtl';
+    /** Lucide icon name from the branding icon picker — the platform brand icon. */
+    iconName?: string | null;
+    /**
+     * Platform title pair from Fort branding. The component resolves the active
+     * language itself so every product gets the translated title for free.
+     */
+    productNameEn?: string | null;
+    productNameAr?: string | null;
+    /** Pre-resolved title override — wins over the En/Ar pair when set. */
+    productName?: string;
+}
+declare const SentraLoading: {
+    ({ language, dir, iconName, productNameEn, productNameAr, productName, }: SentraLoadingProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+/**
+ * ContextualSkeleton — a loading skeleton with a contextual header (spinner +
+ * a bilingual "loading X…" caption) and one of three body shapes: default
+ * (text lines), grid (cards), or timeline (dot + lines rows).
+ *
+ * Pure & product-agnostic (Rule 25): `language` is a prop, no context. Distinct
+ * from SectionSkeleton (which is a single card-shaped block) — this one carries
+ * a caption + variant body for richer loading states.
+ *
+ * Ported from app/src/components/loading/ContextualSkeleton.tsx.
+ */
+
+type ContextualSkeletonVariant = 'default' | 'grid' | 'timeline';
+interface ContextualSkeletonProps {
+    /** Bilingual caption shown next to the spinner, e.g. {en:'Loading alerts…', ar:'…'} */
+    description: {
+        en: string;
+        ar: string;
+    };
+    variant?: ContextualSkeletonVariant;
+    /** Number of text lines for the 'default' variant. Default: 3. */
+    lines?: number;
+    language?: 'en' | 'ar';
+    /**
+     * Optional icon (LucideIcon component) rendered before the caption.
+     * Accepted for API parity with hub callers — visually ignored (spinner
+     * already serves as the loading indicator). Pass it to keep TS happy when
+     * migrating from the old hub ContextualSkeleton.
+     */
+    icon?: React$1.ComponentType<{
+        className?: string;
+    }>;
+    /**
+     * Bilingual title shown above the skeleton body. Optional — omitted if not provided.
+     */
+    title?: {
+        en: string;
+        ar: string;
+    };
+}
+declare const ContextualSkeleton: {
+    ({ description, variant, lines, language, }: ContextualSkeletonProps): React$1.JSX.Element;
+    displayName: string;
+};
+
+interface SectionSkeletonProps {
+    title?: string;
+    rows?: number;
+}
+declare const SectionSkeleton: {
+    ({ title, rows }: SectionSkeletonProps): React$1.JSX.Element;
+    displayName: string;
+};
+
 /**
  * brand.ts — Sentra dynamic theming primitives.
  *
@@ -1256,4 +2158,4 @@ declare const useLanguage: () => LanguageContextValue;
 
 declare function cn(...inputs: ClassValue[]): string;
 
-export { AppPageShell, type AppPageShellProps, AppSidebar, type AppSidebarProps, AuthCard, type AuthCardBrand, type AuthClient, AuthErrorAlert, AuthFlow, type AuthLayout, AuthStepHeader, type BarPoint, type BrandContextValue, type BrandTokens, BrandingProvider, type BrandingProviderProps, type CardFilter, CardGrid, type CardGridLabels, DataState, type DataStateLabels, type DataStateProps, DataTable, type DataTableBulkAction, type DataTableColumnFilter, type DataTableColumnMeta, type DataTableDensity, type DataTableFilterType, type DataTableLanguage, type DataTableProps, type DataTableSelectOption, type DataTableServerCallbacks, type DataTableServerState, DynamicIcon, EmptyState, type EmptyStateProps, ForgotForm, LANG_COOKIE_NAME, type LanguageContextValue, LanguageProvider, type LanguageProviderProps, LockScreen, type LockScreenProps, type LockScreenUser, LoginForm, type LoginResult, MiniBarChart, OTPBoxGroup, type OtpResult, PageHeader, type PageHeaderProps, PasswordInput, PasswordLockScreen, type PasswordLockScreenProps, type PasswordLockScreenUser, type PasswordRule, PasswordStrengthMeter, type ProfileSession, ProfileView, type ProfileViewProps, ResetForm, RouteProgress, type RouteProgressProps, SENTRA_BRAND, ServiceUnavailable, type ServiceUnavailableProps, SessionExpired, type SessionExpiredProps, type SidebarConversation, type SidebarUser, StatCard, type StatCardProps, StatusBadge, type StatusBadgeProps, type StatusBadgeTone, TwoFAForm, type UnlockCredentials, type Verify2FAResult, type View, ViewToggle, type ViewToggleProps, applyBrand, cn, computeRules, computeScore, hexToHSL, isHSL, isValidColor, nudgeL, statValueVariants, statusBadgeVariants, toHSLSafe, useBrand, useLanguage, useT };
+export { type ActivityBucket, type AlertMapItem, type AlertSeverity, AppPageShell, type AppPageShellProps, AppSidebar, type AppSidebarProps, type AppearanceMode, AuthCard, type AuthCardBrand, type AuthClient, AuthErrorAlert, AuthFlow, type AuthLayout, AuthStepHeader, type BarPoint, type BrandContextValue, type BrandTokens, BrandingProvider, type BrandingProviderProps, type CardFilter, CardGrid, type CardGridLabels, ColorPicker, type ColorPickerProps, ContextualSkeleton, DEFAULT_LAYERS, DEFAULT_LEGEND_GROUPS, DEFAULT_REGION_PRESETS, DataState, type DataStateLabels, type DataStateProps, DataTable, type DataTableBulkAction, type DataTableColumnFilter, type DataTableColumnMeta, type DataTableDensity, type DataTableFilterType, type DataTableLanguage, type DataTableProps, type DataTableSelectOption, type DataTableServerCallbacks, type DataTableServerState, DynamicIcon, EmptyState, type EmptyStateProps, EntityNetworkGraph, type EntityNetworkGraphProps, EventMapPanel, type EventMapPanelProps, ForgotForm, type GraphLink, type GraphNode, IconPicker, type IconPickerProps, LANG_COOKIE_NAME, type LanguageContextValue, LanguageProvider, type LanguageProviderProps, type LegendGroup, type LegendItem, type LegendShapeType, LockScreen, type LockScreenProps, type LockScreenUser, type LogLevel, LoginForm, type LoginResult, type LogsFilter, LogsView, type LogsViewProps, MARKER_COLORS, MARKER_LABELS, type MapLayer, MapLayersPanel, type MapLayersPanelProps, MapLegend, type MapLegendProps, type MapMarker$1 as MapMarker, type MapMarkerType, MapPanel, type MapPanelProps, type MapRegionPreset, MapView, type MapViewProps, MiniBarChart, NetworkGraph, type NetworkGraphProps, OTPBoxGroup, type OtpResult, PIPELINE_STAGES, PageHeader, type PageHeaderProps, PasswordInput, PasswordLockScreen, type PasswordLockScreenProps, type PasswordLockScreenUser, type PasswordRule, PasswordStrengthMeter, type PipelineCard, type PipelineLane, type PipelineModel, type PluginActivitySummary, type PluginAppearanceFields, PluginAppearanceSection, type PluginAppearanceSectionProps, PluginCard, type PluginCatalogEntry, type PluginDetailIdentity, PluginDetailLayout, type PluginDetailLayoutProps, type PluginDetailTab, PluginHero, PluginHeroSkeleton, PluginPageHeader, PluginSectionCard, PluginSparkline, type ProfileSession, ProfileView, type ProfileViewProps, type RenderMapContext, ResetForm, type ResolvedIcon, RouteProgress, type RouteProgressProps, SENTRA_BRAND, SectionSkeleton, SentraLoading, type ServiceLogRow, ServiceUnavailable, type ServiceUnavailableProps, SessionExpired, type SessionExpiredProps, type SidebarConversation, type SidebarUser, SourceBadge, type SparklinePoint, StatCard, type StatCardProps, StatusBadge, type StatusBadgeProps, type StatusBadgeTone, type StepMetrics7d, type TestRunCallbacks, type TestRunCompletePayload, TestRunPanel, type TestRunPanelProps, type TestRunSavedItem, type TestRunStep, TwoFAForm, type UnlockCredentials, type Verify2FAResult, type View, ViewToggle, type ViewToggleProps, WorkflowEditor, type WorkflowEditorProps, type WorkflowPalette, WorkflowPipeline, type WorkflowPipelineProps, type WorkflowSource, type WorkflowStep, WorkflowStepNode, type WorkflowStepNodeProps, applyBrand, cn, computeRules, computeScore, hexToHSL, isHSL, isValidColor, nudgeL, resolveIcon, statValueVariants, statusBadgeVariants, toHSLSafe, useBrand, useLanguage, useT };

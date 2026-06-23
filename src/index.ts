@@ -33,6 +33,37 @@ export { DynamicIcon } from "./components/nav/DynamicIcon";
 export { ProfileView } from "./components/profile/ProfileView";
 export type { ProfileViewProps, ProfileSession } from "./components/profile/ProfileView";
 
+// ── pickers (color + icon) ──
+export { ColorPicker } from "./components/pickers/ColorPicker";
+export type { ColorPickerProps } from "./components/pickers/ColorPicker";
+export { IconPicker } from "./components/pickers/IconPicker";
+export type { IconPickerProps } from "./components/pickers/IconPicker";
+
+// ── map (OpenStreetMap via leaflet + prism map chrome) ──
+export { MapView } from "./components/map/MapView";
+export type { MapViewProps, MapMarker } from "./components/map/MapView";
+export * from "./components/map";
+
+// ── network / connections ──
+export { NetworkGraph } from "./components/entity/NetworkGraph";
+export type { NetworkGraphProps, GraphNode, GraphLink } from "./components/entity/NetworkGraph";
+export { EntityNetworkGraph } from "./components/entity/EntityNetworkGraph";
+export type { EntityNetworkGraphProps } from "./components/entity/EntityNetworkGraph";
+
+// ── plugins (cards + pages) ──
+export * from "./components/plugin";
+
+// ── plugin detail + workflow manager (steps pipeline/editor) ──
+export * from "./components/plugin-detail";
+
+// ── logs viewer ──
+export * from "./components/logs";
+
+// ── realtime loading ──
+export { default as SentraLoading } from "./components/ui/sentra-loading";
+export { ContextualSkeleton } from "./components/ui/contextual-skeleton";
+export { SectionSkeleton } from "./components/ui/section-skeleton";
+
 // ── Theme (multi-theme color system) ──
 export * from "./theme";
 
