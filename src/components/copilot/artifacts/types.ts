@@ -57,16 +57,54 @@ export interface A2UICardField {
   value: string | number
 }
 
-/** Data payload for kind: "card". */
+/** Tone for a card metric tile — drives its color coding. */
+export type A2UICardTone = 'positive' | 'negative' | 'neutral'
+
+/** A named icon for a metric tile (resolved to a lucide icon by the renderer). */
+export type A2UICardIcon =
+  | 'trend' | 'users' | 'clock' | 'source' | 'shield' | 'chart' | 'alert' | 'check' | 'globe'
+
+/** One metric tile in the rich card grid. */
+export interface A2UICardMetric {
+  label_en: string
+  label_ar?: string
+  value: string | number
+  /** positive → green, negative → red, neutral → muted. Default neutral. */
+  tone?: A2UICardTone
+  icon?: A2UICardIcon
+  /** Optional tiny sparkline values for the tile. */
+  trend?: number[]
+}
+
+/**
+ * Data payload for kind: "card".
+ *
+ * Two shapes are supported:
+ *  - Simple: body_en/ar + fields (key/value rows).
+ *  - Rich (intelligence card): summary_en/ar headline + a 2-col grid of metric
+ *    tiles + a related-items list + a footer recommendation. The renderer prefers
+ *    the rich shape when `metrics`/`summary` are present, else falls back to body.
+ */
 export interface A2UICardData {
   title_en?: string
   title_ar?: string
   body_en?: string
   body_ar?: string
+  /** Headline finding sentence (rich card). */
+  summary_en?: string
+  summary_ar?: string
   /** Severity level — maps to SeverityChip tokens when provided. */
   severity?: 'critical' | 'high' | 'medium' | 'low'
-  /** Key/value detail rows rendered below the body. */
+  /** Key/value detail rows rendered below the body (simple shape). */
   fields?: A2UICardField[]
+  /** Metric tiles rendered as a 2-column grid (rich shape). */
+  metrics?: A2UICardMetric[]
+  /** Related items list (rich shape). */
+  related_en?: string[]
+  related_ar?: string[]
+  /** Footer recommendation / note (rich shape). */
+  footer_en?: string
+  footer_ar?: string
 }
 
 /** One action item in an A2UI actions artifact. */

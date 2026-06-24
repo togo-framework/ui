@@ -12,10 +12,11 @@ const meta: Meta = {
     docs: {
       description: {
         component:
-          "Copilot UI ported from prism, decoupled from the cortex SDK: the **artifacts** " +
-          "(ArtifactRenderer renders model-emitted table/chart/card/markdown/actions blocks) and " +
-          "the **chat** shell (ChatThread message list). The live dock (CopilotProvider/UnifiedCopilotDock) " +
-          "takes a host-injected `CopilotClient` instead of the SDK.",
+          "Copilot UI ported from prism, decoupled from the cortex SDK. The **artifacts** " +
+          "(ArtifactRenderer → table/chart/**rich card**/markdown/actions) and the **chat** shell " +
+          "(ChatThread). Assistant text renders through the kit MarkdownRenderer, so a full reply " +
+          "parses over markdown (tables → DataTable, code → CodeBlock) AND artifacts. The live dock " +
+          "(CopilotProvider/UnifiedCopilotDock) takes a host-injected `CopilotClient`.",
       },
     },
   },
@@ -23,14 +24,69 @@ const meta: Meta = {
 export default meta;
 
 const md = { version: 1, kind: "markdown", title_en: "Executive summary", data: { content: "## Key findings\n\n- Coordinated activity **up 23%**\n- Two dominant source clusters\n- Recommend escalation to the regional desk" } } as any;
-const table = { version: 1, kind: "table", title_en: "Top sources", data: { columns: ["Source", "Mentions", "Reach"], rows: [["Reuters", 333, "0"], ["AFP", 276, "0"], ["Al Jazeera", 190, "0"]] } } as any;
+const table = { version: 1, kind: "table", title_en: "Top sources", data: { columns: ["Source", "Mentions", "Reach"], rows: [["Reuters", 333, "High"], ["AFP", 276, "Medium"], ["Al Jazeera", 190, "Medium"]] } } as any;
+
+// Rich intelligence card — summary + metric grid + related + footer (bilingual).
+const richCard = {
+  version: 1, kind: "card",
+  title_en: "Renewable energy policy debate", title_ar: "النقاش حول سياسات الطاقة المتجددة",
+  data: {
+    summary_en: "Debate on renewable energy policy in the Gulf rose 340% yesterday, driven by coordinated political signals.",
+    summary_ar: "ارتفع النقاش حول سياسات الطاقة المتجددة في منطقة الخليج بنسبة 340٪ أمس، مدفوعاً بإشارات سياسية منسقة.",
+    metrics: [
+      { label_en: "Volume change", label_ar: "تغير الحجم", value: "+340%", tone: "positive", icon: "trend", trend: [3, 5, 4, 8, 12, 9, 14] },
+      { label_en: "Key influencers", label_ar: "المؤثرون الرئيسيون", value: "12 accounts", tone: "neutral", icon: "users" },
+      { label_en: "Monitoring window", label_ar: "فترة المراقبة", value: "48 hours", tone: "neutral", icon: "clock" },
+      { label_en: "Source", label_ar: "المصدر", value: "Organic", tone: "positive", icon: "source" },
+    ],
+    related_en: [
+      "Saudi Arabia 2030 climate commitments draft leaked",
+      "UAE surprise solar-grid announcement",
+      "Coordinated discussion via major influencer accounts",
+    ],
+    related_ar: [
+      "تسرب مسودة التزامات المملكة العربية السعودية المناخية لعام 2030",
+      "إعلان الإمارات المفاجئ عن شبكة الطاقة الشمسية",
+      "نقاش منسق عبر حسابات المؤثرين الكبار",
+    ],
+    footer_en: "Recommend monitoring political announcements over the next 48 hours.",
+    footer_ar: "يُنصح برصد الإعلانات السياسية خلال الـ 48 ساعة القادمة.",
+  },
+} as any;
+
+const chart = {
+  version: 1, kind: "chart",
+  title_en: "Mentions — last 7 days", title_ar: "الإشارات — آخر 7 أيام",
+  data: {
+    type: "bar",
+    series: [{
+      label_en: "Mentions", label_ar: "الإشارات",
+      points: [
+        { x: "Mon", y: 120 }, { x: "Tue", y: 180 }, { x: "Wed", y: 165 },
+        { x: "Thu", y: 240 }, { x: "Fri", y: 320 }, { x: "Sat", y: 280 }, { x: "Sun", y: 410 },
+      ],
+    }],
+  },
+} as any;
 
 export const Artifacts: StoryObj = {
-  name: "Artifacts — markdown + table",
+  name: "Artifacts — rich card / chart / table / markdown",
   render: () => (
     <div className="max-w-2xl space-y-4">
-      <ArtifactRenderer artifact={md} />
+      <ArtifactRenderer artifact={richCard} />
+      <ArtifactRenderer artifact={chart} />
       <ArtifactRenderer artifact={table} />
+      <ArtifactRenderer artifact={md} />
+    </div>
+  ),
+};
+
+export const ArtifactsRTL: StoryObj = {
+  name: "Artifacts — Arabic / RTL",
+  render: () => (
+    <div className="max-w-2xl space-y-4" dir="rtl">
+      <ArtifactRenderer artifact={richCard} language="ar" />
+      <ArtifactRenderer artifact={chart} language="ar" />
     </div>
   ),
 };
@@ -42,7 +98,7 @@ export const Chat: StoryObj = {
       <ChatThread
         messages={[
           { id: "1", role: "user", content: "Summarize the latest narrative." } as any,
-          { id: "2", role: "assistant", content: "Coordinated activity is up 23% across monitored regions, concentrated in two source clusters.", a2uiArtifacts: [md] } as any,
+          { id: "2", role: "assistant", content: "Coordinated activity is up 23% across monitored regions, concentrated in two source clusters.", a2uiArtifacts: [richCard] } as any,
           { id: "3", role: "user", content: "Which sources?" } as any,
           { id: "4", role: "assistant", content: "Here are the top contributors:", a2uiArtifacts: [table] } as any,
         ]}
@@ -52,44 +108,55 @@ export const Chat: StoryObj = {
 };
 
 // ── Full Dock — wired CopilotProvider with a mock streaming client ──────────────
-// The provider renders UnifiedCopilotDock; CopilotLauncher opens it; the mock
-// client streams a token-by-token reply, a step, and a table artifact.
+// The streamed reply text contains BOTH a markdown table AND a fenced code block
+// (so it parses over the MarkdownRenderer: DataTable + CodeBlock), then emits a
+// rich card artifact + a chart artifact — full response = markdown + artifacts.
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+const replyMd = [
+  "Sure — coordinated activity is **up 23%** this week, concentrated in two source clusters. Top contributors:\n\n",
+  "| Source | Mentions | Reach |\n",
+  "| --- | --- | --- |\n",
+  "| Reuters | 333 | High |\n",
+  "| AFP | 276 | Medium |\n",
+  "| Al Jazeera | 190 | Medium |\n\n",
+  "A quick query to reproduce these counts:\n\n",
+  "```sql\n",
+  "SELECT source, count(*) AS mentions\n",
+  "FROM raw_envelopes\n",
+  "GROUP BY source\n",
+  "ORDER BY mentions DESC;\n",
+  "```\n",
+];
 
 const mockClient: CopilotClient = {
   async *copilotDispatch() {
-    const reply =
-      "Sure — coordinated activity is up 23% across monitored regions this week, " +
-      "concentrated in two source clusters. Here are the top contributors:";
     yield { type: "step", step: { step: "search", message: "Searching sources…", done: false } } as any;
     await sleep(400);
-    for (const word of reply.split(" ")) {
-      await sleep(45);
-      yield { type: "delta", text: word + " " } as any;
+    for (const chunk of replyMd) {
+      await sleep(70);
+      yield { type: "delta", text: chunk } as any;
     }
     yield { type: "step", step: { step: "search", message: "Searched 3 sources", done: true, count: 3 } } as any;
     await sleep(250);
-    yield {
-      type: "artifact",
-      artifact: {
-        version: 1, kind: "table", title_en: "Top sources", title_ar: "أهم المصادر",
-        data: { columns: ["Source", "Mentions"], rows: [["Reuters", 333], ["AFP", 276], ["Al Jazeera", 190]] },
-      },
-    } as any;
+    yield { type: "artifact", artifact: richCard } as any;
+    await sleep(150);
+    yield { type: "artifact", artifact: chart } as any;
     yield { type: "done" } as any;
   },
 };
 
 export const FullDock: StoryObj = {
-  name: "Full Dock — open & chat (mock streaming)",
+  name: "Full Dock — markdown + artifacts (mock streaming)",
   parameters: { layout: "fullscreen", fullBleed: true, docs: { story: { inline: false, height: "640px" } } },
   render: () => (
     <CopilotProvider client={mockClient} context={{ contextType: "global", contextRef: "", title_en: "Demo", title_ar: "تجربة", suggestions: [] } as any}>
       <div className="min-h-screen bg-background p-8 text-foreground">
         <h1 className="mb-2 text-2xl font-semibold">Copilot demo</h1>
         <p className="mb-6 max-w-prose text-sm text-muted-foreground">
-          Click the launcher to open the dock, then send a message (e.g. “summarize the latest narrative”).
-          The mock client streams a reply token-by-token, shows a step, and returns a table artifact.
+          Click the launcher → send a message. The reply streams a **markdown table** + a **code block**
+          (rendered via the kit DataTable + CodeBlock) and returns a **rich card** + **chart** artifact —
+          the full response parses over markdown and artifacts.
         </p>
         <CopilotLauncher variant="header" />
       </div>
