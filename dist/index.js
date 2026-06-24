@@ -16014,28 +16014,44 @@ import * as React30 from "react";
 import { Search as Search8, Star as Star2, Download as Download2 } from "lucide-react";
 import { jsx as jsx99, jsxs as jsxs87 } from "react/jsx-runtime";
 var DISPLAY3 = { fontFamily: '"Sora", var(--togo-font-body, ui-sans-serif, system-ui, sans-serif)' };
+function Glyph2({ icon: Icon, brand, size = 28 }) {
+  if (brand) {
+    return /* @__PURE__ */ jsx99("svg", { role: "img", viewBox: "0 0 24 24", width: size, height: size, fill: "#fff", "aria-hidden": "true", children: /* @__PURE__ */ jsx99("path", { d: brand.path }) });
+  }
+  return Icon ? /* @__PURE__ */ jsx99(Icon, { size, style: { color: "#fff" } }) : null;
+}
 function MarketplaceCard({
   name,
   href,
   category,
-  categoryColor = "#2D8CE6",
+  color,
+  categoryColor,
   icon: Icon,
+  brandIcon,
   description,
   author,
   stars,
   downloads,
   enabled,
+  providers,
   className
 }) {
+  const tint = color || categoryColor || "#2D8CE6";
+  const shown = (providers || []).slice(0, 5);
+  const extra = (providers || []).length - shown.length;
   return /* @__PURE__ */ jsx99("a", { href, className: cn("group block h-full", className), children: /* @__PURE__ */ jsxs87("div", { className: "rounded-2xl border border-border bg-card/40 overflow-hidden h-full flex flex-col transition-all duration-200 hover:border-foreground/25 hover:-translate-y-0.5", children: [
     /* @__PURE__ */ jsxs87(
       "div",
       {
         className: "relative h-28 flex items-center justify-center overflow-hidden",
-        style: { background: `radial-gradient(120% 140% at 0% 0%, ${categoryColor}55, transparent 62%), linear-gradient(135deg, ${categoryColor}26, #0b1016)` },
+        style: { background: `radial-gradient(120% 140% at 0% 0%, ${tint}55, transparent 62%), linear-gradient(135deg, ${tint}26, #0b1016)` },
         children: [
           /* @__PURE__ */ jsx99("div", { className: "absolute inset-0 opacity-[0.14]", style: { backgroundImage: "radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)", backgroundSize: "16px 16px" } }),
-          Icon && /* @__PURE__ */ jsx99("div", { className: "relative grid place-items-center w-14 h-14 rounded-2xl bg-black/20 ring-1 ring-white/20 transition-transform duration-300 group-hover:scale-105", children: /* @__PURE__ */ jsx99(Icon, { size: 28, style: { color: "#fff" } }) }),
+          (Icon || brandIcon) && /* @__PURE__ */ jsx99("div", { className: "relative grid place-items-center w-14 h-14 rounded-2xl bg-black/20 ring-1 ring-white/20 transition-transform duration-300 group-hover:scale-105", children: /* @__PURE__ */ jsx99(Glyph2, { icon: Icon, brand: brandIcon }) }),
+          typeof providers !== "undefined" && providers.length > 0 && /* @__PURE__ */ jsxs87("span", { className: "absolute top-3 start-3 text-[10px] font-mono px-2 py-0.5 rounded-full bg-black/30 text-white/80 ring-1 ring-white/20", children: [
+            providers.length,
+            " providers"
+          ] }),
           enabled && /* @__PURE__ */ jsx99("span", { className: "absolute top-3 end-3 text-[10px] font-mono px-2 py-0.5 rounded-full bg-black/30 text-emerald-300 ring-1 ring-emerald-400/30", children: "enabled" })
         ]
       }
@@ -16046,6 +16062,28 @@ function MarketplaceCard({
         category && /* @__PURE__ */ jsx99("span", { className: "ms-auto shrink-0 text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full border border-border text-muted-foreground", children: category })
       ] }),
       /* @__PURE__ */ jsx99("p", { className: "text-[13px] text-muted-foreground mt-1.5 line-clamp-2 flex-1", children: description || "A togo-framework plugin." }),
+      shown.length > 0 && /* @__PURE__ */ jsxs87("div", { className: "mt-3 flex flex-wrap gap-1.5", children: [
+        shown.map((p) => /* @__PURE__ */ jsxs87(
+          "span",
+          {
+            onClick: (e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              window.location.href = p.href;
+            },
+            className: "inline-flex items-center gap-1.5 rounded-full border border-border bg-background/40 ps-1.5 pe-2.5 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:border-foreground/25 transition-colors cursor-pointer",
+            children: [
+              /* @__PURE__ */ jsx99("span", { className: "grid place-items-center w-4 h-4 rounded-full", style: { background: `${p.color || tint}26` }, children: /* @__PURE__ */ jsx99(Glyph2, { icon: p.icon, brand: p.brand, size: 10 }) }),
+              p.name
+            ]
+          },
+          p.href
+        )),
+        extra > 0 && /* @__PURE__ */ jsxs87("span", { className: "inline-flex items-center rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground", children: [
+          "+",
+          extra
+        ] })
+      ] }),
       /* @__PURE__ */ jsxs87("div", { className: "flex items-center gap-3 mt-3 text-[11px] text-muted-foreground font-mono", children: [
         author && /* @__PURE__ */ jsx99("span", { className: "truncate", children: author }),
         /* @__PURE__ */ jsxs87("span", { className: "ms-auto flex items-center gap-3 shrink-0", children: [
