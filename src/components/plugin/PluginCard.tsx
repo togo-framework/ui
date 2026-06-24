@@ -239,7 +239,7 @@ export const PluginCard = ({
 
   // countLabel uses the coarse plugin_type so all adk_artifact kinds show
   // "invocations" regardless of their specific adk_kind.
-  const countLabelText = countLabel(rawTypeKey, isRTL);
+  const countLabelText = plugin.metric_label || countLabel(rawTypeKey, isRTL);
 
   const seriesData = useMemo(() => {
     const series = plugin.activity_series ?? [];

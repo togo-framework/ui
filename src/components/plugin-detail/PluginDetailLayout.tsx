@@ -124,6 +124,8 @@ export interface PluginActivitySummary {
   last_active_at?: string | null
   activity_count?: number | null
   activity_series?: { n: number }[]
+  /** Optional override for the counter's label (e.g. "downloads"); replaces the default ("records"). */
+  metric_label?: string | null
 }
 
 export interface PluginDetailLayoutProps {
@@ -263,7 +265,7 @@ const PluginHero = ({ plugin, activity, isRTL }: PluginHeroProps) => {
         <div className="flex-none w-full lg:w-72 rounded-lg border border-border/70 bg-muted/20 overflow-hidden">
           <div className="px-4 pt-3 pb-1">
             <div className="text-[10px] uppercase tracking-wider text-muted-foreground">
-              {countLabel(typeKey, isRTL)}
+              {activity?.metric_label || countLabel(typeKey, isRTL)}
             </div>
             <div className="text-3xl font-semibold text-foreground leading-tight" title={String(activityCount)}>
               {formatCount(activityCount)}
