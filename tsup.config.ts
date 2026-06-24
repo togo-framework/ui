@@ -9,5 +9,5 @@ export default defineConfig({
   clean: true,
   external: ["react", "react-dom", "lucide-react", "leaflet"],
   loader: { ".css": "copy" },
-  onSuccess: "cp src/styles.css dist/styles.css && cp src/styles.css dist/shadcn.css",
+  onSuccess: "cp src/styles.css dist/styles.css && cp src/styles.css dist/shadcn.css && mkdir -p dist/theme && cp src/theme/*.css dist/theme/",
 });
