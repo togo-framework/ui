@@ -15455,14 +15455,15 @@ var CopilotSelectionTrigger = ({
     setAnchor({ x, y, text: raw.slice(0, maxChars) });
   }, [minChars, maxChars, withinBoundary, isRTL]);
   useEffect28(() => {
-    const onUp = () => requestAnimationFrame(evaluateSelection);
+    const settle = () => window.setTimeout(evaluateSelection, 0);
+    const onUp = () => settle();
     const onKey = (e) => {
       if (e.key === "Escape") {
         setAnchor(null);
         return;
       }
       if (e.shiftKey || e.key === "ArrowLeft" || e.key === "ArrowRight") {
-        requestAnimationFrame(evaluateSelection);
+        settle();
       }
     };
     const onScroll = () => setAnchor(null);
