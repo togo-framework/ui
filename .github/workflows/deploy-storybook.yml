@@ -8,6 +8,7 @@ on:
     paths:
       - "src/**"
       - ".storybook/**"
+      - "public/**"
       - "package.json"
       - "package-lock.json"
       - ".github/workflows/deploy-storybook.yml"
