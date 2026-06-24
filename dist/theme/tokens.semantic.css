@@ -1,0 +1,45 @@
+/*
+ * ToGO Design System — SEMANTIC role tokens.
+ *
+ * The roles components actually consume. Each theme is a `[data-theme="…"]`
+ * block that re-points the same roles — this is the runtime-theming switch
+ * surface. Add a tenant/brand theme by adding one more block here; no
+ * component changes required.
+ *
+ * No hex lives here — every value references a primitive (tokens.primitive.css).
+ */
+
+/* ── DARK (default) ── */
+:root,
+[data-theme="dark"] {
+  --togo-color-bg:            var(--togo-ink-900);
+  --togo-color-surface:       #1B2226;
+  --togo-color-surface-alt:   #222B30;
+  --togo-color-border:        #2C383E;
+  --togo-color-text:          #E8EEF0;
+  --togo-color-text-muted:    var(--togo-slate-300);
+  --togo-color-accent:        var(--togo-cyan-500);
+  --togo-color-accent-strong: var(--togo-sky-500);
+  --togo-color-on-accent:     var(--togo-ink-900);
+  --togo-color-focus-ring:    var(--togo-cyan-400);
+  --togo-color-success:       var(--togo-success-500);
+  --togo-color-warn:          var(--togo-warn-500);
+  --togo-color-danger:        var(--togo-danger-500);
+}
+
+/* ── LIGHT ── */
+[data-theme="light"] {
+  --togo-color-bg:            var(--togo-mist-100);
+  --togo-color-surface:       var(--togo-white);
+  --togo-color-surface-alt:   var(--togo-mist-100);
+  --togo-color-border:        var(--togo-line-200);
+  --togo-color-text:          var(--togo-ink-900);
+  --togo-color-text-muted:    var(--togo-slate-500);
+  --togo-color-accent:        var(--togo-cobalt-500);
+  --togo-color-accent-strong: var(--togo-sky-500);
+  --togo-color-on-accent:     var(--togo-white);
+  --togo-color-focus-ring:    var(--togo-sky-500);
+  --togo-color-success:       var(--togo-success-500);
+  --togo-color-warn:          var(--togo-warn-500);
+  --togo-color-danger:        var(--togo-danger-500);
+}

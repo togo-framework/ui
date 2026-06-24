@@ -106,13 +106,16 @@ const CopilotSelectionTrigger = ({
   }, [minChars, maxChars, withinBoundary, isRTL])
 
   // selectionchange fires continuously while dragging — settle on pointer/key up.
+  // setTimeout (not rAF) so it still fires in a hidden/throttled tab, and so the
+  // selection has committed before we measure it.
   useEffect(() => {
-    const onUp = () => requestAnimationFrame(evaluateSelection)
+    const settle = () => window.setTimeout(evaluateSelection, 0)
+    const onUp = () => settle()
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') { setAnchor(null); return }
       // Shift+Arrow keyboard selection
       if (e.shiftKey || e.key === 'ArrowLeft' || e.key === 'ArrowRight') {
-        requestAnimationFrame(evaluateSelection)
+        settle()
       }
     }
     const onScroll = () => setAnchor(null)

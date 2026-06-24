@@ -16,6 +16,13 @@
  * overlay components (Dialog, DropdownMenu, Sheet, Popover, Tooltip, Accordion). */
 @import "tw-animate-css";
 
+/* ToGO token layers — primitive palette + semantic roles (the --togo-* contract).
+ * The existing HSL tokens below are remapped onto this palette so the whole kit
+ * re-skins to the ToGO brand; the --togo-color-* roles add the runtime-theming
+ * surface that ThemeProvider switches via [data-theme]. */
+@import "./theme/tokens.primitive.css";
+@import "./theme/tokens.semantic.css";
+
 /* Class-based dark mode: `dark:` utilities follow the `.dark` class (toggled on
  * <html>), NOT the OS prefers-color-scheme. Without this, components using
  * `dark:` variants render their dark styles whenever the OS is dark — even in
@@ -402,3 +409,102 @@
 .tg-md .hljs-deletion { color: hsl(var(--destructive)); }
 .tg-md .hljs-emphasis { font-style: italic; }
 .tg-md .hljs-strong { font-weight: 700; }
+
+/* ════════════════════════════════════════════════════════════════════════════
+ * ToGO BRAND REMAP — re-point the inherited (prism) HSL tokens onto the ToGO
+ * palette so the entire kit + every app re-skins to the brand. Appended last so
+ * it wins by cascade without editing the blocks above. [data-theme] selectors are
+ * added alongside .dark so ThemeProvider can drive these tokens too.
+ * HSL triples here are the ToGO hex palette converted for the hsl(var(--x)) system.
+ * ════════════════════════════════════════════════════════════════════════════ */
+
+/* Light (default + explicit) — accent = Cobalt, focus = Stack Sky, surfaces = Mist */
+:root,
+[data-theme="light"] {
+  --background: 195 21% 96%;          /* Mist  #F4F7F8 */
+  --background-medium: 200 16% 92%;
+  --foreground: 200 18% 10%;          /* Ink   #141A1D */
+  --card: 0 0% 100%;
+  --card-foreground: 200 18% 10%;
+  --popover: 0 0% 100%;
+  --popover-foreground: 200 18% 10%;
+  --primary: 217 80% 44%;             /* Cobalt #1659C8 */
+  --primary-foreground: 0 0% 100%;
+  --secondary: 200 16% 93%;
+  --secondary-foreground: 200 18% 12%;
+  --muted: 200 16% 93%;
+  --muted-foreground: 198 12% 40%;    /* Slate #5A6B72 */
+  --accent: 200 18% 90%;
+  --accent-foreground: 200 18% 12%;
+  --border: 200 14% 88%;              /* Line  #E8EDEF */
+  --input: 200 14% 88%;
+  --ring: 209 79% 54%;                /* Stack Sky #2D8CE6 */
+  --brand-primary: 217 80% 44%;
+  --brand-primary-glow: 209 79% 54%;
+  --ai-glow: 217 80% 44%;
+  --ai-pulse: 187 75% 49%;
+  --sidebar-background: 0 0% 100%;
+  --sidebar-foreground: 198 12% 40%;
+  --sidebar-primary: 217 80% 44%;
+  --sidebar-primary-foreground: 0 0% 100%;
+  --sidebar-accent: 200 18% 95%;
+  --sidebar-accent-foreground: 200 18% 12%;
+  --sidebar-border: 200 14% 90%;
+  --sidebar-ring: 209 79% 54%;
+  --success: 157 67% 37%;             /* #1F9D6B */
+  --warning: 40 80% 49%;              /* #E0A11B */
+  --destructive: 353 62% 59%;         /* Danger #D85563 */
+  --info: 209 79% 54%;
+}
+
+/* Dark (default-when-.dark + explicit) — accent = Gopher Cyan on Ink */
+.dark,
+[data-theme="dark"] {
+  --background: 200 20% 7%;           /* near-Ink */
+  --background-medium: 200 16% 11%;
+  --foreground: 200 15% 96%;
+  --card: 200 18% 11%;
+  --card-foreground: 200 15% 96%;
+  --popover: 200 18% 13%;
+  --popover-foreground: 200 15% 96%;
+  --primary: 187 75% 49%;             /* Gopher Cyan #1FC7DC */
+  --primary-foreground: 200 18% 10%;  /* Ink text on cyan */
+  --secondary: 200 14% 17%;
+  --secondary-foreground: 200 15% 96%;
+  --muted: 200 14% 17%;
+  --muted-foreground: 200 11% 68%;    /* Slate-300 */
+  --accent: 200 14% 20%;
+  --accent-foreground: 200 15% 96%;
+  --border: 200 14% 20%;
+  --input: 200 14% 20%;
+  --ring: 187 75% 55%;
+  --brand-primary: 187 75% 49%;
+  --brand-primary-glow: 209 79% 54%;
+  --ai-glow: 187 75% 49%;
+  --ai-pulse: 187 60% 60%;
+  --sidebar-background: 200 20% 9%;
+  --sidebar-foreground: 200 11% 68%;
+  --sidebar-primary: 187 75% 49%;
+  --sidebar-primary-foreground: 200 18% 10%;
+  --sidebar-accent: 200 14% 16%;
+  --sidebar-accent-foreground: 200 15% 96%;
+  --sidebar-border: 200 14% 18%;
+  --sidebar-ring: 187 75% 55%;
+  --success: 157 60% 45%;
+  --warning: 40 80% 55%;
+  --destructive: 353 62% 59%;
+  --info: 209 79% 60%;
+}
+
+/* New ToGO Tailwind aliases for the §2 authoring API (non-conflicting names).
+ * The brand accent is also available as `bg-primary` (remapped above). */
+@theme inline {
+  --color-surface: var(--togo-color-surface);
+  --color-surface-alt: var(--togo-color-surface-alt);
+  --color-on-accent: var(--togo-color-on-accent);
+  --color-accent-strong: var(--togo-color-accent-strong);
+  --color-danger: var(--togo-color-danger);
+  --color-warn: var(--togo-color-warn);
+  --font-display: var(--togo-font-display);
+  --font-mono: var(--togo-font-mono);
+}
