@@ -23,6 +23,9 @@ export interface PluginCatalogEntry {
   last_active_at: string | null;
   activity_count: number | null;
   activity_series: ActivityBucket[] | null;
+  /** Optional override for the counter's label (e.g. "downloads", "stars").
+   * When set, it replaces the plugin_type-derived default ("records"). */
+  metric_label?: string | null;
   route: string | null;
 }
 
