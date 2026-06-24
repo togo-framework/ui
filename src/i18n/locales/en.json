@@ -76,7 +76,11 @@
     "comparisonFactorsAccepted": "Comparison factors accepted",
     "insightFromDashboard": "Insight from dashboard",
     "copyResponse": "Copy",
-    "shareResponse": "Share"
+    "shareResponse": "Share",
+    "dockFloat": "Float (undock)",
+    "undock": "Undock",
+    "redock": "Re-dock",
+    "resize": "Resize"
   },
   "auth": {
     "signIn": "Sign In",

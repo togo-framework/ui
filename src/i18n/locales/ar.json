@@ -76,7 +76,11 @@
     "comparisonFactorsAccepted": "تم قبول عوامل المقارنة",
     "insightFromDashboard": "رؤية من لوحة التحكم",
     "copyResponse": "نسخ",
-    "shareResponse": "مشاركة"
+    "shareResponse": "مشاركة",
+    "dockFloat": "نافذة عائمة",
+    "undock": "إلغاء الإرساء",
+    "redock": "إعادة الإرساء",
+    "resize": "تغيير الحجم"
   },
   "auth": {
     "signIn": "تسجيل الدخول",

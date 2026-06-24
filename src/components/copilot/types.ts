@@ -2,8 +2,21 @@
 // Extracted from sentra-next so these components have no app dependency.
 
 export type CopilotLanguage = 'en' | 'ar'
-export type DockPosition = 'bottom' | 'left' | 'right'
+// 'float' = an undocked, free-floating, draggable + resizable window. The other
+// three pin the dock to a screen edge.
+export type DockPosition = 'bottom' | 'left' | 'right' | 'float'
 export type ChatPersona = 'analyst' | 'strategist' | 'advisor' | string
+
+// ── CopilotQuickAction — intro quick-action chip ─────────────────────────────
+// Rendered in the dock's empty/intro state. Clicking a chip sends `prompt`.
+// Bilingual labels so the chip follows the active language.
+export interface CopilotQuickAction {
+  label_en: string
+  label_ar: string
+  prompt: string
+  /** Optional lucide-style icon name hint (rendered by the dock when known). */
+  icon?: string
+}
 
 // ── AgentStep — mirrors app/src/lib/types.ts#AgentStep ──────────────────────
 export interface AgentStep {
@@ -153,6 +166,12 @@ export interface CopilotChatState {
   // true from send until the turn fully completes
   isLoading: boolean
   isStreaming: boolean
+
+  // true after the stream's [DONE] while the final assistant message (markdown,
+  // tables, charts, artifacts) is committing/painting. The dock keeps the
+  // thinking indicator alive until this clears so the spinner doesn't vanish a
+  // frame before the rendered content appears. Optional for back-compat.
+  isFinalizing?: boolean
 
   // Live agent step indicators
   agentSteps: AgentStep[]
