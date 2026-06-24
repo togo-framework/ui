@@ -1,5 +1,6 @@
 import * as React from "react";
 import type { Preview } from "@storybook/react";
+import togoTheme from "./theme";
 import "./tailwind.css";
 
 // Viewport presets so every component can be previewed mobile-first → desktop.
@@ -18,6 +19,7 @@ const preview: Preview = {
     viewport: { viewports: customViewports },
     backgrounds: { disable: true }, // the theme toggle drives the background via tokens
     controls: { matchers: { color: /(background|color)$/i, date: /Date$/i } },
+    docs: { theme: togoTheme }, // ToGO brand on the autodocs pages
     options: {
       storySort: {
         order: ["Getting Started", "Design System", "Components", "Pages"],

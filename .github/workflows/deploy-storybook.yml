@@ -1,0 +1,44 @@
+name: deploy-storybook
+
+# Build the @togo-framework/ui Storybook and publish it to ui.to-go.dev on every push.
+# Ships the static build to the togo box, into the `togo-ui-web` container's web root.
+on:
+  push:
+    branches: [main]
+    paths:
+      - "src/**"
+      - ".storybook/**"
+      - "package.json"
+      - "package-lock.json"
+      - ".github/workflows/deploy-storybook.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-storybook
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: npm ci
+      - run: npm run build-storybook
+      - name: Ship to ui.to-go.dev
+        env:
+          KEY: ${{ secrets.DEPLOY_SSH_KEY }}
+          HOST: ${{ secrets.DEPLOY_HOST }}
+        run: |
+          mkdir -p ~/.ssh && printf '%s\n' "$KEY" > ~/.ssh/id && chmod 600 ~/.ssh/id
+          ssh-keyscan -H "$HOST" >> ~/.ssh/known_hosts 2>/dev/null
+          tar czf /tmp/ui-storybook.tgz -C storybook-static .
+          scp -i ~/.ssh/id -o StrictHostKeyChecking=no /tmp/ui-storybook.tgz "root@${HOST}:/tmp/ui-storybook.tgz"
+          ssh -i ~/.ssh/id -o StrictHostKeyChecking=no "root@${HOST}" '
+            pct push 201 /tmp/ui-storybook.tgz /tmp/ui-storybook.tgz
+            pct exec 201 -- bash -c "rm -rf /opt/ui.to-go.dev-site && mkdir -p /opt/ui.to-go.dev-site && tar xzf /tmp/ui-storybook.tgz -C /opt/ui.to-go.dev-site && docker restart togo-ui-web >/dev/null"
+            rm -f /tmp/ui-storybook.tgz
+          '
+          echo "Deployed Storybook → https://ui.to-go.dev"
