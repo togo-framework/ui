@@ -1427,8 +1427,8 @@ var BrandCrest = ({
   const crestChrome = cn(
     "flex items-center justify-center rounded-2xl",
     box,
-    onPanel ? "border-2 border-primary-foreground/30 bg-primary-foreground/10" : "bg-primary/10",
-    onPanel ? "text-primary-foreground" : "text-primary"
+    onPanel ? "border-2 border-white/30 bg-white/10" : "bg-primary/10",
+    onPanel ? "text-white" : "text-primary"
   );
   if (brand.icon !== null && brand.icon !== void 0) {
     return /* @__PURE__ */ jsx11("div", { className: crestChrome, "aria-hidden": "true", children: brand.icon });
@@ -1436,36 +1436,36 @@ var BrandCrest = ({
   return /* @__PURE__ */ jsx11("div", { className: crestChrome, children: /* @__PURE__ */ jsx11("span", { className: cn("font-bold tracking-tight", text), children: brand.initial }) });
 };
 BrandCrest.displayName = "BrandCrest";
-var BrandPanel = ({ brand, ar }) => /* @__PURE__ */ jsxs10("div", { className: "relative hidden lg:flex lg:w-1/2 flex-col items-center justify-center overflow-hidden px-12 py-16 bg-primary", children: [
+var BrandPanel = ({ brand, ar }) => /* @__PURE__ */ jsxs10("div", { className: "relative hidden lg:flex lg:w-1/2 flex-col items-center justify-center overflow-hidden px-12 py-16 bg-gradient-to-br from-[#1FC7DC] via-[#2D8CE6] to-[#1659C8]", children: [
   /* @__PURE__ */ jsx11(
     "div",
     {
       className: "absolute inset-0 opacity-[0.08]",
       style: {
-        backgroundImage: "radial-gradient(circle, hsl(var(--primary-foreground)) 1px, transparent 1px)",
+        backgroundImage: "radial-gradient(circle, #ffffff 1px, transparent 1px)",
         backgroundSize: "24px 24px"
       },
       "aria-hidden": "true"
     }
   ),
-  /* @__PURE__ */ jsxs10("div", { className: "relative z-10 flex w-full max-w-sm flex-col items-center gap-7 text-center text-primary-foreground", children: [
+  /* @__PURE__ */ jsxs10("div", { className: "relative z-10 flex w-full max-w-sm flex-col items-center gap-7 text-center text-white", children: [
     /* @__PURE__ */ jsx11(BrandCrest, { brand, size: "lg", onPanel: true }),
     /* @__PURE__ */ jsxs10("div", { className: "flex flex-col gap-2.5", children: [
       /* @__PURE__ */ jsx11("h1", { className: "text-[2rem] font-bold leading-tight tracking-tight", children: brandName(brand, ar) }),
-      /* @__PURE__ */ jsx11("p", { className: "text-sm leading-relaxed text-primary-foreground/75", children: ar ? brand.tagline.ar : brand.tagline.en })
+      /* @__PURE__ */ jsx11("p", { className: "text-sm leading-relaxed text-white/75", children: ar ? brand.tagline.ar : brand.tagline.en })
     ] }),
-    brand.bullets.length > 0 && /* @__PURE__ */ jsx11("ul", { className: "mt-1 flex w-full flex-col items-center gap-3.5 text-center text-sm text-primary-foreground/85", children: brand.bullets.map((bullet, i) => /* @__PURE__ */ jsxs10("li", { className: "flex items-center justify-center gap-2.5", children: [
+    brand.bullets.length > 0 && /* @__PURE__ */ jsx11("ul", { className: "mt-1 flex w-full flex-col items-center gap-3.5 text-center text-sm text-white/85", children: brand.bullets.map((bullet, i) => /* @__PURE__ */ jsxs10("li", { className: "flex items-center justify-center gap-2.5", children: [
       /* @__PURE__ */ jsx11(
         "span",
         {
-          className: "flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary-foreground/15",
+          className: "flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-white/15",
           "aria-hidden": "true",
           children: /* @__PURE__ */ jsx11("svg", { className: "h-2.5 w-2.5", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "3", children: /* @__PURE__ */ jsx11("path", { d: "M20 6 9 17l-5-5" }) })
         }
       ),
       /* @__PURE__ */ jsx11("span", { className: "leading-snug", children: ar ? bullet.ar : bullet.en })
     ] }, i)) }),
-    /* @__PURE__ */ jsxs10("div", { className: "mt-3 flex items-center gap-2 text-xs text-primary-foreground/55", children: [
+    /* @__PURE__ */ jsxs10("div", { className: "mt-3 flex items-center gap-2 text-xs text-white/55", children: [
       /* @__PURE__ */ jsxs10("svg", { className: "h-3.5 w-3.5", viewBox: "0 0 24 24", fill: "none", stroke: "currentColor", strokeWidth: "2", "aria-hidden": "true", children: [
         /* @__PURE__ */ jsx11("rect", { x: "3", y: "11", width: "18", height: "11", rx: "2", ry: "2" }),
         /* @__PURE__ */ jsx11("path", { d: "M7 11V7a5 5 0 0 1 10 0v4" })
@@ -5815,7 +5815,7 @@ var PluginCard = ({
   const lastActiveISO = plugin.last_active_at ?? null;
   const state = activityState(lastActiveISO);
   const stateClasses = STATE_CLASSES[state];
-  const countLabelText = countLabel(rawTypeKey, isRTL);
+  const countLabelText = plugin.metric_label || countLabel(rawTypeKey, isRTL);
   const seriesData = useMemo6(() => {
     const series = plugin.activity_series ?? [];
     if (series.length === 0) {
@@ -8935,7 +8935,7 @@ var PluginHero = ({ plugin, activity, isRTL }) => {
     ] }),
     /* @__PURE__ */ jsxs47("div", { className: "flex-none w-full lg:w-72 rounded-lg border border-border/70 bg-muted/20 overflow-hidden", children: [
       /* @__PURE__ */ jsxs47("div", { className: "px-4 pt-3 pb-1", children: [
-        /* @__PURE__ */ jsx53("div", { className: "text-[10px] uppercase tracking-wider text-muted-foreground", children: countLabel2(typeKey, isRTL) }),
+        /* @__PURE__ */ jsx53("div", { className: "text-[10px] uppercase tracking-wider text-muted-foreground", children: activity?.metric_label || countLabel2(typeKey, isRTL) }),
         /* @__PURE__ */ jsx53("div", { className: "text-3xl font-semibold text-foreground leading-tight", title: String(activityCount), children: formatCount2(activityCount) })
       ] }),
       /* @__PURE__ */ jsx53("div", { className: "h-16 w-full", children: /* @__PURE__ */ jsx53(ResponsiveContainer2, { width: "100%", height: "100%", children: /* @__PURE__ */ jsxs47(AreaChart2, { data: seriesData, margin: { top: 4, right: 0, bottom: 0, left: 0 }, children: [
@@ -10914,7 +10914,60 @@ import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import { Copy, Check as Check5, ImageDown } from "lucide-react";
+import hljs from "highlight.js/lib/core";
+import hlBash from "highlight.js/lib/languages/bash";
+import hlGo from "highlight.js/lib/languages/go";
+import hlTs from "highlight.js/lib/languages/typescript";
+import hlJs from "highlight.js/lib/languages/javascript";
+import hlJson from "highlight.js/lib/languages/json";
+import hlYaml from "highlight.js/lib/languages/yaml";
+import hlSql from "highlight.js/lib/languages/sql";
+import hlGraphql from "highlight.js/lib/languages/graphql";
+import hlPwsh from "highlight.js/lib/languages/powershell";
+import hlDockerfile from "highlight.js/lib/languages/dockerfile";
 import { Fragment as Fragment18, jsx as jsx69, jsxs as jsxs60 } from "react/jsx-runtime";
+var HL_LANGS = {
+  bash: hlBash,
+  go: hlGo,
+  typescript: hlTs,
+  javascript: hlJs,
+  json: hlJson,
+  yaml: hlYaml,
+  sql: hlSql,
+  graphql: hlGraphql,
+  powershell: hlPwsh,
+  dockerfile: hlDockerfile
+};
+for (const [name, def] of Object.entries(HL_LANGS)) {
+  try {
+    if (!hljs.getLanguage(name)) hljs.registerLanguage(name, def);
+  } catch {
+  }
+}
+var HL_ALIAS = {
+  sh: "bash",
+  shell: "bash",
+  zsh: "bash",
+  console: "bash",
+  ts: "typescript",
+  tsx: "typescript",
+  js: "javascript",
+  jsx: "javascript",
+  mjs: "javascript",
+  yml: "yaml",
+  ps: "powershell",
+  ps1: "powershell",
+  gql: "graphql",
+  docker: "dockerfile"
+};
+function highlightToHtml(code, lang) {
+  const key = lang ? HL_ALIAS[lang] ?? lang : void 0;
+  try {
+    if (key && hljs.getLanguage(key)) return hljs.highlight(code, { language: key }).value;
+  } catch {
+  }
+  return null;
+}
 function hastText(node) {
   if (!node) return "";
   if (node.type === "text") return node.value ?? "";
@@ -10982,7 +11035,9 @@ function CodeBlock({ lang, children }) {
     a.download = `code.${lang || "txt"}.png`;
     a.click();
   };
-  return /* @__PURE__ */ jsxs60("div", { className: "my-3 overflow-hidden rounded-lg border border-border", children: [
+  const raw = typeof children === "string" ? children : Array.isArray(children) && children.every((c) => typeof c === "string") ? children.join("") : null;
+  const html = raw != null ? highlightToHtml(raw.replace(/\n$/, ""), lang) : null;
+  return /* @__PURE__ */ jsxs60("div", { className: "tg-code my-3 overflow-hidden rounded-lg border border-border", children: [
     /* @__PURE__ */ jsxs60("div", { className: "flex items-center justify-between border-b border-border bg-muted/60 px-3 py-1.5", children: [
       /* @__PURE__ */ jsx69("span", { className: "font-mono text-xs text-muted-foreground", children: lang || "code" }),
       /* @__PURE__ */ jsxs60("span", { className: "flex items-center gap-1", children: [
@@ -10996,7 +11051,7 @@ function CodeBlock({ lang, children }) {
         ] })
       ] })
     ] }),
-    /* @__PURE__ */ jsx69("div", { ref: boxRef, className: "bg-muted/40 p-3", children: /* @__PURE__ */ jsx69("pre", { dir: "ltr", className: "overflow-x-auto text-[0.8rem] leading-relaxed [&>code]:bg-transparent [&>code]:p-0", children: /* @__PURE__ */ jsx69("code", { ref: codeRef, className: cn("hljs", lang && `language-${lang}`), children }) }) })
+    /* @__PURE__ */ jsx69("div", { ref: boxRef, className: "bg-muted/40 p-3", children: /* @__PURE__ */ jsx69("pre", { dir: "ltr", className: "overflow-x-auto text-[0.8rem] leading-relaxed [&>code]:bg-transparent [&>code]:p-0", children: html != null ? /* @__PURE__ */ jsx69("code", { ref: codeRef, className: cn("hljs", lang && `language-${lang}`), dangerouslySetInnerHTML: { __html: html } }) : /* @__PURE__ */ jsx69("code", { ref: codeRef, className: cn("hljs", lang && `language-${lang}`), children }) }) })
   ] });
 }
 var _mermaidPromise = null;
@@ -15758,6 +15813,671 @@ var ChatThread = ({
 };
 ChatThread.displayName = "ChatThread";
 var ChatThread_default = ChatThread;
+
+// src/components/marketing/Marketing.tsx
+import * as React28 from "react";
+import { jsx as jsx97, jsxs as jsxs85 } from "react/jsx-runtime";
+var DISPLAY = { fontFamily: '"Sora", var(--togo-font-body, ui-sans-serif, system-ui, sans-serif)' };
+function Eyebrow({ icon: Icon, className, children, ...rest }) {
+  return /* @__PURE__ */ jsxs85(
+    "div",
+    {
+      className: cn(
+        "flex items-center gap-2 font-mono text-[11px] uppercase tracking-[0.18em] text-[hsl(var(--primary))]",
+        className
+      ),
+      ...rest,
+      children: [
+        Icon ? /* @__PURE__ */ jsx97(Icon, { className: "h-3.5 w-3.5 shrink-0", "aria-hidden": true }) : null,
+        /* @__PURE__ */ jsx97("span", { children })
+      ]
+    }
+  );
+}
+Eyebrow.displayName = "Eyebrow";
+function SectionHeading({ eyebrow, eyebrowIcon, title, subtitle, align = "center", className }) {
+  const centered = align === "center";
+  return /* @__PURE__ */ jsxs85("div", { className: cn("max-w-2xl", centered && "mx-auto text-center", className), children: [
+    eyebrow ? /* @__PURE__ */ jsx97(Eyebrow, { icon: eyebrowIcon, className: cn("mb-3", centered && "justify-center"), children: eyebrow }) : null,
+    /* @__PURE__ */ jsx97("h2", { style: DISPLAY, className: "text-3xl font-bold tracking-tight text-foreground sm:text-4xl", children: title }),
+    subtitle ? /* @__PURE__ */ jsx97("p", { className: "mt-3 text-muted-foreground", children: subtitle }) : null
+  ] });
+}
+SectionHeading.displayName = "SectionHeading";
+function FeatureCard({ icon: Icon, title, children, className, ...rest }) {
+  return /* @__PURE__ */ jsxs85(
+    "div",
+    {
+      className: cn(
+        "rounded-2xl border border-border bg-card p-6 transition duration-200 hover:-translate-y-1 hover:border-border/80",
+        className
+      ),
+      ...rest,
+      children: [
+        Icon ? /* @__PURE__ */ jsx97("div", { className: "mb-4 inline-grid h-11 w-11 place-items-center rounded-xl border border-[hsl(var(--primary)/0.18)] bg-[hsl(var(--primary)/0.1)] text-[hsl(var(--primary))]", children: /* @__PURE__ */ jsx97(Icon, { className: "h-5 w-5", "aria-hidden": true }) }) : null,
+        /* @__PURE__ */ jsx97("h3", { style: DISPLAY, className: "mb-2 text-[17px] font-bold text-foreground", children: title }),
+        /* @__PURE__ */ jsx97("div", { className: "text-sm text-muted-foreground [&_b]:text-foreground [&_code]:rounded [&_code]:bg-muted [&_code]:px-1.5 [&_code]:py-0.5 [&_code]:font-mono [&_code]:text-[12.5px] [&_code]:text-foreground/80", children })
+      ]
+    }
+  );
+}
+FeatureCard.displayName = "FeatureCard";
+function CodeShowcase({ tabs, className }) {
+  const [active, setActive] = React28.useState(tabs[0]?.key);
+  const tab = tabs.find((t2) => t2.key === active) ?? tabs[0];
+  return /* @__PURE__ */ jsxs85("div", { className: cn("overflow-hidden rounded-2xl border border-border bg-card", className), children: [
+    /* @__PURE__ */ jsx97("div", { role: "tablist", className: "flex items-center gap-1 overflow-x-auto border-b border-border px-2", children: tabs.map((t2) => {
+      const on = (active ?? tabs[0]?.key) === t2.key;
+      return /* @__PURE__ */ jsxs85(
+        "button",
+        {
+          role: "tab",
+          "aria-selected": on,
+          onClick: () => setActive(t2.key),
+          className: cn(
+            "relative px-3 py-2.5 text-sm transition",
+            on ? "text-foreground" : "text-muted-foreground hover:text-foreground"
+          ),
+          children: [
+            t2.label,
+            on ? /* @__PURE__ */ jsx97("span", { className: "absolute inset-x-2 -bottom-px h-0.5 rounded bg-[hsl(var(--primary))]" }) : null
+          ]
+        },
+        t2.key
+      );
+    }) }),
+    tab?.file ? /* @__PURE__ */ jsx97("div", { className: "px-4 pt-3 font-mono text-[11px] text-muted-foreground", children: tab.file }) : null,
+    /* @__PURE__ */ jsx97("div", { className: "px-3 pb-3 pt-1", children: /* @__PURE__ */ jsx97(CodeBlock, { lang: tab?.lang, children: tab?.code }) })
+  ] });
+}
+CodeShowcase.displayName = "CodeShowcase";
+
+// src/components/marketing/Glass.tsx
+import * as React29 from "react";
+import { jsx as jsx98, jsxs as jsxs86 } from "react/jsx-runtime";
+var DISPLAY2 = { fontFamily: '"Sora", var(--togo-font-body, ui-sans-serif, system-ui, sans-serif)' };
+function AuroraBackground({ className, intensity = 1, style, ...rest }) {
+  return /* @__PURE__ */ jsxs86("div", { "aria-hidden": true, className: cn("pointer-events-none absolute inset-0 -z-10 overflow-hidden", className), style, ...rest, children: [
+    /* @__PURE__ */ jsx98("style", { children: `
+        @keyframes tg-aurora-a { 0%,100%{transform:translate3d(-6%,-4%,0) scale(1)} 50%{transform:translate3d(8%,6%,0) scale(1.15)} }
+        @keyframes tg-aurora-b { 0%,100%{transform:translate3d(6%,8%,0) scale(1.1)} 50%{transform:translate3d(-8%,-6%,0) scale(.95)} }
+        @keyframes tg-aurora-c { 0%,100%{transform:translate3d(0,0,0) scale(1.05)} 50%{transform:translate3d(-10%,4%,0) scale(1.2)} }
+        .tg-orb{position:absolute;border-radius:9999px;filter:blur(70px);opacity:${0.5 * intensity};mix-blend-mode:screen}
+        @media (prefers-reduced-motion: reduce){ .tg-orb{animation:none!important} }
+      ` }),
+    /* @__PURE__ */ jsx98("div", { className: "tg-orb", style: { width: "46vw", height: "46vw", top: "-12%", left: "8%", background: "radial-gradient(circle, #1FC7DC, transparent 65%)", animation: "tg-aurora-a 22s ease-in-out infinite" } }),
+    /* @__PURE__ */ jsx98("div", { className: "tg-orb", style: { width: "50vw", height: "50vw", top: "-18%", right: "2%", background: "radial-gradient(circle, #2D8CE6, transparent 65%)", animation: "tg-aurora-b 26s ease-in-out infinite" } }),
+    /* @__PURE__ */ jsx98("div", { className: "tg-orb", style: { width: "42vw", height: "42vw", top: "20%", left: "30%", background: "radial-gradient(circle, #1659C8, transparent 68%)", animation: "tg-aurora-c 30s ease-in-out infinite" } }),
+    /* @__PURE__ */ jsx98(
+      "div",
+      {
+        className: "absolute inset-0 opacity-[0.35]",
+        style: {
+          backgroundImage: "linear-gradient(rgba(120,140,160,.10) 1px,transparent 1px),linear-gradient(90deg,rgba(120,140,160,.10) 1px,transparent 1px)",
+          backgroundSize: "56px 56px",
+          maskImage: "radial-gradient(900px 600px at 50% 0%, #000, transparent 80%)",
+          WebkitMaskImage: "radial-gradient(900px 600px at 50% 0%, #000, transparent 80%)"
+        }
+      }
+    )
+  ] });
+}
+AuroraBackground.displayName = "AuroraBackground";
+function GlassCard({ className, elevation = "raised", hover = false, children, ...rest }) {
+  const shadow = elevation === "floating" ? "shadow-[0_30px_80px_-30px_rgba(0,0,0,.7)]" : elevation === "raised" ? "shadow-[0_16px_50px_-24px_rgba(0,0,0,.6)]" : "";
+  return /* @__PURE__ */ jsx98(
+    "div",
+    {
+      className: cn(
+        "relative rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-xl",
+        "before:pointer-events-none before:absolute before:inset-0 before:rounded-2xl before:p-px",
+        "before:[background:linear-gradient(140deg,rgba(255,255,255,.18),rgba(255,255,255,0)_40%)]",
+        "before:[mask:linear-gradient(#000,#000)_content-box,linear-gradient(#000,#000)] before:[mask-composite:exclude]",
+        shadow,
+        hover && "transition-transform duration-300 hover:-translate-y-1",
+        className
+      ),
+      ...rest,
+      children
+    }
+  );
+}
+GlassCard.displayName = "GlassCard";
+function Reveal({ className, delayMs = 0, as: Tag = "div", children, style, ...rest }) {
+  const ref = React29.useRef(null);
+  const [state, setState] = React29.useState("static");
+  React29.useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const noMotion = typeof window !== "undefined" && (navigator.webdriver || window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || !("IntersectionObserver" in window));
+    if (noMotion) return;
+    const rect = el.getBoundingClientRect();
+    if (rect.top < window.innerHeight * 0.92 && rect.bottom > 0) {
+      setState("shown");
+      return;
+    }
+    setState("hidden");
+    const io = new IntersectionObserver(
+      (entries) => entries.forEach((e) => {
+        if (e.isIntersecting) {
+          setState("shown");
+          io.disconnect();
+        }
+      }),
+      { threshold: 0.12, rootMargin: "0px 0px -8% 0px" }
+    );
+    io.observe(el);
+    return () => io.disconnect();
+  }, []);
+  const motion = state === "static" ? "" : state === "hidden" ? "opacity-0 translate-y-5" : "opacity-100 translate-y-0";
+  return /* @__PURE__ */ jsx98(
+    Tag,
+    {
+      ref,
+      style: { transitionDelay: `${delayMs}ms`, ...style },
+      className: cn("transition-all duration-[700ms] ease-out will-change-[opacity,transform]", motion, className),
+      ...rest,
+      children
+    }
+  );
+}
+Reveal.displayName = "Reveal";
+function MockupWindow({ className, title, children, ...rest }) {
+  return /* @__PURE__ */ jsxs86(GlassCard, { elevation: "floating", className: cn("overflow-hidden", className), ...rest, children: [
+    /* @__PURE__ */ jsxs86("div", { className: "flex items-center gap-2 px-4 py-3 border-b border-white/10 bg-white/[0.03]", children: [
+      /* @__PURE__ */ jsx98("span", { className: "h-3 w-3 rounded-full bg-[#ff5f57]" }),
+      /* @__PURE__ */ jsx98("span", { className: "h-3 w-3 rounded-full bg-[#febc2e]" }),
+      /* @__PURE__ */ jsx98("span", { className: "h-3 w-3 rounded-full bg-[#28c840]" }),
+      title ? /* @__PURE__ */ jsx98("span", { className: "ms-2 font-mono text-xs text-muted-foreground truncate", children: title }) : null
+    ] }),
+    /* @__PURE__ */ jsx98("div", { className: "bg-[#080b0f]/80", children })
+  ] });
+}
+MockupWindow.displayName = "MockupWindow";
+function PillButton({ className, variant = "flow", size = "lg", children, ...rest }) {
+  const sz = size === "lg" ? "h-[52px] px-7 text-base" : "h-11 px-5 text-sm";
+  const look = variant === "flow" ? "text-white shadow-[0_12px_34px_-10px_rgba(22,89,200,.7)] hover:-translate-y-0.5" : "text-foreground border border-white/15 bg-white/[0.06] backdrop-blur-md hover:bg-white/[0.1]";
+  return /* @__PURE__ */ jsx98(
+    "a",
+    {
+      style: variant === "flow" ? { backgroundImage: "linear-gradient(110deg,#1FC7DC,#2D8CE6 50%,#1659C8)", ...DISPLAY2 } : DISPLAY2,
+      className: cn("inline-flex items-center justify-center gap-2 rounded-full font-semibold transition-all duration-200", sz, look, className),
+      ...rest,
+      children
+    }
+  );
+}
+PillButton.displayName = "PillButton";
+
+// src/components/marketing/Marketplace.tsx
+import * as React30 from "react";
+import { Search as Search8, Star as Star2, Download as Download2 } from "lucide-react";
+import { jsx as jsx99, jsxs as jsxs87 } from "react/jsx-runtime";
+var DISPLAY3 = { fontFamily: '"Sora", var(--togo-font-body, ui-sans-serif, system-ui, sans-serif)' };
+function MarketplaceCard({
+  name,
+  href,
+  category,
+  categoryColor = "#2D8CE6",
+  icon: Icon,
+  description,
+  author,
+  stars,
+  downloads,
+  enabled,
+  className
+}) {
+  return /* @__PURE__ */ jsx99("a", { href, className: cn("group block h-full", className), children: /* @__PURE__ */ jsxs87("div", { className: "rounded-2xl border border-border bg-card/40 overflow-hidden h-full flex flex-col transition-all duration-200 hover:border-foreground/25 hover:-translate-y-0.5", children: [
+    /* @__PURE__ */ jsxs87(
+      "div",
+      {
+        className: "relative h-28 flex items-center justify-center overflow-hidden",
+        style: { background: `radial-gradient(120% 140% at 0% 0%, ${categoryColor}55, transparent 62%), linear-gradient(135deg, ${categoryColor}26, #0b1016)` },
+        children: [
+          /* @__PURE__ */ jsx99("div", { className: "absolute inset-0 opacity-[0.14]", style: { backgroundImage: "radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)", backgroundSize: "16px 16px" } }),
+          Icon && /* @__PURE__ */ jsx99("div", { className: "relative grid place-items-center w-14 h-14 rounded-2xl bg-black/20 ring-1 ring-white/20 transition-transform duration-300 group-hover:scale-105", children: /* @__PURE__ */ jsx99(Icon, { size: 28, style: { color: "#fff" } }) }),
+          enabled && /* @__PURE__ */ jsx99("span", { className: "absolute top-3 end-3 text-[10px] font-mono px-2 py-0.5 rounded-full bg-black/30 text-emerald-300 ring-1 ring-emerald-400/30", children: "enabled" })
+        ]
+      }
+    ),
+    /* @__PURE__ */ jsxs87("div", { className: "p-5 flex flex-col flex-1", children: [
+      /* @__PURE__ */ jsxs87("div", { className: "flex items-center gap-2", children: [
+        /* @__PURE__ */ jsx99("h3", { style: DISPLAY3, className: "text-[15px] font-bold truncate", children: name }),
+        category && /* @__PURE__ */ jsx99("span", { className: "ms-auto shrink-0 text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full border border-border text-muted-foreground", children: category })
+      ] }),
+      /* @__PURE__ */ jsx99("p", { className: "text-[13px] text-muted-foreground mt-1.5 line-clamp-2 flex-1", children: description || "A togo-framework plugin." }),
+      /* @__PURE__ */ jsxs87("div", { className: "flex items-center gap-3 mt-3 text-[11px] text-muted-foreground font-mono", children: [
+        author && /* @__PURE__ */ jsx99("span", { className: "truncate", children: author }),
+        /* @__PURE__ */ jsxs87("span", { className: "ms-auto flex items-center gap-3 shrink-0", children: [
+          typeof stars === "number" && stars > 0 && /* @__PURE__ */ jsxs87("span", { className: "flex items-center gap-1", children: [
+            /* @__PURE__ */ jsx99(Star2, { size: 11 }),
+            " ",
+            stars
+          ] }),
+          typeof downloads === "number" && downloads > 0 && /* @__PURE__ */ jsxs87("span", { className: "flex items-center gap-1", children: [
+            /* @__PURE__ */ jsx99(Download2, { size: 11 }),
+            " ",
+            downloads
+          ] })
+        ] })
+      ] })
+    ] })
+  ] }) });
+}
+MarketplaceCard.displayName = "MarketplaceCard";
+function StatsRow({ stats, className }) {
+  return /* @__PURE__ */ jsx99("div", { className: cn("grid grid-cols-3 gap-3 sm:gap-4", className), children: stats.map((s, i) => /* @__PURE__ */ jsxs87("div", { className: "rounded-2xl border border-border bg-card/40 px-4 sm:px-5 py-4 text-center", children: [
+    /* @__PURE__ */ jsx99("div", { className: "text-[10px] font-mono uppercase tracking-[0.16em] text-muted-foreground/70", children: s.label }),
+    /* @__PURE__ */ jsx99("div", { style: DISPLAY3, className: "text-2xl sm:text-3xl font-bold mt-1", children: s.value })
+  ] }, i)) });
+}
+StatsRow.displayName = "StatsRow";
+function FilterBar({ search, onSearch, chips, active, onChip, sort, searchPlaceholder = "Search plugins\u2026", className }) {
+  return /* @__PURE__ */ jsxs87("div", { className: cn("flex flex-col gap-4", className), children: [
+    /* @__PURE__ */ jsxs87("div", { className: "flex flex-col sm:flex-row gap-3 sm:items-center", children: [
+      /* @__PURE__ */ jsxs87("div", { className: "relative flex-1 min-w-0", children: [
+        /* @__PURE__ */ jsx99(Search8, { size: 15, className: "absolute start-3.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" }),
+        /* @__PURE__ */ jsx99(
+          "input",
+          {
+            value: search,
+            onChange: (e) => onSearch(e.target.value),
+            placeholder: searchPlaceholder,
+            className: "w-full h-11 ps-10 pe-4 rounded-full border border-border bg-card/40 text-sm outline-none focus:border-[color:rgba(31,199,220,.5)] transition-colors"
+          }
+        )
+      ] }),
+      sort && /* @__PURE__ */ jsx99(
+        "select",
+        {
+          value: sort.value,
+          onChange: (e) => sort.onSort(e.target.value),
+          className: "h-11 px-4 rounded-full border border-border bg-card/40 text-sm outline-none cursor-pointer",
+          children: sort.options.map((o) => /* @__PURE__ */ jsx99("option", { value: o.value, className: "bg-[#0b1016]", children: o.label }, o.value))
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsx99("div", { className: "flex flex-wrap gap-2", children: chips.map((c) => {
+      const on = active === c.value;
+      return /* @__PURE__ */ jsxs87(
+        "button",
+        {
+          onClick: () => onChip(c.value),
+          className: cn(
+            "font-mono text-[12px] px-3.5 py-1.5 rounded-full border transition-colors",
+            on ? "border-[color:rgba(31,199,220,.5)] text-[#5CDDEC] bg-[color:rgba(31,199,220,.08)]" : "border-border text-muted-foreground hover:text-foreground hover:bg-card/40"
+          ),
+          children: [
+            c.label,
+            typeof c.count === "number" && /* @__PURE__ */ jsxs87("span", { className: "opacity-50", children: [
+              " ",
+              c.count
+            ] })
+          ]
+        },
+        c.value
+      );
+    }) })
+  ] });
+}
+FilterBar.displayName = "FilterBar";
+function Pager({ page, pages, onPage, className }) {
+  if (pages <= 1) return null;
+  const nums = Array.from({ length: pages }, (_, i) => i + 1).filter((n) => n === 1 || n === pages || Math.abs(n - page) <= 1);
+  const btn = "min-w-9 h-9 px-2 rounded-full border text-sm font-mono transition-colors";
+  return /* @__PURE__ */ jsxs87("div", { className: cn("flex items-center justify-center gap-1.5", className), children: [
+    /* @__PURE__ */ jsx99("button", { disabled: page <= 1, onClick: () => onPage(page - 1), className: cn(btn, "border-border text-muted-foreground hover:text-foreground disabled:opacity-30"), children: "\u2039" }),
+    nums.map((n, i) => /* @__PURE__ */ jsxs87(React30.Fragment, { children: [
+      i > 0 && n - nums[i - 1] > 1 && /* @__PURE__ */ jsx99("span", { className: "text-muted-foreground/50 px-1", children: "\u2026" }),
+      /* @__PURE__ */ jsx99("button", { onClick: () => onPage(n), className: cn(btn, n === page ? "border-[color:rgba(31,199,220,.5)] text-[#5CDDEC] bg-[color:rgba(31,199,220,.08)]" : "border-border text-muted-foreground hover:text-foreground"), children: n })
+    ] }, n)),
+    /* @__PURE__ */ jsx99("button", { disabled: page >= pages, onClick: () => onPage(page + 1), className: cn(btn, "border-border text-muted-foreground hover:text-foreground disabled:opacity-30"), children: "\u203A" })
+  ] });
+}
+Pager.displayName = "Pager";
+
+// src/components/marketing/Docs.tsx
+import * as React31 from "react";
+import { Info as Info3, AlertTriangle as AlertTriangle5, Lightbulb as Lightbulb2, Search as Search9, ChevronRight as ChevronRight9 } from "lucide-react";
+import { Fragment as Fragment25, jsx as jsx100, jsxs as jsxs88 } from "react/jsx-runtime";
+var DISPLAY4 = { fontFamily: '"Sora", var(--togo-font-body, ui-sans-serif, system-ui, sans-serif)' };
+function Callout({ kind = "info", title, children, className }) {
+  const { Icon, c } = {
+    info: { Icon: Info3, c: "#2D8CE6" },
+    warn: { Icon: AlertTriangle5, c: "#f5a623" },
+    tip: { Icon: Lightbulb2, c: "#1FC7DC" },
+    note: { Icon: Info3, c: "#8b97a3" }
+  }[kind];
+  return /* @__PURE__ */ jsxs88("div", { className: cn("rounded-xl border p-4 flex gap-3 my-4", className), style: { borderColor: `${c}40`, background: `${c}12` }, children: [
+    /* @__PURE__ */ jsx100(Icon, { size: 18, style: { color: c }, className: "shrink-0 mt-0.5" }),
+    /* @__PURE__ */ jsxs88("div", { className: "text-sm text-foreground/90 [&>p]:m-0 [&>p]:leading-relaxed", children: [
+      title && /* @__PURE__ */ jsx100("div", { className: "font-semibold mb-1", style: DISPLAY4, children: title }),
+      children
+    ] })
+  ] });
+}
+Callout.displayName = "Callout";
+function DocsSidebar({ groups, activeHref, className, onNavigate }) {
+  return /* @__PURE__ */ jsx100("nav", { className: cn("text-sm", className), children: groups.map((g) => {
+    const hasActive = g.items.some((i) => i.href === activeHref);
+    return /* @__PURE__ */ jsx100(DocsGroup, { group: g, activeHref, defaultOpen: hasActive, onNavigate }, g.label);
+  }) });
+}
+function DocsGroup({ group, activeHref, defaultOpen, onNavigate }) {
+  const [open, setOpen] = React31.useState(defaultOpen);
+  return /* @__PURE__ */ jsxs88("div", { className: "mb-1", children: [
+    /* @__PURE__ */ jsxs88("button", { onClick: () => setOpen((o) => !o), className: "w-full flex items-center gap-1.5 px-2 py-1.5 text-[11px] font-mono uppercase tracking-[0.14em] text-muted-foreground/70 hover:text-foreground", children: [
+      /* @__PURE__ */ jsx100(ChevronRight9, { size: 12, className: cn("transition-transform", open && "rotate-90") }),
+      group.label
+    ] }),
+    open && /* @__PURE__ */ jsx100("ul", { className: "mt-0.5 mb-2 ms-3 border-s border-border", children: group.items.map((i) => {
+      const on = i.href === activeHref;
+      return /* @__PURE__ */ jsx100("li", { children: /* @__PURE__ */ jsx100(
+        "a",
+        {
+          href: i.href,
+          onClick: onNavigate ? (e) => {
+            e.preventDefault();
+            onNavigate(i.href);
+          } : void 0,
+          className: cn("block ps-3 -ms-px border-s py-1.5 transition-colors", on ? "border-[#1FC7DC] text-[#5CDDEC]" : "border-transparent text-muted-foreground hover:text-foreground"),
+          children: i.label
+        }
+      ) }, i.href);
+    }) })
+  ] });
+}
+DocsSidebar.displayName = "DocsSidebar";
+function DocsTOC({ items, className }) {
+  const [active, setActive] = React31.useState("");
+  React31.useEffect(() => {
+    if (!items.length) return;
+    const obs = new IntersectionObserver(
+      (entries) => {
+        const vis = entries.filter((e) => e.isIntersecting).sort((a, b) => a.boundingClientRect.top - b.boundingClientRect.top);
+        if (vis[0]) setActive(vis[0].target.id);
+      },
+      { rootMargin: "-80px 0px -70% 0px" }
+    );
+    items.forEach((i) => {
+      const el = document.getElementById(i.id);
+      if (el) obs.observe(el);
+    });
+    return () => obs.disconnect();
+  }, [items]);
+  if (!items.length) return null;
+  return /* @__PURE__ */ jsxs88("nav", { className: cn("text-sm", className), children: [
+    /* @__PURE__ */ jsx100("div", { className: "text-[10px] font-mono uppercase tracking-[0.16em] text-muted-foreground/60 mb-3", children: "On this page" }),
+    /* @__PURE__ */ jsx100("ul", { className: "border-s border-border", children: items.map((i) => /* @__PURE__ */ jsx100("li", { style: { paddingInlineStart: `${(Math.max(1, i.level) - 1) * 12}px` }, children: /* @__PURE__ */ jsx100("a", { href: `#${i.id}`, className: cn("block ps-3 -ms-px border-s py-1 transition-colors", active === i.id ? "border-[#1FC7DC] text-[#5CDDEC]" : "border-transparent text-muted-foreground hover:text-foreground"), children: i.text }) }, i.id)) })
+  ] });
+}
+DocsTOC.displayName = "DocsTOC";
+function DocsLayout({ sidebar, toc, breadcrumb, topbar, children, className }) {
+  return /* @__PURE__ */ jsxs88("div", { className: cn("mx-auto max-w-7xl px-4 sm:px-6", className), children: [
+    topbar,
+    /* @__PURE__ */ jsxs88("div", { className: "flex gap-8", children: [
+      /* @__PURE__ */ jsx100("aside", { className: "hidden lg:block w-60 shrink-0 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto py-8 pe-2", children: sidebar }),
+      /* @__PURE__ */ jsxs88("main", { className: "min-w-0 flex-1 py-8 max-w-3xl", children: [
+        breadcrumb && /* @__PURE__ */ jsx100("div", { className: "text-[12px] font-mono text-muted-foreground/70 mb-3", children: breadcrumb }),
+        children
+      ] }),
+      toc && /* @__PURE__ */ jsx100("aside", { className: "hidden xl:block w-56 shrink-0 sticky top-20 self-start max-h-[calc(100vh-6rem)] overflow-y-auto py-8", children: toc })
+    ] })
+  ] });
+}
+DocsLayout.displayName = "DocsLayout";
+function CommandPalette({ items, placeholder = "Search docs & plugins\u2026", className }) {
+  const [open, setOpen] = React31.useState(false);
+  const [q, setQ] = React31.useState("");
+  React31.useEffect(() => {
+    const h = (e) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setOpen((o) => !o);
+      }
+      if (e.key === "Escape") setOpen(false);
+    };
+    window.addEventListener("keydown", h);
+    return () => window.removeEventListener("keydown", h);
+  }, []);
+  const results = q ? items.filter((i) => (i.label + " " + (i.sublabel || "")).toLowerCase().includes(q.toLowerCase())).slice(0, 40) : items.slice(0, 24);
+  return /* @__PURE__ */ jsxs88(Fragment25, { children: [
+    /* @__PURE__ */ jsxs88("button", { onClick: () => setOpen(true), className: cn("inline-flex items-center gap-2 h-9 px-3 rounded-full border border-border bg-card/40 text-sm text-muted-foreground hover:text-foreground transition-colors", className), children: [
+      /* @__PURE__ */ jsx100(Search9, { size: 14 }),
+      " ",
+      /* @__PURE__ */ jsx100("span", { className: "hidden sm:inline", children: "Search" }),
+      /* @__PURE__ */ jsx100("kbd", { className: "hidden sm:inline font-mono text-[10px] border border-border rounded px-1 py-0.5", children: "\u2318K" })
+    ] }),
+    open && /* @__PURE__ */ jsx100("div", { className: "fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] bg-black/60", onClick: () => setOpen(false), children: /* @__PURE__ */ jsxs88("div", { className: "w-full max-w-xl mx-4 rounded-2xl border border-border bg-card shadow-[0_30px_80px_-20px_rgba(0,0,0,.8)] overflow-hidden", onClick: (e) => e.stopPropagation(), children: [
+      /* @__PURE__ */ jsxs88("div", { className: "flex items-center gap-3 px-4 border-b border-border", children: [
+        /* @__PURE__ */ jsx100(Search9, { size: 16, className: "text-muted-foreground" }),
+        /* @__PURE__ */ jsx100("input", { autoFocus: true, value: q, onChange: (e) => setQ(e.target.value), placeholder, className: "flex-1 h-12 bg-transparent outline-none text-sm" }),
+        /* @__PURE__ */ jsx100("kbd", { className: "font-mono text-[10px] text-muted-foreground border border-border rounded px-1", children: "esc" })
+      ] }),
+      /* @__PURE__ */ jsxs88("ul", { className: "max-h-[50vh] overflow-auto p-2", children: [
+        results.map((r, idx) => /* @__PURE__ */ jsx100("li", { children: /* @__PURE__ */ jsxs88("a", { href: r.href, className: "flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-card/40", children: [
+          /* @__PURE__ */ jsx100("span", { className: "text-sm truncate", children: r.label }),
+          r.sublabel && /* @__PURE__ */ jsx100("span", { className: "text-xs text-muted-foreground truncate min-w-0", children: r.sublabel }),
+          r.group && /* @__PURE__ */ jsx100("span", { className: "ms-auto shrink-0 text-[10px] font-mono uppercase text-muted-foreground/60", children: r.group })
+        ] }) }, idx)),
+        !results.length && /* @__PURE__ */ jsx100("li", { className: "px-3 py-6 text-center text-sm text-muted-foreground", children: "No results." })
+      ] })
+    ] }) })
+  ] });
+}
+CommandPalette.displayName = "CommandPalette";
+
+// src/components/marketing/Terminal.tsx
+import * as React32 from "react";
+import { RotateCcw as RotateCcw3 } from "lucide-react";
+import { jsx as jsx101, jsxs as jsxs89 } from "react/jsx-runtime";
+function fullFrame(steps) {
+  const lines = [];
+  steps.forEach((s, i) => {
+    lines.push(
+      /* @__PURE__ */ jsxs89("div", { className: "whitespace-pre-wrap break-words", children: [
+        /* @__PURE__ */ jsx101("span", { className: "text-[#5CDDEC]", children: "\u276F " }),
+        /* @__PURE__ */ jsx101("span", { className: "text-foreground", children: s.cmd })
+      ] }, `c${i}`)
+    );
+    (s.out || []).forEach((l, j) => lines.push(/* @__PURE__ */ jsx101("div", { className: "whitespace-pre-wrap break-words text-muted-foreground", children: l }, `o${i}-${j}`)));
+  });
+  return { lines, showEnd: true };
+}
+var keepStaticFrame = () => typeof window !== "undefined" && (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || navigator?.webdriver === true);
+function TypingTerminal({ steps, endSlot, title = "~/myapp \u2014 togo", className, typeMs = 26, lineMs = 110, loop = false, height = 360 }) {
+  const [frame, setFrame] = React32.useState(() => fullFrame(steps));
+  const [done, setDone] = React32.useState(false);
+  const [runId, setRunId] = React32.useState(0);
+  const scrollRef = React32.useRef(null);
+  React32.useEffect(() => {
+    if (keepStaticFrame()) {
+      setDone(true);
+      return;
+    }
+    let alive = true;
+    const timers = [];
+    const wait = (ms) => new Promise((res) => timers.push(setTimeout(res, ms)));
+    const toBottom = () => {
+      if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    };
+    async function run() {
+      setDone(false);
+      do {
+        const lines = [];
+        setFrame({ lines: [], showEnd: false });
+        for (let i = 0; i < steps.length && alive; i++) {
+          const s = steps[i];
+          for (let c = 1; c <= s.cmd.length && alive; c++) {
+            const typed = s.cmd.slice(0, c);
+            setFrame({
+              lines: [...lines, /* @__PURE__ */ jsxs89("div", { className: "whitespace-pre-wrap break-words", children: [
+                /* @__PURE__ */ jsx101("span", { className: "text-[#5CDDEC]", children: "\u276F " }),
+                /* @__PURE__ */ jsx101("span", { className: "text-foreground", children: typed }),
+                /* @__PURE__ */ jsx101("span", { className: "ml-0.5 inline-block w-2 -mb-0.5 h-4 bg-[#5CDDEC] animate-pulse" })
+              ] }, `c${i}`)],
+              showEnd: false
+            });
+            toBottom();
+            await wait(typeMs);
+          }
+          lines.push(/* @__PURE__ */ jsxs89("div", { className: "whitespace-pre-wrap break-words", children: [
+            /* @__PURE__ */ jsx101("span", { className: "text-[#5CDDEC]", children: "\u276F " }),
+            /* @__PURE__ */ jsx101("span", { className: "text-foreground", children: s.cmd })
+          ] }, `c${i}`));
+          await wait(220);
+          for (let j = 0; j < (s.out?.length || 0) && alive; j++) {
+            lines.push(/* @__PURE__ */ jsx101("div", { className: "whitespace-pre-wrap break-words text-muted-foreground", children: s.out[j] }, `o${i}-${j}`));
+            setFrame({ lines: [...lines], showEnd: false });
+            toBottom();
+            await wait(lineMs);
+          }
+        }
+        if (!alive) return;
+        setFrame({ lines: [...lines], showEnd: true });
+        toBottom();
+        if (!loop) {
+          setDone(true);
+          return;
+        }
+        await wait(4200);
+      } while (alive);
+    }
+    run();
+    return () => {
+      alive = false;
+      timers.forEach(clearTimeout);
+    };
+  }, [steps, typeMs, lineMs, loop, runId]);
+  return /* @__PURE__ */ jsxs89("div", { className: cn("rounded-2xl border border-border overflow-hidden bg-[#080b0f] shadow-2xl", className), children: [
+    /* @__PURE__ */ jsxs89("div", { className: "flex items-center gap-2 px-4 py-3 border-b border-border", children: [
+      /* @__PURE__ */ jsx101("span", { className: "w-3 h-3 rounded-full bg-[#ff5f57]" }),
+      /* @__PURE__ */ jsx101("span", { className: "w-3 h-3 rounded-full bg-[#febc2e]" }),
+      /* @__PURE__ */ jsx101("span", { className: "w-3 h-3 rounded-full bg-[#28c840]" }),
+      /* @__PURE__ */ jsx101("span", { className: "ms-2 font-mono text-xs text-muted-foreground", children: title }),
+      done && !loop && /* @__PURE__ */ jsxs89(
+        "button",
+        {
+          type: "button",
+          onClick: () => setRunId((n) => n + 1),
+          className: "ms-auto inline-flex items-center gap-1.5 rounded-md border border-white/12 bg-white/[0.04] px-2.5 py-1 font-mono text-[11px] text-muted-foreground hover:text-foreground hover:bg-white/[0.08] transition-colors",
+          "aria-label": "Replay the terminal demo",
+          children: [
+            /* @__PURE__ */ jsx101(RotateCcw3, { size: 12 }),
+            " Replay"
+          ]
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxs89("div", { ref: scrollRef, className: "p-5 font-mono text-[12.5px] sm:text-[13px] leading-[1.9] overflow-auto", style: { height }, children: [
+      frame.lines,
+      frame.showEnd && endSlot ? /* @__PURE__ */ jsx101("div", { className: "mt-4 pt-4 border-t border-white/10", children: endSlot }) : null
+    ] })
+  ] });
+}
+TypingTerminal.displayName = "TypingTerminal";
+
+// src/components/marketing/MascotMark.tsx
+import * as React33 from "react";
+import { jsx as jsx102, jsxs as jsxs90 } from "react/jsx-runtime";
+var EYES = [
+  { x: 0.405, y: 0.45 },
+  { x: 0.595, y: 0.45 }
+];
+var EYE_W = 0.085;
+var PUPIL_RATIO = 0.52;
+var MAX_OFF = (1 - PUPIL_RATIO) / 2 * 100;
+var KEYFRAMES = `
+@keyframes tgMascotFloat { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-12px)} }
+.tg-mascot { will-change: transform; animation: tgMascotFloat 6s ease-in-out infinite; }
+@media (prefers-reduced-motion: reduce) { .tg-mascot { animation: none !important; } }`;
+function MascotMark({ src = "/togo-mark.svg", alt = "ToGO", className }) {
+  const ref = React33.useRef(null);
+  const [active, setActive] = React33.useState(false);
+  const [look, setLook] = React33.useState({ dx: 0, dy: 0 });
+  React33.useEffect(() => {
+    if (typeof window === "undefined" || !window.matchMedia) return;
+    if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
+    setActive(true);
+    let raf = 0;
+    const onMove = (e) => {
+      const el = ref.current;
+      if (!el) return;
+      const r = el.getBoundingClientRect();
+      const cx = r.left + r.width / 2;
+      const cy = r.top + r.height * 0.45;
+      const dx = Math.max(-1, Math.min(1, (e.clientX - cx) / (r.width * 0.85)));
+      const dy = Math.max(-1, Math.min(1, (e.clientY - cy) / (r.height * 0.85)));
+      cancelAnimationFrame(raf);
+      raf = requestAnimationFrame(() => setLook({ dx, dy }));
+    };
+    const recenter = () => setLook({ dx: 0, dy: 0 });
+    window.addEventListener("pointermove", onMove, { passive: true });
+    window.addEventListener("pointerleave", recenter);
+    document.addEventListener("mouseleave", recenter);
+    return () => {
+      window.removeEventListener("pointermove", onMove);
+      window.removeEventListener("pointerleave", recenter);
+      document.removeEventListener("mouseleave", recenter);
+      cancelAnimationFrame(raf);
+    };
+  }, []);
+  const tilt = active ? look.dx * 4 : 0;
+  return /* @__PURE__ */ jsxs90("div", { ref, className: cn("tg-mascot", className), style: { position: "relative", display: "inline-block" }, children: [
+    /* @__PURE__ */ jsx102("style", { children: KEYFRAMES }),
+    /* @__PURE__ */ jsxs90(
+      "div",
+      {
+        style: {
+          position: "relative",
+          transform: active ? `rotate(${tilt}deg)` : void 0,
+          transformOrigin: "50% 75%",
+          transition: "transform .25s ease-out"
+        },
+        children: [
+          /* @__PURE__ */ jsx102("img", { src, alt, draggable: false, style: { display: "block", width: "100%", height: "100%" } }),
+          active && EYES.map((eye, i) => /* @__PURE__ */ jsx102(
+            "span",
+            {
+              "aria-hidden": "true",
+              style: {
+                position: "absolute",
+                left: `${eye.x * 100}%`,
+                top: `${eye.y * 100}%`,
+                width: `${EYE_W * 100}%`,
+                aspectRatio: "1",
+                transform: "translate(-50%,-50%)",
+                borderRadius: "9999px",
+                background: "rgba(255,255,255,.94)",
+                boxShadow: "inset 0 2px 4px rgba(8,16,40,.28)"
+              },
+              children: /* @__PURE__ */ jsx102(
+                "span",
+                {
+                  style: {
+                    position: "absolute",
+                    left: `${50 + look.dx * MAX_OFF}%`,
+                    top: `${50 + look.dy * MAX_OFF}%`,
+                    width: `${PUPIL_RATIO * 100}%`,
+                    aspectRatio: "1",
+                    transform: "translate(-50%,-50%)",
+                    borderRadius: "9999px",
+                    background: "#0a1733",
+                    boxShadow: "inset 1.5px -1.5px 2px rgba(255,255,255,.35)",
+                    transition: "left .12s ease-out, top .12s ease-out"
+                  }
+                }
+              )
+            },
+            i
+          ))
+        ]
+      }
+    )
+  ] });
+}
+MascotMark.displayName = "MascotMark";
 export {
   Accordion,
   AccordionContent,
@@ -15795,6 +16515,7 @@ export {
   ArtifactTable,
   ArtifactViewer_default as ArtifactViewer,
   AspectRatio,
+  AuroraBackground,
   AuthCard_default as AuthCard,
   AuthErrorAlert_default as AuthErrorAlert,
   AuthFlow_default as AuthFlow,
@@ -15813,6 +16534,7 @@ export {
   BreadcrumbSeparator,
   Button,
   Calendar,
+  Callout,
   Card,
   CardContent,
   CardDescription,
@@ -15834,6 +16556,7 @@ export {
   ChatThread_default as ChatThread,
   Checkbox,
   CodeBlock,
+  CodeShowcase,
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
@@ -15846,6 +16569,7 @@ export {
   CommandInputPrimitive,
   CommandItem,
   CommandList,
+  CommandPalette,
   CommandSeparator,
   CommandShortcut,
   ContextMenu,
@@ -15883,6 +16607,9 @@ export {
   DialogTitle,
   DialogTrigger,
   DirectionalArrow,
+  DocsLayout,
+  DocsSidebar,
+  DocsTOC,
   Drawer,
   DrawerClose,
   DrawerContent,
@@ -15914,9 +16641,12 @@ export {
   EntityNetworkGraph,
   ErrorTrackingPage,
   EventMapPanel,
+  Eyebrow,
+  FeatureCard,
   FeedbackButton,
   FeedbackHub,
   FeedbackWidget,
+  FilterBar,
   ForgotForm_default as ForgotForm,
   Form,
   FormControl,
@@ -15925,6 +16655,7 @@ export {
   FormItem,
   FormLabel,
   FormMessage,
+  GlassCard,
   HoverCard,
   HoverCardContent,
   HoverCardTrigger,
@@ -15954,6 +16685,8 @@ export {
   MarkdownEditor,
   MarkdownRenderer,
   MarkdownTable,
+  MarketplaceCard,
+  MascotMark,
   Menubar,
   MenubarCheckboxItem,
   MenubarContent,
@@ -15971,6 +16704,7 @@ export {
   MenubarSubTrigger,
   MenubarTrigger,
   MiniBarChart,
+  MockupWindow,
   MotorFeedbackLauncher,
   NativeSelect,
   NavigationMenu,
@@ -15986,6 +16720,7 @@ export {
   OTPBoxGroup_default as OTPBoxGroup,
   PIPELINE_STAGES,
   PageHeader,
+  Pager,
   Pagination,
   PaginationContent,
   PaginationEllipsis,
@@ -15996,6 +16731,7 @@ export {
   PasswordInput_default as PasswordInput,
   PasswordLockScreen_default as PasswordLockScreen,
   PasswordStrengthMeter_default as PasswordStrengthMeter,
+  PillButton,
   PluginAppearanceSection,
   PluginCard,
   PluginDetailLayout,
@@ -16015,6 +16751,7 @@ export {
   ResizableHandle,
   ResizablePanel,
   ResizablePanelGroup,
+  Reveal,
   RouteProgress,
   SENTRA_BRAND,
   STEP_FIELD_REGISTRY,
@@ -16022,6 +16759,7 @@ export {
   ScrollArea,
   ScrollBar,
   SectionBoard,
+  SectionHeading,
   SectionSkeleton,
   Select,
   SelectContent,
@@ -16075,6 +16813,7 @@ export {
   Slider,
   SourceBadge,
   StatCard,
+  StatsRow,
   StatusBadge,
   StepOptionsDialog,
   StreamingMessage_default as StreamingMessage,
@@ -16103,6 +16842,7 @@ export {
   TooltipProvider,
   TooltipTrigger,
   TwoFAForm_default as TwoFAForm,
+  TypingTerminal,
   UnifiedCopilotDock_default as UnifiedCopilotDock,
   ViewToggle,
   Wordmark,

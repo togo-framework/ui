@@ -1519,6 +1519,9 @@ interface PluginCatalogEntry {
     last_active_at: string | null;
     activity_count: number | null;
     activity_series: ActivityBucket[] | null;
+    /** Optional override for the counter's label (e.g. "downloads", "stars").
+     * When set, it replaces the plugin_type-derived default ("records"). */
+    metric_label?: string | null;
     route: string | null;
 }
 interface SparklinePoint {
@@ -1852,6 +1855,8 @@ interface PluginActivitySummary {
     activity_series?: {
         n: number;
     }[];
+    /** Optional override for the counter's label (e.g. "downloads"); replaces the default ("records"). */
+    metric_label?: string | null;
 }
 interface PluginDetailLayoutProps {
     /** Ordered tab list. */
@@ -3869,4 +3874,255 @@ declare const AgentSteps: {
     displayName: string;
 };
 
-export { type A2UIActionItem, type A2UIActionsData, type A2UIArtifact$1 as A2UIArtifact, type A2UICardData, type A2UICardField, type A2UIChartData, type A2UIChartSeries, type A2UIClientCandidate, type A2UIClientCandidatesData, type A2UIClientDiffConfirmData, type A2UIClientDiffRow, type A2UIClientField, type A2UIClientFieldPickerData, type A2UIKind, type A2UIMarkdownData, type A2UIPersonaStarter, type A2UIPersonaStartersData, type A2UITableColumn, type A2UITableData, type ActivityBucket, AdminLayout, type AdminLayoutProps, type AdminSubNavItem, AgentSteps, type AlertMapItem, type AlertSeverity, type AppBrand, AppHeader, type AppHeaderProps, AppLayout, type AppLayoutProps, type AppNavGroup, type AppNavItem, AppPageShell, type AppPageShellProps, AppSidebar, type AppSidebarProps, type AppearanceMode, ArtifactActions, type ArtifactActionsProps, ArtifactCard, type ArtifactCardProps, ArtifactChart, type ArtifactChartProps, ArtifactClientCandidates, type ArtifactClientCandidatesProps, ArtifactClientDiffConfirm, type ArtifactClientDiffConfirmProps, ArtifactClientFieldPicker, type ArtifactClientFieldPickerProps, type ArtifactInteraction, ArtifactMarkdown, type ArtifactMarkdownProps, ArtifactPersonaStarters, type ArtifactPersonaStartersProps, ArtifactRenderer, type ArtifactRendererProps, ArtifactTable, type ArtifactTableProps, ArtifactViewer, AuthCard, type AuthCardBrand, type AuthClient, AuthErrorAlert, AuthFlow, type AuthLayout, AuthStepHeader, type BarPoint, type CardFilter, CardGrid, type CardGridLabels, ChatThread, CodeBlock, ColorPicker, type ColorPickerProps, ContextualSkeleton, type CopilotClient, type CopilotEvent, CopilotLauncher, CopilotProvider, type CopilotQuickAction, type CopilotRequest, CopilotSelectionTrigger, type CopilotSelectionTriggerProps, DEFAULT_LAYERS, DEFAULT_LEGEND_GROUPS, DEFAULT_REGION_PRESETS, DataState, type DataStateLabels, type DataStateProps, DataTable, type DataTableBulkAction, type DataTableColumnFilter, type DataTableColumnMeta, type DataTableDensity, type DataTableFilterType, type DataTableLanguage, type DataTableProps, type DataTableSelectOption, type DataTableServerCallbacks, type DataTableServerState, type DockPosition, DynamicIcon, DynamicSection, type DynamicSectionProps, EmptyState, type EmptyStateProps, EntityNetworkGraph, type EntityNetworkGraphProps, type ErrorFilter, ErrorTrackingPage, type ErrorTrackingPageProps, EventMapPanel, type EventMapPanelProps, type FeedbackAttachment, FeedbackButton, type FeedbackButtonProps, FeedbackHub, type FeedbackHubProps, type FeedbackItem, type FeedbackKind, FeedbackWidget, type FeedbackWidgetProps, ForgotForm, type GraphLink, type GraphNode, IconPicker, type IconPickerProps, type Issue$1 as Issue, type IssueAssignee, type IssueBreadcrumb, IssueDetail, type IssueDetailProps, type IssueLevel, type IssueSort, type IssueTag, IssuesList, type IssuesListProps, LANG_COOKIE_NAME, type LanguageContextValue, LanguageProvider, type LanguageProviderProps, type LegendGroup, type LegendItem, type LegendShapeType, LockScreen, type LockScreenProps, type LockScreenUser, type LogLevel, LoginForm, type LoginResult, Logo, type LogoProps, type LogoTone, type LogoVariant, type LogsFilter, LogsView, type LogsViewProps, MARKER_COLORS, MARKER_LABELS, type MapLayer, MapLayersPanel, type MapLayersPanelProps, MapLegend, type MapLegendProps, type MapMarker$1 as MapMarker, type MapMarkerType, MapPanel, type MapPanelProps, type MapRegionPreset, MapView, type MapViewProps, MarkdownContent, MarkdownEditor, type MarkdownEditorProps, MarkdownRenderer, type MarkdownRendererProps, MarkdownTable, type MarkdownView, MiniBarChart, type ModelOption, MotorFeedbackLauncher, type MotorFeedbackLauncherProps, NestedStepsEditor, type NestedStepsEditorProps, NetworkGraph, type NetworkGraphProps, type NewFeedback, OTPBoxGroup, type OtpResult, PIPELINE_STAGES, PageHeader, type PageHeaderProps, PasswordInput, PasswordLockScreen, type PasswordLockScreenProps, type PasswordLockScreenUser, type PasswordRule, PasswordStrengthMeter, type PickedLocation, type PipelineCard, type PipelineLane, type PipelineModel, type PluginActivitySummary, type PluginAppearanceFields, PluginAppearanceSection, type PluginAppearanceSectionProps, PluginCard, type PluginCatalogEntry, type PluginDetailIdentity, PluginDetailLayout, type PluginDetailLayoutProps, type PluginDetailTab, PluginHero, PluginHeroSkeleton, PluginPageHeader, PluginSectionCard, PluginSparkline, type ProfileSession, ProfileView, type ProfileViewProps, type RenderMapContext, ResetForm, type ResolvedIcon, RouteProgress, type RouteProgressProps, STEP_FIELD_REGISTRY, SectionBoard, type SectionBoardProps, type SectionModel, SectionSkeleton, SentraLoading, type ServiceLogRow, ServiceUnavailable, type ServiceUnavailableProps, SessionExpired, type SessionExpiredProps, SeverityChip, type SidebarConversation, type SidebarUser, SourceBadge, type SparklinePoint, type StackFrame, type StackFrameContextLine, StatCard, type StatCardProps, StatusBadge, type StatusBadgeProps, type StatusBadgeTone, type Step, type StepFieldDef, type StepFieldType, type StepMetrics7d, StepOptionsDialog, type StepOptionsDialogProps, StreamingMessage, type TestRunCallbacks, type TestRunCompletePayload, TestRunPanel, type TestRunPanelProps, type TestRunSavedItem, type TestRunStep, TwoFAForm, UnifiedCopilotDock, type UnlockCredentials, type Verify2FAResult, type View, ViewToggle, type ViewToggleProps, Wordmark, type WordmarkProps, Workflow, WorkflowEditor, type WorkflowEditorProps, type WorkflowPalette, WorkflowPipeline, type WorkflowPipelineProps, type WorkflowProps, type WorkflowSource, type WorkflowStep, type WorkflowStepLike, WorkflowStepNode, type WorkflowStepNodeProps, type WorkflowView, cn, computeRules, computeScore, feedbackButtonVariants, levelTone, resolveIcon, statValueVariants, statusBadgeVariants, useCopilot, useLanguage, useT };
+interface EyebrowProps extends React$1.HTMLAttributes<HTMLDivElement> {
+    icon?: LucideIcon;
+}
+declare function Eyebrow({ icon: Icon, className, children, ...rest }: EyebrowProps): React$1.JSX.Element;
+declare namespace Eyebrow {
+    var displayName: string;
+}
+interface SectionHeadingProps {
+    eyebrow?: React$1.ReactNode;
+    eyebrowIcon?: LucideIcon;
+    title: React$1.ReactNode;
+    subtitle?: React$1.ReactNode;
+    align?: "left" | "center";
+    className?: string;
+}
+declare function SectionHeading({ eyebrow, eyebrowIcon, title, subtitle, align, className }: SectionHeadingProps): React$1.JSX.Element;
+declare namespace SectionHeading {
+    var displayName: string;
+}
+interface FeatureCardProps extends Omit<React$1.HTMLAttributes<HTMLDivElement>, "title"> {
+    icon?: LucideIcon;
+    title: React$1.ReactNode;
+}
+declare function FeatureCard({ icon: Icon, title, children, className, ...rest }: FeatureCardProps): React$1.JSX.Element;
+declare namespace FeatureCard {
+    var displayName: string;
+}
+interface CodeShowcaseTab {
+    key: string;
+    label: string;
+    lang?: string;
+    file?: string;
+    code: string;
+}
+interface CodeShowcaseProps {
+    tabs: CodeShowcaseTab[];
+    className?: string;
+}
+declare function CodeShowcase({ tabs, className }: CodeShowcaseProps): React$1.JSX.Element;
+declare namespace CodeShowcase {
+    var displayName: string;
+}
+
+interface AuroraBackgroundProps extends React$1.HTMLAttributes<HTMLDivElement> {
+    /** Dim the orbs (0–1). Default 1. */
+    intensity?: number;
+}
+declare function AuroraBackground({ className, intensity, style, ...rest }: AuroraBackgroundProps): React$1.JSX.Element;
+declare namespace AuroraBackground {
+    var displayName: string;
+}
+interface GlassCardProps extends React$1.HTMLAttributes<HTMLDivElement> {
+    elevation?: "flat" | "raised" | "floating";
+    hover?: boolean;
+}
+declare function GlassCard({ className, elevation, hover, children, ...rest }: GlassCardProps): React$1.JSX.Element;
+declare namespace GlassCard {
+    var displayName: string;
+}
+interface RevealProps extends React$1.HTMLAttributes<HTMLDivElement> {
+    delayMs?: number;
+    as?: React$1.ElementType;
+}
+declare function Reveal({ className, delayMs, as: Tag, children, style, ...rest }: RevealProps): React$1.JSX.Element;
+declare namespace Reveal {
+    var displayName: string;
+}
+interface MockupWindowProps extends Omit<React$1.HTMLAttributes<HTMLDivElement>, "title"> {
+    title?: React$1.ReactNode;
+}
+declare function MockupWindow({ className, title, children, ...rest }: MockupWindowProps): React$1.JSX.Element;
+declare namespace MockupWindow {
+    var displayName: string;
+}
+interface PillButtonProps extends React$1.AnchorHTMLAttributes<HTMLAnchorElement> {
+    variant?: "flow" | "glass";
+    size?: "md" | "lg";
+}
+declare function PillButton({ className, variant, size, children, ...rest }: PillButtonProps): React$1.JSX.Element;
+declare namespace PillButton {
+    var displayName: string;
+}
+
+interface MarketplaceCardProps {
+    name: string;
+    href: string;
+    category?: string;
+    /** Hex that drives the cover gradient + icon tint. */
+    categoryColor?: string;
+    icon?: LucideIcon;
+    description?: string;
+    /** Owner/org, e.g. "togo-framework". */
+    author?: string;
+    stars?: number;
+    downloads?: number;
+    enabled?: boolean;
+    className?: string;
+}
+declare function MarketplaceCard({ name, href, category, categoryColor, icon: Icon, description, author, stars, downloads, enabled, className, }: MarketplaceCardProps): React$1.JSX.Element;
+declare namespace MarketplaceCard {
+    var displayName: string;
+}
+interface StatTile {
+    label: string;
+    value: React$1.ReactNode;
+}
+declare function StatsRow({ stats, className }: {
+    stats: StatTile[];
+    className?: string;
+}): React$1.JSX.Element;
+declare namespace StatsRow {
+    var displayName: string;
+}
+interface FilterChip {
+    value: string;
+    label: string;
+    count?: number;
+}
+interface FilterBarProps {
+    search: string;
+    onSearch: (v: string) => void;
+    chips: FilterChip[];
+    active: string;
+    onChip: (v: string) => void;
+    sort?: {
+        value: string;
+        options: {
+            value: string;
+            label: string;
+        }[];
+        onSort: (v: string) => void;
+    };
+    searchPlaceholder?: string;
+    className?: string;
+}
+declare function FilterBar({ search, onSearch, chips, active, onChip, sort, searchPlaceholder, className }: FilterBarProps): React$1.JSX.Element;
+declare namespace FilterBar {
+    var displayName: string;
+}
+declare function Pager({ page, pages, onPage, className }: {
+    page: number;
+    pages: number;
+    onPage: (p: number) => void;
+    className?: string;
+}): React$1.JSX.Element | null;
+declare namespace Pager {
+    var displayName: string;
+}
+
+declare function Callout({ kind, title, children, className }: {
+    kind?: "info" | "warn" | "tip" | "note";
+    title?: string;
+    children: React$1.ReactNode;
+    className?: string;
+}): React$1.JSX.Element;
+declare namespace Callout {
+    var displayName: string;
+}
+interface DocsNavItem {
+    label: string;
+    href: string;
+}
+interface DocsNavGroup {
+    label: string;
+    items: DocsNavItem[];
+}
+declare function DocsSidebar({ groups, activeHref, className, onNavigate }: {
+    groups: DocsNavGroup[];
+    activeHref?: string;
+    className?: string;
+    onNavigate?: (href: string) => void;
+}): React$1.JSX.Element;
+declare namespace DocsSidebar {
+    var displayName: string;
+}
+interface TocItem {
+    id: string;
+    text: string;
+    level: number;
+}
+declare function DocsTOC({ items, className }: {
+    items: TocItem[];
+    className?: string;
+}): React$1.JSX.Element | null;
+declare namespace DocsTOC {
+    var displayName: string;
+}
+interface DocsLayoutProps {
+    sidebar: React$1.ReactNode;
+    toc?: React$1.ReactNode;
+    breadcrumb?: React$1.ReactNode;
+    topbar?: React$1.ReactNode;
+    children: React$1.ReactNode;
+    className?: string;
+}
+declare function DocsLayout({ sidebar, toc, breadcrumb, topbar, children, className }: DocsLayoutProps): React$1.JSX.Element;
+declare namespace DocsLayout {
+    var displayName: string;
+}
+interface PaletteItem {
+    label: string;
+    sublabel?: string;
+    href: string;
+    group?: string;
+}
+declare function CommandPalette({ items, placeholder, className }: {
+    items: PaletteItem[];
+    placeholder?: string;
+    className?: string;
+}): React$1.JSX.Element;
+declare namespace CommandPalette {
+    var displayName: string;
+}
+
+interface TerminalStep {
+    /** Command typed at the prompt (without the leading ❯). */
+    cmd: string;
+    /** Output lines streamed after the command. */
+    out?: string[];
+}
+interface TypingTerminalProps {
+    steps: TerminalStep[];
+    /** Revealed after the last step finishes (e.g. an app screenshot/mock). */
+    endSlot?: React$1.ReactNode;
+    title?: string;
+    className?: string;
+    /** ms per typed character. */
+    typeMs?: number;
+    /** ms between streamed output lines. */
+    lineMs?: number;
+    /** Loop the playback. Default false — plays once, then offers Replay. */
+    loop?: boolean;
+    /** Fixed body height (px). The window never grows/jumps while typing. */
+    height?: number;
+}
+declare function TypingTerminal({ steps, endSlot, title, className, typeMs, lineMs, loop, height }: TypingTerminalProps): React$1.JSX.Element;
+declare namespace TypingTerminal {
+    var displayName: string;
+}
+
+interface MascotMarkProps {
+    /** Source of the head mark SVG (defaults to /togo-mark.svg). */
+    src?: string;
+    alt?: string;
+    className?: string;
+}
+declare function MascotMark({ src, alt, className }: MascotMarkProps): React$1.JSX.Element;
+declare namespace MascotMark {
+    var displayName: string;
+}
+
+export { type A2UIActionItem, type A2UIActionsData, type A2UIArtifact$1 as A2UIArtifact, type A2UICardData, type A2UICardField, type A2UIChartData, type A2UIChartSeries, type A2UIClientCandidate, type A2UIClientCandidatesData, type A2UIClientDiffConfirmData, type A2UIClientDiffRow, type A2UIClientField, type A2UIClientFieldPickerData, type A2UIKind, type A2UIMarkdownData, type A2UIPersonaStarter, type A2UIPersonaStartersData, type A2UITableColumn, type A2UITableData, type ActivityBucket, AdminLayout, type AdminLayoutProps, type AdminSubNavItem, AgentSteps, type AlertMapItem, type AlertSeverity, type AppBrand, AppHeader, type AppHeaderProps, AppLayout, type AppLayoutProps, type AppNavGroup, type AppNavItem, AppPageShell, type AppPageShellProps, AppSidebar, type AppSidebarProps, type AppearanceMode, ArtifactActions, type ArtifactActionsProps, ArtifactCard, type ArtifactCardProps, ArtifactChart, type ArtifactChartProps, ArtifactClientCandidates, type ArtifactClientCandidatesProps, ArtifactClientDiffConfirm, type ArtifactClientDiffConfirmProps, ArtifactClientFieldPicker, type ArtifactClientFieldPickerProps, type ArtifactInteraction, ArtifactMarkdown, type ArtifactMarkdownProps, ArtifactPersonaStarters, type ArtifactPersonaStartersProps, ArtifactRenderer, type ArtifactRendererProps, ArtifactTable, type ArtifactTableProps, ArtifactViewer, AuroraBackground, type AuroraBackgroundProps, AuthCard, type AuthCardBrand, type AuthClient, AuthErrorAlert, AuthFlow, type AuthLayout, AuthStepHeader, type BarPoint, Callout, type CardFilter, CardGrid, type CardGridLabels, ChatThread, CodeBlock, CodeShowcase, type CodeShowcaseProps, type CodeShowcaseTab, ColorPicker, type ColorPickerProps, CommandPalette, ContextualSkeleton, type CopilotClient, type CopilotEvent, CopilotLauncher, CopilotProvider, type CopilotQuickAction, type CopilotRequest, CopilotSelectionTrigger, type CopilotSelectionTriggerProps, DEFAULT_LAYERS, DEFAULT_LEGEND_GROUPS, DEFAULT_REGION_PRESETS, DataState, type DataStateLabels, type DataStateProps, DataTable, type DataTableBulkAction, type DataTableColumnFilter, type DataTableColumnMeta, type DataTableDensity, type DataTableFilterType, type DataTableLanguage, type DataTableProps, type DataTableSelectOption, type DataTableServerCallbacks, type DataTableServerState, type DockPosition, DocsLayout, type DocsLayoutProps, type DocsNavGroup, type DocsNavItem, DocsSidebar, DocsTOC, DynamicIcon, DynamicSection, type DynamicSectionProps, EmptyState, type EmptyStateProps, EntityNetworkGraph, type EntityNetworkGraphProps, type ErrorFilter, ErrorTrackingPage, type ErrorTrackingPageProps, EventMapPanel, type EventMapPanelProps, Eyebrow, type EyebrowProps, FeatureCard, type FeatureCardProps, type FeedbackAttachment, FeedbackButton, type FeedbackButtonProps, FeedbackHub, type FeedbackHubProps, type FeedbackItem, type FeedbackKind, FeedbackWidget, type FeedbackWidgetProps, FilterBar, type FilterBarProps, type FilterChip, ForgotForm, GlassCard, type GlassCardProps, type GraphLink, type GraphNode, IconPicker, type IconPickerProps, type Issue$1 as Issue, type IssueAssignee, type IssueBreadcrumb, IssueDetail, type IssueDetailProps, type IssueLevel, type IssueSort, type IssueTag, IssuesList, type IssuesListProps, LANG_COOKIE_NAME, type LanguageContextValue, LanguageProvider, type LanguageProviderProps, type LegendGroup, type LegendItem, type LegendShapeType, LockScreen, type LockScreenProps, type LockScreenUser, type LogLevel, LoginForm, type LoginResult, Logo, type LogoProps, type LogoTone, type LogoVariant, type LogsFilter, LogsView, type LogsViewProps, MARKER_COLORS, MARKER_LABELS, type MapLayer, MapLayersPanel, type MapLayersPanelProps, MapLegend, type MapLegendProps, type MapMarker$1 as MapMarker, type MapMarkerType, MapPanel, type MapPanelProps, type MapRegionPreset, MapView, type MapViewProps, MarkdownContent, MarkdownEditor, type MarkdownEditorProps, MarkdownRenderer, type MarkdownRendererProps, MarkdownTable, type MarkdownView, MarketplaceCard, type MarketplaceCardProps, MascotMark, type MascotMarkProps, MiniBarChart, MockupWindow, type MockupWindowProps, type ModelOption, MotorFeedbackLauncher, type MotorFeedbackLauncherProps, NestedStepsEditor, type NestedStepsEditorProps, NetworkGraph, type NetworkGraphProps, type NewFeedback, OTPBoxGroup, type OtpResult, PIPELINE_STAGES, PageHeader, type PageHeaderProps, Pager, type PaletteItem, PasswordInput, PasswordLockScreen, type PasswordLockScreenProps, type PasswordLockScreenUser, type PasswordRule, PasswordStrengthMeter, type PickedLocation, PillButton, type PillButtonProps, type PipelineCard, type PipelineLane, type PipelineModel, type PluginActivitySummary, type PluginAppearanceFields, PluginAppearanceSection, type PluginAppearanceSectionProps, PluginCard, type PluginCatalogEntry, type PluginDetailIdentity, PluginDetailLayout, type PluginDetailLayoutProps, type PluginDetailTab, PluginHero, PluginHeroSkeleton, PluginPageHeader, PluginSectionCard, PluginSparkline, type ProfileSession, ProfileView, type ProfileViewProps, type RenderMapContext, ResetForm, type ResolvedIcon, Reveal, type RevealProps, RouteProgress, type RouteProgressProps, STEP_FIELD_REGISTRY, SectionBoard, type SectionBoardProps, SectionHeading, type SectionHeadingProps, type SectionModel, SectionSkeleton, SentraLoading, type ServiceLogRow, ServiceUnavailable, type ServiceUnavailableProps, SessionExpired, type SessionExpiredProps, SeverityChip, type SidebarConversation, type SidebarUser, SourceBadge, type SparklinePoint, type StackFrame, type StackFrameContextLine, StatCard, type StatCardProps, type StatTile, StatsRow, StatusBadge, type StatusBadgeProps, type StatusBadgeTone, type Step, type StepFieldDef, type StepFieldType, type StepMetrics7d, StepOptionsDialog, type StepOptionsDialogProps, StreamingMessage, type TerminalStep, type TestRunCallbacks, type TestRunCompletePayload, TestRunPanel, type TestRunPanelProps, type TestRunSavedItem, type TestRunStep, type TocItem, TwoFAForm, TypingTerminal, type TypingTerminalProps, UnifiedCopilotDock, type UnlockCredentials, type Verify2FAResult, type View, ViewToggle, type ViewToggleProps, Wordmark, type WordmarkProps, Workflow, WorkflowEditor, type WorkflowEditorProps, type WorkflowPalette, WorkflowPipeline, type WorkflowPipelineProps, type WorkflowProps, type WorkflowSource, type WorkflowStep, type WorkflowStepLike, WorkflowStepNode, type WorkflowStepNodeProps, type WorkflowView, cn, computeRules, computeScore, feedbackButtonVariants, levelTone, resolveIcon, statValueVariants, statusBadgeVariants, useCopilot, useLanguage, useT };
