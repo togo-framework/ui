@@ -3273,6 +3273,14 @@ interface CopilotClient {
     }): AsyncIterable<CopilotEvent>;
 }
 
+type DockPosition = 'bottom' | 'left' | 'right' | 'float';
+interface CopilotQuickAction {
+    label_en: string;
+    label_ar: string;
+    prompt: string;
+    /** Optional lucide-style icon name hint (rendered by the dock when known). */
+    icon?: string;
+}
 interface AgentStep {
     step: string;
     message: string;
@@ -3358,6 +3366,7 @@ interface CopilotChatState {
     isReceiving: boolean;
     isLoading: boolean;
     isStreaming: boolean;
+    isFinalizing?: boolean;
     agentSteps: AgentStep[];
     streamError: string | null;
     inputValue: string;
@@ -3587,9 +3596,14 @@ interface CopilotProviderProps {
      * tool, skill, agent. The user can enable/disable plugins here."
      */
     pageContext?: string;
+    /**
+     * Quick-action chips shown in the dock's empty/intro state. Each chip sends
+     * its `prompt` when clicked. Falls back to `context.suggestions` when omitted.
+     */
+    quickActions?: CopilotQuickAction[];
 }
 declare const CopilotProvider: {
-    ({ children, baseUrl, token, context, defaultOpen, pageContext, client: injectedClient, }: CopilotProviderProps): React__default.JSX.Element;
+    ({ children, baseUrl, token, context, defaultOpen, pageContext, quickActions, client: injectedClient, }: CopilotProviderProps): React__default.JSX.Element;
     displayName: string;
 };
 /**
@@ -3646,6 +3660,12 @@ interface UnifiedCopilotDockProps {
     onPendingMessageConsumed?: () => void;
     /** Quick-action chips shown after the first insight response */
     followUpChips?: string[];
+    /**
+     * Quick-action chips shown in the empty/intro state (before any messages).
+     * Each chip sends its `prompt` when clicked. When omitted, the dock falls
+     * back to rendering `context.suggestions` as chips (back-compat).
+     */
+    quickActions?: CopilotQuickAction[];
     /** Start the dock in expanded state */
     defaultExpanded?: boolean;
     /** Assistant greeting shown above suggestion chips when chat is empty */
@@ -3750,7 +3770,7 @@ interface UnifiedCopilotDockProps {
  *  - AuthImage       → plain <img> or omitted
  */
 declare const UnifiedCopilotDock: {
-    ({ chatState, context, language: languageProp, onNavigate, onCheckSlugs, onExpandToFullPage, pendingMessage, pendingAutoSend, onPendingMessageConsumed, followUpChips, defaultExpanded, seedGreeting, onClose, personas, allowedTools, allowedSkills, branding, uiConfig, pageContext: _pageContext, onArtifactAction, onArtifactInteract, }: UnifiedCopilotDockProps): React__default.JSX.Element;
+    ({ chatState, context, language: languageProp, onNavigate, onCheckSlugs, onExpandToFullPage, pendingMessage, pendingAutoSend, onPendingMessageConsumed, followUpChips, quickActions, defaultExpanded, seedGreeting, onClose, personas, allowedTools, allowedSkills, branding, uiConfig, pageContext: _pageContext, onArtifactAction, onArtifactInteract, }: UnifiedCopilotDockProps): React__default.JSX.Element;
     displayName: string;
 };
 
@@ -3788,6 +3808,51 @@ interface CopilotLauncherProps {
 }
 declare const CopilotLauncher: {
     ({ variant, className, label, }: CopilotLauncherProps): React__default.JSX.Element;
+    displayName: string;
+};
+
+/**
+ * CopilotSelectionTrigger — smart "Ask Copilot" on text selection.
+ *
+ * Mount this once inside a CopilotProvider. When the user selects text anywhere
+ * on the page (or within an optional `boundarySelector` subtree), a small
+ * floating "Ask Copilot" button appears near the end of the selection. Clicking
+ * it opens the copilot dock pre-filled with the selected text (optionally
+ * auto-sent).
+ *
+ * Opt-in: it renders nothing until there's a qualifying selection.
+ * Accessible: Escape dismisses; the button is a real <button> with an aria-label.
+ * RTL-aware: the bubble offsets toward the selection's leading edge.
+ *
+ *   <CopilotProvider client={client}>
+ *     …app…
+ *     <CopilotSelectionTrigger />
+ *   </CopilotProvider>
+ */
+
+interface CopilotSelectionTriggerProps {
+    /** Minimum selected character count before the trigger appears. Default 8. */
+    minChars?: number;
+    /** Maximum characters forwarded as the prompt (selection is trimmed). Default 2000. */
+    maxChars?: number;
+    /** Auto-send the prompt on click instead of pre-filling the input. Default false. */
+    autoSend?: boolean;
+    /** Override the button label. Defaults to the i18n "copilot:askCopilot". */
+    label?: string;
+    /**
+     * Limit the trigger to selections inside this element subtree. Pass a CSS
+     * selector (e.g. "[data-copilot-selectable]") or an element ref. When omitted,
+     * the whole document is selectable.
+     */
+    boundarySelector?: string;
+    /**
+     * Build the prompt from the selected text. Defaults to a short "Explain:"
+     * framing in the active language. Return the raw selection to send it as-is.
+     */
+    getPrompt?: (selectedText: string, language: 'en' | 'ar') => string;
+}
+declare const CopilotSelectionTrigger: {
+    ({ minChars, maxChars, autoSend, label, boundarySelector, getPrompt, }: CopilotSelectionTriggerProps): React__default.JSX.Element | null;
     displayName: string;
 };
 
@@ -3897,4 +3962,4 @@ declare const AgentSteps: {
     displayName: string;
 };
 
-export { type A2UIActionItem, type A2UIActionsData, type A2UIArtifact$1 as A2UIArtifact, type A2UICardData, type A2UICardField, type A2UIChartData, type A2UIChartSeries, type A2UIClientCandidate, type A2UIClientCandidatesData, type A2UIClientDiffConfirmData, type A2UIClientDiffRow, type A2UIClientField, type A2UIClientFieldPickerData, type A2UIKind, type A2UIMarkdownData, type A2UIPersonaStarter, type A2UIPersonaStartersData, type A2UITableColumn, type A2UITableData, type ActivityBucket, AdminLayout, type AdminLayoutProps, type AdminSubNavItem, AgentSteps, type AlertMapItem, type AlertSeverity, type AppBrand, AppHeader, type AppHeaderProps, AppLayout, type AppLayoutProps, type AppNavGroup, type AppNavItem, AppPageShell, type AppPageShellProps, AppSidebar, type AppSidebarProps, type AppearanceMode, ArtifactActions, type ArtifactActionsProps, ArtifactCard, type ArtifactCardProps, ArtifactChart, type ArtifactChartProps, ArtifactClientCandidates, type ArtifactClientCandidatesProps, ArtifactClientDiffConfirm, type ArtifactClientDiffConfirmProps, ArtifactClientFieldPicker, type ArtifactClientFieldPickerProps, type ArtifactInteraction, ArtifactMarkdown, type ArtifactMarkdownProps, ArtifactPersonaStarters, type ArtifactPersonaStartersProps, ArtifactRenderer, type ArtifactRendererProps, ArtifactTable, type ArtifactTableProps, ArtifactViewer, AuthCard, type AuthCardBrand, type AuthClient, AuthErrorAlert, AuthFlow, type AuthLayout, AuthStepHeader, type BarPoint, type BrandContextValue, type BrandTokens, BrandingProvider, type BrandingProviderProps, type CardFilter, CardGrid, type CardGridLabels, ChatThread, CodeBlock, ColorPicker, type ColorPickerProps, ContextualSkeleton, type CopilotClient, type CopilotEvent, CopilotLauncher, CopilotProvider, type CopilotRequest, DEFAULT_LAYERS, DEFAULT_LEGEND_GROUPS, DEFAULT_REGION_PRESETS, DataState, type DataStateLabels, type DataStateProps, DataTable, type DataTableBulkAction, type DataTableColumnFilter, type DataTableColumnMeta, type DataTableDensity, type DataTableFilterType, type DataTableLanguage, type DataTableProps, type DataTableSelectOption, type DataTableServerCallbacks, type DataTableServerState, DynamicIcon, DynamicSection, type DynamicSectionProps, EmptyState, type EmptyStateProps, EntityNetworkGraph, type EntityNetworkGraphProps, type ErrorFilter, ErrorTrackingPage, type ErrorTrackingPageProps, EventMapPanel, type EventMapPanelProps, type FeedbackAttachment, FeedbackButton, type FeedbackButtonProps, FeedbackHub, type FeedbackHubProps, type FeedbackItem, type FeedbackKind, FeedbackWidget, type FeedbackWidgetProps, ForgotForm, type GraphLink, type GraphNode, IconPicker, type IconPickerProps, type Issue$1 as Issue, type IssueAssignee, type IssueBreadcrumb, IssueDetail, type IssueDetailProps, type IssueLevel, type IssueSort, type IssueTag, IssuesList, type IssuesListProps, LANG_COOKIE_NAME, type LanguageContextValue, LanguageProvider, type LanguageProviderProps, type LegendGroup, type LegendItem, type LegendShapeType, LockScreen, type LockScreenProps, type LockScreenUser, type LogLevel, LoginForm, type LoginResult, type LogsFilter, LogsView, type LogsViewProps, MARKER_COLORS, MARKER_LABELS, type MapLayer, MapLayersPanel, type MapLayersPanelProps, MapLegend, type MapLegendProps, type MapMarker$1 as MapMarker, type MapMarkerType, MapPanel, type MapPanelProps, type MapRegionPreset, MapView, type MapViewProps, MarkdownContent, MarkdownEditor, type MarkdownEditorProps, MarkdownRenderer, type MarkdownRendererProps, MarkdownTable, type MarkdownView, MiniBarChart, type ModelOption, MotorFeedbackLauncher, type MotorFeedbackLauncherProps, NestedStepsEditor, type NestedStepsEditorProps, NetworkGraph, type NetworkGraphProps, type NewFeedback, OTPBoxGroup, type OtpResult, PIPELINE_STAGES, PageHeader, type PageHeaderProps, PasswordInput, PasswordLockScreen, type PasswordLockScreenProps, type PasswordLockScreenUser, type PasswordRule, PasswordStrengthMeter, type PickedLocation, type PipelineCard, type PipelineLane, type PipelineModel, type PluginActivitySummary, type PluginAppearanceFields, PluginAppearanceSection, type PluginAppearanceSectionProps, PluginCard, type PluginCatalogEntry, type PluginDetailIdentity, PluginDetailLayout, type PluginDetailLayoutProps, type PluginDetailTab, PluginHero, PluginHeroSkeleton, PluginPageHeader, PluginSectionCard, PluginSparkline, type ProfileSession, ProfileView, type ProfileViewProps, type RenderMapContext, ResetForm, type ResolvedIcon, RouteProgress, type RouteProgressProps, SENTRA_BRAND, STEP_FIELD_REGISTRY, SectionBoard, type SectionBoardProps, type SectionModel, SectionSkeleton, SentraLoading, type ServiceLogRow, ServiceUnavailable, type ServiceUnavailableProps, SessionExpired, type SessionExpiredProps, SeverityChip, type SidebarConversation, type SidebarUser, SourceBadge, type SparklinePoint, type StackFrame, type StackFrameContextLine, StatCard, type StatCardProps, StatusBadge, type StatusBadgeProps, type StatusBadgeTone, type Step, type StepFieldDef, type StepFieldType, type StepMetrics7d, StepOptionsDialog, type StepOptionsDialogProps, StreamingMessage, type TestRunCallbacks, type TestRunCompletePayload, TestRunPanel, type TestRunPanelProps, type TestRunSavedItem, type TestRunStep, TwoFAForm, UnifiedCopilotDock, type UnlockCredentials, type Verify2FAResult, type View, ViewToggle, type ViewToggleProps, Workflow, WorkflowEditor, type WorkflowEditorProps, type WorkflowPalette, WorkflowPipeline, type WorkflowPipelineProps, type WorkflowProps, type WorkflowSource, type WorkflowStep, type WorkflowStepLike, WorkflowStepNode, type WorkflowStepNodeProps, type WorkflowView, applyBrand, cn, computeRules, computeScore, feedbackButtonVariants, hexToHSL, isHSL, isValidColor, levelTone, nudgeL, resolveIcon, statValueVariants, statusBadgeVariants, toHSLSafe, useBrand, useCopilot, useLanguage, useT };
+export { type A2UIActionItem, type A2UIActionsData, type A2UIArtifact$1 as A2UIArtifact, type A2UICardData, type A2UICardField, type A2UIChartData, type A2UIChartSeries, type A2UIClientCandidate, type A2UIClientCandidatesData, type A2UIClientDiffConfirmData, type A2UIClientDiffRow, type A2UIClientField, type A2UIClientFieldPickerData, type A2UIKind, type A2UIMarkdownData, type A2UIPersonaStarter, type A2UIPersonaStartersData, type A2UITableColumn, type A2UITableData, type ActivityBucket, AdminLayout, type AdminLayoutProps, type AdminSubNavItem, AgentSteps, type AlertMapItem, type AlertSeverity, type AppBrand, AppHeader, type AppHeaderProps, AppLayout, type AppLayoutProps, type AppNavGroup, type AppNavItem, AppPageShell, type AppPageShellProps, AppSidebar, type AppSidebarProps, type AppearanceMode, ArtifactActions, type ArtifactActionsProps, ArtifactCard, type ArtifactCardProps, ArtifactChart, type ArtifactChartProps, ArtifactClientCandidates, type ArtifactClientCandidatesProps, ArtifactClientDiffConfirm, type ArtifactClientDiffConfirmProps, ArtifactClientFieldPicker, type ArtifactClientFieldPickerProps, type ArtifactInteraction, ArtifactMarkdown, type ArtifactMarkdownProps, ArtifactPersonaStarters, type ArtifactPersonaStartersProps, ArtifactRenderer, type ArtifactRendererProps, ArtifactTable, type ArtifactTableProps, ArtifactViewer, AuthCard, type AuthCardBrand, type AuthClient, AuthErrorAlert, AuthFlow, type AuthLayout, AuthStepHeader, type BarPoint, type BrandContextValue, type BrandTokens, BrandingProvider, type BrandingProviderProps, type CardFilter, CardGrid, type CardGridLabels, ChatThread, CodeBlock, ColorPicker, type ColorPickerProps, ContextualSkeleton, type CopilotClient, type CopilotEvent, CopilotLauncher, CopilotProvider, type CopilotQuickAction, type CopilotRequest, CopilotSelectionTrigger, type CopilotSelectionTriggerProps, DEFAULT_LAYERS, DEFAULT_LEGEND_GROUPS, DEFAULT_REGION_PRESETS, DataState, type DataStateLabels, type DataStateProps, DataTable, type DataTableBulkAction, type DataTableColumnFilter, type DataTableColumnMeta, type DataTableDensity, type DataTableFilterType, type DataTableLanguage, type DataTableProps, type DataTableSelectOption, type DataTableServerCallbacks, type DataTableServerState, type DockPosition, DynamicIcon, DynamicSection, type DynamicSectionProps, EmptyState, type EmptyStateProps, EntityNetworkGraph, type EntityNetworkGraphProps, type ErrorFilter, ErrorTrackingPage, type ErrorTrackingPageProps, EventMapPanel, type EventMapPanelProps, type FeedbackAttachment, FeedbackButton, type FeedbackButtonProps, FeedbackHub, type FeedbackHubProps, type FeedbackItem, type FeedbackKind, FeedbackWidget, type FeedbackWidgetProps, ForgotForm, type GraphLink, type GraphNode, IconPicker, type IconPickerProps, type Issue$1 as Issue, type IssueAssignee, type IssueBreadcrumb, IssueDetail, type IssueDetailProps, type IssueLevel, type IssueSort, type IssueTag, IssuesList, type IssuesListProps, LANG_COOKIE_NAME, type LanguageContextValue, LanguageProvider, type LanguageProviderProps, type LegendGroup, type LegendItem, type LegendShapeType, LockScreen, type LockScreenProps, type LockScreenUser, type LogLevel, LoginForm, type LoginResult, type LogsFilter, LogsView, type LogsViewProps, MARKER_COLORS, MARKER_LABELS, type MapLayer, MapLayersPanel, type MapLayersPanelProps, MapLegend, type MapLegendProps, type MapMarker$1 as MapMarker, type MapMarkerType, MapPanel, type MapPanelProps, type MapRegionPreset, MapView, type MapViewProps, MarkdownContent, MarkdownEditor, type MarkdownEditorProps, MarkdownRenderer, type MarkdownRendererProps, MarkdownTable, type MarkdownView, MiniBarChart, type ModelOption, MotorFeedbackLauncher, type MotorFeedbackLauncherProps, NestedStepsEditor, type NestedStepsEditorProps, NetworkGraph, type NetworkGraphProps, type NewFeedback, OTPBoxGroup, type OtpResult, PIPELINE_STAGES, PageHeader, type PageHeaderProps, PasswordInput, PasswordLockScreen, type PasswordLockScreenProps, type PasswordLockScreenUser, type PasswordRule, PasswordStrengthMeter, type PickedLocation, type PipelineCard, type PipelineLane, type PipelineModel, type PluginActivitySummary, type PluginAppearanceFields, PluginAppearanceSection, type PluginAppearanceSectionProps, PluginCard, type PluginCatalogEntry, type PluginDetailIdentity, PluginDetailLayout, type PluginDetailLayoutProps, type PluginDetailTab, PluginHero, PluginHeroSkeleton, PluginPageHeader, PluginSectionCard, PluginSparkline, type ProfileSession, ProfileView, type ProfileViewProps, type RenderMapContext, ResetForm, type ResolvedIcon, RouteProgress, type RouteProgressProps, SENTRA_BRAND, STEP_FIELD_REGISTRY, SectionBoard, type SectionBoardProps, type SectionModel, SectionSkeleton, SentraLoading, type ServiceLogRow, ServiceUnavailable, type ServiceUnavailableProps, SessionExpired, type SessionExpiredProps, SeverityChip, type SidebarConversation, type SidebarUser, SourceBadge, type SparklinePoint, type StackFrame, type StackFrameContextLine, StatCard, type StatCardProps, StatusBadge, type StatusBadgeProps, type StatusBadgeTone, type Step, type StepFieldDef, type StepFieldType, type StepMetrics7d, StepOptionsDialog, type StepOptionsDialogProps, StreamingMessage, type TestRunCallbacks, type TestRunCompletePayload, TestRunPanel, type TestRunPanelProps, type TestRunSavedItem, type TestRunStep, TwoFAForm, UnifiedCopilotDock, type UnlockCredentials, type Verify2FAResult, type View, ViewToggle, type ViewToggleProps, Workflow, WorkflowEditor, type WorkflowEditorProps, type WorkflowPalette, WorkflowPipeline, type WorkflowPipelineProps, type WorkflowProps, type WorkflowSource, type WorkflowStep, type WorkflowStepLike, WorkflowStepNode, type WorkflowStepNodeProps, type WorkflowView, applyBrand, cn, computeRules, computeScore, feedbackButtonVariants, hexToHSL, isHSL, isValidColor, levelTone, nudgeL, resolveIcon, statValueVariants, statusBadgeVariants, toHSLSafe, useBrand, useCopilot, useLanguage, useT };

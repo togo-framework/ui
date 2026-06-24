@@ -10188,7 +10188,12 @@ var en_default = {
     comparisonFactorsAccepted: "Comparison factors accepted",
     insightFromDashboard: "Insight from dashboard",
     copyResponse: "Copy",
-    shareResponse: "Share"
+    shareResponse: "Share",
+    dockFloat: "Float (undock)",
+    undock: "Undock",
+    redock: "Re-dock",
+    resize: "Resize",
+    askCopilot: "Ask Copilot"
   },
   auth: {
     signIn: "Sign In",
@@ -10285,7 +10290,12 @@ var ar_default = {
     comparisonFactorsAccepted: "\u062A\u0645 \u0642\u0628\u0648\u0644 \u0639\u0648\u0627\u0645\u0644 \u0627\u0644\u0645\u0642\u0627\u0631\u0646\u0629",
     insightFromDashboard: "\u0631\u0624\u064A\u0629 \u0645\u0646 \u0644\u0648\u062D\u0629 \u0627\u0644\u062A\u062D\u0643\u0645",
     copyResponse: "\u0646\u0633\u062E",
-    shareResponse: "\u0645\u0634\u0627\u0631\u0643\u0629"
+    shareResponse: "\u0645\u0634\u0627\u0631\u0643\u0629",
+    dockFloat: "\u0646\u0627\u0641\u0630\u0629 \u0639\u0627\u0626\u0645\u0629",
+    undock: "\u0625\u0644\u063A\u0627\u0621 \u0627\u0644\u0625\u0631\u0633\u0627\u0621",
+    redock: "\u0625\u0639\u0627\u062F\u0629 \u0627\u0644\u0625\u0631\u0633\u0627\u0621",
+    resize: "\u062A\u063A\u064A\u064A\u0631 \u0627\u0644\u062D\u062C\u0645",
+    askCopilot: "\u0627\u0633\u0623\u0644 \u0627\u0644\u0645\u0633\u0627\u0639\u062F"
   },
   auth: {
     signIn: "\u062A\u0633\u062C\u064A\u0644 \u0627\u0644\u062F\u062E\u0648\u0644",
@@ -12479,6 +12489,26 @@ import {
 
 // src/components/copilot/UnifiedCopilotDock.tsx
 import { useState as useState44, useRef as useRef17, useEffect as useEffect26, useCallback as useCallback14, useMemo as useMemo12 } from "react";
+
+// src/components/copilot/copilotStrings.ts
+var EN = en_default;
+function fallbackT(key) {
+  const idx = key.indexOf(":");
+  if (idx === -1) {
+    const v = EN[key];
+    return typeof v === "string" ? v : key;
+  }
+  const ns = key.slice(0, idx);
+  const leaf = key.slice(idx + 1);
+  const bucket = EN[ns];
+  if (bucket && typeof bucket === "object") {
+    const v = bucket[leaf];
+    if (typeof v === "string") return v;
+  }
+  return key;
+}
+
+// src/components/copilot/UnifiedCopilotDock.tsx
 import {
   Send,
   Sparkles as Sparkles8,
@@ -12506,7 +12536,10 @@ import {
   ChevronDown as ChevronDown10,
   AtSign,
   Terminal as Terminal2,
-  Trash2 as Trash25
+  Trash2 as Trash25,
+  Move,
+  GripVertical as GripVertical4,
+  Minimize2
 } from "lucide-react";
 
 // src/components/copilot/AgentSteps.tsx
@@ -13630,6 +13663,7 @@ var UnifiedCopilotDock = ({
   pendingAutoSend,
   onPendingMessageConsumed,
   followUpChips,
+  quickActions,
   defaultExpanded,
   seedGreeting,
   onClose,
@@ -13644,7 +13678,7 @@ var UnifiedCopilotDock = ({
 }) => {
   const langCtx = useSafeT();
   const language = langCtx ? langCtx.language : languageProp;
-  const t2 = langCtx ? langCtx.t : (key) => key;
+  const t2 = langCtx ? langCtx.t : fallbackT;
   const isRTL = language === "ar";
   const handleArtifactAction = useCallback14(
     (item) => {
@@ -13695,7 +13729,7 @@ var UnifiedCopilotDock = ({
   const getInitialDockPosition = () => {
     try {
       const saved = localStorage.getItem("sentra-copilot-dock-position");
-      if (saved === "left" || saved === "right" || saved === "bottom") return saved;
+      if (saved === "left" || saved === "right" || saved === "bottom" || saved === "float") return saved;
     } catch {
     }
     return "bottom";
@@ -13708,13 +13742,95 @@ var UnifiedCopilotDock = ({
     } catch {
     }
   };
+  const FLOAT_MIN_W = 320;
+  const FLOAT_MIN_H = 360;
+  const defaultFloatRect = useCallback14(() => {
+    const w = 420;
+    const h = 560;
+    const vw = typeof window !== "undefined" ? window.innerWidth : 1280;
+    const vh = typeof window !== "undefined" ? window.innerHeight : 800;
+    const x = isRTL ? 24 : Math.max(24, vw - w - 24);
+    const y = Math.max(24, vh - h - 24);
+    return { x, y, w, h };
+  }, [isRTL]);
+  const clampFloatRect = useCallback14((r) => {
+    if (typeof window === "undefined") return r;
+    const vw = window.innerWidth;
+    const vh = window.innerHeight;
+    const w = Math.min(Math.max(r.w, FLOAT_MIN_W), vw - 16);
+    const h = Math.min(Math.max(r.h, FLOAT_MIN_H), vh - 16);
+    const x = Math.min(Math.max(r.x, 8), Math.max(8, vw - w - 8));
+    const y = Math.min(Math.max(r.y, 8), Math.max(8, vh - h - 8));
+    return { x, y, w, h };
+  }, []);
+  const [floatRect, setFloatRect] = useState44(() => {
+    try {
+      const saved = localStorage.getItem("sentra-copilot-float-rect");
+      if (saved) return clampFloatRect(JSON.parse(saved));
+    } catch {
+    }
+    return defaultFloatRect();
+  });
+  const persistFloatRect = useCallback14((r) => {
+    try {
+      localStorage.setItem("sentra-copilot-float-rect", JSON.stringify(r));
+    } catch {
+    }
+  }, []);
+  const floatGestureRef = useRef17(null);
   const effectiveDockPosition = useMemo12(() => {
     if (typeof window !== "undefined" && window.innerWidth < 640) return "bottom";
     return dockPosition;
   }, [dockPosition]);
+  const isFloat = effectiveDockPosition === "float";
+  const onFloatPointerMove = useCallback14((e) => {
+    const g = floatGestureRef.current;
+    if (!g) return;
+    const dx = e.clientX - g.startX;
+    const dy = e.clientY - g.startY;
+    if (g.mode === "move") {
+      setFloatRect(clampFloatRect({ ...g.orig, x: g.orig.x + dx, y: g.orig.y + dy }));
+    } else {
+      const w = g.orig.w + (isRTL ? -dx : dx);
+      const x = isRTL ? g.orig.x + dx : g.orig.x;
+      setFloatRect(clampFloatRect({ x, y: g.orig.y, w, h: g.orig.h + dy }));
+    }
+  }, [clampFloatRect, isRTL]);
+  const endFloatGesture = useCallback14(() => {
+    if (!floatGestureRef.current) return;
+    floatGestureRef.current = null;
+    window.removeEventListener("pointermove", onFloatPointerMove);
+    window.removeEventListener("pointerup", endFloatGesture);
+    setFloatRect((r) => {
+      persistFloatRect(r);
+      return r;
+    });
+  }, [onFloatPointerMove, persistFloatRect]);
+  const startFloatGesture = useCallback14(
+    (mode) => (e) => {
+      if (!isFloat) return;
+      e.preventDefault();
+      floatGestureRef.current = { mode, startX: e.clientX, startY: e.clientY, orig: floatRect };
+      window.addEventListener("pointermove", onFloatPointerMove);
+      window.addEventListener("pointerup", endFloatGesture);
+    },
+    [isFloat, floatRect, onFloatPointerMove, endFloatGesture]
+  );
+  useEffect26(() => () => {
+    window.removeEventListener("pointermove", onFloatPointerMove);
+    window.removeEventListener("pointerup", endFloatGesture);
+  }, [onFloatPointerMove, endFloatGesture]);
+  useEffect26(() => {
+    if (!isFloat) return;
+    const onResize = () => setFloatRect((r) => clampFloatRect(r));
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [isFloat, clampFloatRect]);
   const dockClasses = useMemo12(() => {
     if (!isExpanded) return "fixed bottom-0 left-0 right-0 z-50 h-14 transition-all duration-300";
     switch (effectiveDockPosition) {
+      case "float":
+        return "fixed z-50";
       case "left":
         return "fixed top-[3.5rem] left-0 bottom-0 w-full sm:w-[420px] z-50 transition-all duration-300";
       case "right":
@@ -13724,12 +13840,18 @@ var UnifiedCopilotDock = ({
         return "fixed bottom-0 left-0 right-0 z-50 h-[calc(100vh-3.5rem)] sm:h-[60vh] transition-all duration-300";
     }
   }, [isExpanded, effectiveDockPosition]);
+  const floatStyle = useMemo12(() => {
+    if (!isFloat || !isExpanded) return void 0;
+    return { left: floatRect.x, top: floatRect.y, width: floatRect.w, height: floatRect.h };
+  }, [isFloat, isExpanded, floatRect]);
   const expandedBorderClass = useMemo12(() => {
     switch (effectiveDockPosition) {
       case "left":
         return "border-e";
       case "right":
         return "border-s";
+      case "float":
+        return "border rounded-2xl overflow-hidden";
       default:
         return "border-t";
     }
@@ -13740,6 +13862,8 @@ var UnifiedCopilotDock = ({
         return "shadow-[4px_0_15px_rgba(0,0,0,0.12)]";
       case "right":
         return "shadow-[-4px_0_15px_rgba(0,0,0,0.12)]";
+      case "float":
+        return "shadow-2xl";
       default:
         return "shadow-2xl";
     }
@@ -13783,6 +13907,9 @@ var UnifiedCopilotDock = ({
       setHistoryItems(chatState.conversationHistory);
     }
   }, [historyOpen, chatState]);
+  useEffect26(() => {
+    if (defaultExpanded) setIsExpanded(true);
+  }, [defaultExpanded]);
   useEffect26(() => {
     if (!isExpanded) return;
     const handleEscape = (e) => {
@@ -13974,7 +14101,10 @@ var UnifiedCopilotDock = ({
       {
         className: dockClasses,
         dir: isRTL ? "rtl" : "ltr",
-        style: branding?.primaryColor ? { ["--primary"]: branding.primaryColor } : void 0,
+        style: {
+          ...branding?.primaryColor ? { ["--primary"]: branding.primaryColor } : {},
+          ...floatStyle ?? {}
+        },
         children: [
           !isExpanded && /* @__PURE__ */ jsxs77(
             "div",
@@ -14012,172 +14142,217 @@ var UnifiedCopilotDock = ({
               ]
             }
           ),
-          isExpanded && /* @__PURE__ */ jsxs77("div", { className: `h-full bg-card/95 backdrop-blur-lg ${expandedBorderClass} border-border ${expandedShadowClass} flex flex-col`, children: [
-            /* @__PURE__ */ jsxs77("div", { className: "px-4 py-2.5 border-b border-border flex items-center justify-between shrink-0 bg-background/50", children: [
-              /* @__PURE__ */ jsxs77("div", { className: "flex items-center gap-2.5", children: [
-                /* @__PURE__ */ jsx89(TwinAvatar, { size: "md" }),
-                /* @__PURE__ */ jsxs77("div", { children: [
-                  /* @__PURE__ */ jsxs77("div", { className: "flex items-center gap-2", children: [
-                    /* @__PURE__ */ jsx89("h3", { className: "text-sm font-semibold text-foreground", children: chatState.conversationTitle || aiName }),
-                    twinBadge && /* @__PURE__ */ jsx89("span", { className: "text-[9px] px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-400 font-medium", children: twinBadge }),
-                    /* @__PURE__ */ jsxs77("span", { className: `text-[9px] px-1.5 py-0.5 rounded-full font-medium shrink-0 inline-flex items-center gap-0.5 ${thinkingMode ? "bg-amber-500/20 text-amber-400" : "bg-cyan-500/20 text-cyan-400"}`, children: [
-                      thinkingMode ? /* @__PURE__ */ jsx89(Brain3, { className: "w-2.5 h-2.5" }) : /* @__PURE__ */ jsx89(Zap2, { className: "w-2.5 h-2.5" }),
-                      thinkingMode ? t2("copilot:thinking") : t2("copilot:fast")
+          isExpanded && /* @__PURE__ */ jsxs77("div", { className: `relative h-full bg-card/95 backdrop-blur-lg ${expandedBorderClass} border-border ${expandedShadowClass} flex flex-col`, children: [
+            isFloat && /* @__PURE__ */ jsx89(
+              "div",
+              {
+                role: "separator",
+                "aria-label": t2("copilot:resize"),
+                onPointerDown: startFloatGesture("resize"),
+                className: `absolute bottom-0 ${isRTL ? "left-0" : "right-0"} z-10 h-5 w-5 ${isRTL ? "cursor-sw-resize" : "cursor-se-resize"} touch-none flex items-end justify-end p-0.5 text-muted-foreground/50 hover:text-muted-foreground`,
+                style: isRTL ? { transform: "scaleX(-1)" } : void 0,
+                children: /* @__PURE__ */ jsx89("svg", { viewBox: "0 0 10 10", className: "h-2.5 w-2.5", fill: "currentColor", "aria-hidden": "true", children: /* @__PURE__ */ jsx89("path", { d: "M9 1 1 9M9 5 5 9M9 9 9 9", stroke: "currentColor", strokeWidth: "1.2", fill: "none" }) })
+              }
+            ),
+            /* @__PURE__ */ jsxs77(
+              "div",
+              {
+                className: `px-4 py-2.5 border-b border-border flex items-center justify-between shrink-0 bg-background/50 ${isFloat ? "cursor-move select-none" : ""}`,
+                onPointerDown: isFloat ? startFloatGesture("move") : void 0,
+                children: [
+                  /* @__PURE__ */ jsxs77("div", { className: "flex items-center gap-2.5", children: [
+                    isFloat && /* @__PURE__ */ jsx89(GripVertical4, { className: "w-3.5 h-3.5 text-muted-foreground/60 shrink-0", "aria-hidden": "true" }),
+                    /* @__PURE__ */ jsx89(TwinAvatar, { size: "md" }),
+                    /* @__PURE__ */ jsxs77("div", { children: [
+                      /* @__PURE__ */ jsxs77("div", { className: "flex items-center gap-2", children: [
+                        /* @__PURE__ */ jsx89("h3", { className: "text-sm font-semibold text-foreground", children: chatState.conversationTitle || aiName }),
+                        twinBadge && /* @__PURE__ */ jsx89("span", { className: "text-[9px] px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-400 font-medium", children: twinBadge }),
+                        /* @__PURE__ */ jsxs77("span", { className: `text-[9px] px-1.5 py-0.5 rounded-full font-medium shrink-0 inline-flex items-center gap-0.5 ${thinkingMode ? "bg-amber-500/20 text-amber-400" : "bg-cyan-500/20 text-cyan-400"}`, children: [
+                          thinkingMode ? /* @__PURE__ */ jsx89(Brain3, { className: "w-2.5 h-2.5" }) : /* @__PURE__ */ jsx89(Zap2, { className: "w-2.5 h-2.5" }),
+                          thinkingMode ? t2("copilot:thinking") : t2("copilot:fast")
+                        ] })
+                      ] }),
+                      /* @__PURE__ */ jsx89("p", { className: "text-[10px] text-muted-foreground line-clamp-2", children: isTwin ? t2("copilot:aiPersonaSimulation") : dockContextLabel || context.title }),
+                      dockContextBadge && /* @__PURE__ */ jsxs77(
+                        "button",
+                        {
+                          onClick: dockContextBadge && onNavigate ? () => {
+                            const ref = chatState.loadedContextRef || context.contextRef;
+                            const type = chatState.loadedContextType || context.type;
+                            onNavigate?.(`/${type}/${ref}`);
+                          } : void 0,
+                          className: `inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full mt-0.5 transition-all duration-fast ease-standard border ${dockContextBadge.color} ${onNavigate ? "hover:brightness-125 cursor-pointer border-current/20" : "opacity-60 cursor-default border-transparent"}`,
+                          children: [
+                            onNavigate && /* @__PURE__ */ jsx89(ExternalLink5, { className: "w-2.5 h-2.5 shrink-0" }),
+                            /* @__PURE__ */ jsxs77("span", { className: "truncate max-w-[150px] font-medium", children: [
+                              language === "ar" ? dockContextBadge.labelAr : dockContextBadge.label,
+                              dockContextLabel ? ` \xB7 ${dockContextLabel}` : ""
+                            ] })
+                          ]
+                        }
+                      )
                     ] })
                   ] }),
-                  /* @__PURE__ */ jsx89("p", { className: "text-[10px] text-muted-foreground line-clamp-2", children: isTwin ? t2("copilot:aiPersonaSimulation") : dockContextLabel || context.title }),
-                  dockContextBadge && /* @__PURE__ */ jsxs77(
-                    "button",
-                    {
-                      onClick: dockContextBadge && onNavigate ? () => {
-                        const ref = chatState.loadedContextRef || context.contextRef;
-                        const type = chatState.loadedContextType || context.type;
-                        onNavigate?.(`/${type}/${ref}`);
-                      } : void 0,
-                      className: `inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full mt-0.5 transition-all duration-fast ease-standard border ${dockContextBadge.color} ${onNavigate ? "hover:brightness-125 cursor-pointer border-current/20" : "opacity-60 cursor-default border-transparent"}`,
-                      children: [
-                        onNavigate && /* @__PURE__ */ jsx89(ExternalLink5, { className: "w-2.5 h-2.5 shrink-0" }),
-                        /* @__PURE__ */ jsxs77("span", { className: "truncate max-w-[150px] font-medium", children: [
-                          language === "ar" ? dockContextBadge.labelAr : dockContextBadge.label,
-                          dockContextLabel ? ` \xB7 ${dockContextLabel}` : ""
-                        ] })
-                      ]
-                    }
-                  )
-                ] })
-              ] }),
-              /* @__PURE__ */ jsxs77("div", { className: "flex items-center gap-1", children: [
-                /* @__PURE__ */ jsxs77(DropdownMenu, { dir: isRTL ? "rtl" : "ltr", children: [
-                  /* @__PURE__ */ jsx89(DropdownMenuTrigger, { asChild: true, children: /* @__PURE__ */ jsx89(
-                    Button,
-                    {
-                      variant: "ghost",
-                      size: "icon",
-                      className: "h-7 w-7",
-                      "aria-label": language === "ar" ? "\u0645\u0648\u0636\u0639 \u0627\u0644\u0646\u0627\u0641\u0630\u0629" : "Dock position",
-                      children: /* @__PURE__ */ jsx89(MoreVertical, { className: "w-3.5 h-3.5", "aria-hidden": "true" })
-                    }
-                  ) }),
-                  /* @__PURE__ */ jsxs77(DropdownMenuContent, { align: "end", className: "w-52", children: [
-                    /* @__PURE__ */ jsx89(DropdownMenuLabel, { className: "text-[10px] text-muted-foreground font-normal", dir: isRTL ? "rtl" : "ltr", children: t2("copilot:dockPosition") }),
-                    /* @__PURE__ */ jsxs77(
-                      DropdownMenuItem,
+                  /* @__PURE__ */ jsxs77("div", { className: "flex items-center gap-1", onPointerDown: (e) => e.stopPropagation(), children: [
+                    /* @__PURE__ */ jsxs77(DropdownMenu, { dir: isRTL ? "rtl" : "ltr", children: [
+                      /* @__PURE__ */ jsx89(DropdownMenuTrigger, { asChild: true, children: /* @__PURE__ */ jsx89(
+                        Button,
+                        {
+                          variant: "ghost",
+                          size: "icon",
+                          className: "h-7 w-7",
+                          "aria-label": language === "ar" ? "\u0645\u0648\u0636\u0639 \u0627\u0644\u0646\u0627\u0641\u0630\u0629" : "Dock position",
+                          children: /* @__PURE__ */ jsx89(MoreVertical, { className: "w-3.5 h-3.5", "aria-hidden": "true" })
+                        }
+                      ) }),
+                      /* @__PURE__ */ jsxs77(DropdownMenuContent, { align: "end", className: "w-52", children: [
+                        /* @__PURE__ */ jsx89(DropdownMenuLabel, { className: "text-[10px] text-muted-foreground font-normal", dir: isRTL ? "rtl" : "ltr", children: t2("copilot:dockPosition") }),
+                        /* @__PURE__ */ jsxs77(
+                          DropdownMenuItem,
+                          {
+                            onClick: () => handleDockPositionChange("left"),
+                            dir: isRTL ? "rtl" : "ltr",
+                            className: dockPosition === "left" ? "text-primary" : "",
+                            children: [
+                              /* @__PURE__ */ jsx89(PanelLeft, { className: `w-3.5 h-3.5 me-2` }),
+                              t2("copilot:dockLeft"),
+                              dockPosition === "left" && /* @__PURE__ */ jsx89(Check7, { className: `w-3 h-3 ms-auto text-primary` })
+                            ]
+                          }
+                        ),
+                        /* @__PURE__ */ jsxs77(
+                          DropdownMenuItem,
+                          {
+                            onClick: () => handleDockPositionChange("right"),
+                            dir: isRTL ? "rtl" : "ltr",
+                            className: dockPosition === "right" ? "text-primary" : "",
+                            children: [
+                              /* @__PURE__ */ jsx89(PanelRight, { className: `w-3.5 h-3.5 me-2` }),
+                              t2("copilot:dockRight"),
+                              dockPosition === "right" && /* @__PURE__ */ jsx89(Check7, { className: `w-3 h-3 ms-auto text-primary` })
+                            ]
+                          }
+                        ),
+                        /* @__PURE__ */ jsxs77(
+                          DropdownMenuItem,
+                          {
+                            onClick: () => handleDockPositionChange("bottom"),
+                            dir: isRTL ? "rtl" : "ltr",
+                            className: dockPosition === "bottom" ? "text-primary" : "",
+                            children: [
+                              /* @__PURE__ */ jsx89(PanelBottom, { className: `w-3.5 h-3.5 me-2` }),
+                              t2("copilot:dockBottom"),
+                              dockPosition === "bottom" && /* @__PURE__ */ jsx89(Check7, { className: `w-3 h-3 ms-auto text-primary` })
+                            ]
+                          }
+                        ),
+                        /* @__PURE__ */ jsx89(DropdownMenuSeparator, {}),
+                        /* @__PURE__ */ jsxs77(
+                          DropdownMenuItem,
+                          {
+                            onClick: () => handleDockPositionChange("float"),
+                            dir: isRTL ? "rtl" : "ltr",
+                            className: dockPosition === "float" ? "text-primary" : "",
+                            children: [
+                              /* @__PURE__ */ jsx89(Move, { className: `w-3.5 h-3.5 me-2` }),
+                              t2("copilot:dockFloat"),
+                              dockPosition === "float" && /* @__PURE__ */ jsx89(Check7, { className: `w-3 h-3 ms-auto text-primary` })
+                            ]
+                          }
+                        )
+                      ] })
+                    ] }),
+                    /* @__PURE__ */ jsx89(
+                      Button,
                       {
-                        onClick: () => handleDockPositionChange("left"),
-                        dir: isRTL ? "rtl" : "ltr",
-                        className: dockPosition === "left" ? "text-primary" : "",
-                        children: [
-                          /* @__PURE__ */ jsx89(PanelLeft, { className: `w-3.5 h-3.5 me-2` }),
-                          t2("copilot:dockLeft"),
-                          dockPosition === "left" && /* @__PURE__ */ jsx89(Check7, { className: `w-3 h-3 ms-auto text-primary` })
-                        ]
+                        variant: "ghost",
+                        size: "icon",
+                        className: "h-7 w-7",
+                        onClick: () => handleDockPositionChange(isFloat ? "bottom" : "float"),
+                        title: isFloat ? t2("copilot:redock") : t2("copilot:undock"),
+                        "aria-label": isFloat ? t2("copilot:redock") : t2("copilot:undock"),
+                        children: isFloat ? /* @__PURE__ */ jsx89(Minimize2, { className: "w-3.5 h-3.5" }) : /* @__PURE__ */ jsx89(Move, { className: "w-3.5 h-3.5" })
                       }
                     ),
-                    /* @__PURE__ */ jsxs77(
-                      DropdownMenuItem,
+                    (chatState.onFetchHistory || chatState.conversationHistory) && /* @__PURE__ */ jsxs77(Popover, { open: historyOpen, onOpenChange: setHistoryOpen, children: [
+                      /* @__PURE__ */ jsx89(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsx89(Button, { variant: "ghost", size: "icon", className: "h-7 w-7", title: t2("copilot:history"), children: /* @__PURE__ */ jsx89(Clock5, { className: "w-3.5 h-3.5" }) }) }),
+                      /* @__PURE__ */ jsxs77(PopoverContent, { align: "end", className: "w-72 p-0", dir: isRTL ? "rtl" : "ltr", children: [
+                        /* @__PURE__ */ jsx89("div", { className: "p-3 border-b border-border", children: /* @__PURE__ */ jsx89("p", { className: "text-xs font-medium text-foreground", children: t2("copilot:conversationHistory") }) }),
+                        /* @__PURE__ */ jsx89(ScrollArea, { className: "max-h-64", children: /* @__PURE__ */ jsx89("div", { className: "p-2 space-y-0.5", children: historyItems.length === 0 ? /* @__PURE__ */ jsx89("p", { className: "text-xs text-muted-foreground text-center py-4", children: t2("copilot:noPreviousConversations") }) : historyItems.map((conv) => /* @__PURE__ */ jsxs77(
+                          "div",
+                          {
+                            className: `group flex items-center gap-1 rounded-lg transition-colors duration-fast ease-standard hover:bg-muted ${conv.id === chatState.conversationId ? "bg-primary/10" : ""}`,
+                            children: [
+                              /* @__PURE__ */ jsxs77(
+                                "button",
+                                {
+                                  onClick: () => handleLoadConversation(conv.id),
+                                  className: `flex-1 min-w-0 text-start px-2.5 py-2 text-xs`,
+                                  children: [
+                                    /* @__PURE__ */ jsx89("p", { className: "font-medium text-foreground line-clamp-1", children: conv.title || conv.context_label || "Untitled" }),
+                                    /* @__PURE__ */ jsx89("p", { className: "text-[10px] text-muted-foreground mt-0.5", children: new Date(conv.updated_at).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US") })
+                                  ]
+                                }
+                              ),
+                              chatState.onDeleteConversation && /* @__PURE__ */ jsx89(
+                                "button",
+                                {
+                                  onClick: () => handleDeleteConversation(conv.id),
+                                  className: "shrink-0 me-1.5 p-1 rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all duration-fast ease-standard",
+                                  title: t2("copilot:deleteConversation"),
+                                  "aria-label": t2("copilot:deleteConversation"),
+                                  children: /* @__PURE__ */ jsx89(Trash25, { className: "w-3 h-3" })
+                                }
+                              )
+                            ]
+                          },
+                          conv.id
+                        )) }) })
+                      ] })
+                    ] }),
+                    /* @__PURE__ */ jsx89(
+                      Button,
                       {
-                        onClick: () => handleDockPositionChange("right"),
-                        dir: isRTL ? "rtl" : "ltr",
-                        className: dockPosition === "right" ? "text-primary" : "",
-                        children: [
-                          /* @__PURE__ */ jsx89(PanelRight, { className: `w-3.5 h-3.5 me-2` }),
-                          t2("copilot:dockRight"),
-                          dockPosition === "right" && /* @__PURE__ */ jsx89(Check7, { className: `w-3 h-3 ms-auto text-primary` })
-                        ]
+                        variant: "ghost",
+                        size: "icon",
+                        className: "h-7 w-7",
+                        onClick: () => {
+                          chatState.onNewConversation();
+                          setThinkingMode(false);
+                        },
+                        title: t2("copilot:newChat"),
+                        children: /* @__PURE__ */ jsx89(Plus5, { className: "w-3.5 h-3.5" })
                       }
                     ),
-                    /* @__PURE__ */ jsxs77(
-                      DropdownMenuItem,
+                    onExpandToFullPage && /* @__PURE__ */ jsx89(
+                      Button,
                       {
-                        onClick: () => handleDockPositionChange("bottom"),
-                        dir: isRTL ? "rtl" : "ltr",
-                        className: dockPosition === "bottom" ? "text-primary" : "",
-                        children: [
-                          /* @__PURE__ */ jsx89(PanelBottom, { className: `w-3.5 h-3.5 me-2` }),
-                          t2("copilot:dockBottom"),
-                          dockPosition === "bottom" && /* @__PURE__ */ jsx89(Check7, { className: `w-3 h-3 ms-auto text-primary` })
-                        ]
+                        variant: "ghost",
+                        size: "icon",
+                        className: "h-7 w-7",
+                        onClick: onExpandToFullPage,
+                        title: t2("copilot:fullView"),
+                        children: /* @__PURE__ */ jsx89(Maximize2, { className: "w-3.5 h-3.5" })
+                      }
+                    ),
+                    /* @__PURE__ */ jsx89(
+                      Button,
+                      {
+                        variant: "ghost",
+                        size: "icon",
+                        className: "h-7 w-7",
+                        "aria-label": t2("common:close"),
+                        onClick: () => {
+                          setIsExpanded(false);
+                          onClose?.();
+                        },
+                        children: /* @__PURE__ */ jsx89(X6, { className: "w-4 h-4", "aria-hidden": "true" })
                       }
                     )
                   ] })
-                ] }),
-                (chatState.onFetchHistory || chatState.conversationHistory) && /* @__PURE__ */ jsxs77(Popover, { open: historyOpen, onOpenChange: setHistoryOpen, children: [
-                  /* @__PURE__ */ jsx89(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsx89(Button, { variant: "ghost", size: "icon", className: "h-7 w-7", title: t2("copilot:history"), children: /* @__PURE__ */ jsx89(Clock5, { className: "w-3.5 h-3.5" }) }) }),
-                  /* @__PURE__ */ jsxs77(PopoverContent, { align: "end", className: "w-72 p-0", dir: isRTL ? "rtl" : "ltr", children: [
-                    /* @__PURE__ */ jsx89("div", { className: "p-3 border-b border-border", children: /* @__PURE__ */ jsx89("p", { className: "text-xs font-medium text-foreground", children: t2("copilot:conversationHistory") }) }),
-                    /* @__PURE__ */ jsx89(ScrollArea, { className: "max-h-64", children: /* @__PURE__ */ jsx89("div", { className: "p-2 space-y-0.5", children: historyItems.length === 0 ? /* @__PURE__ */ jsx89("p", { className: "text-xs text-muted-foreground text-center py-4", children: t2("copilot:noPreviousConversations") }) : historyItems.map((conv) => /* @__PURE__ */ jsxs77(
-                      "div",
-                      {
-                        className: `group flex items-center gap-1 rounded-lg transition-colors duration-fast ease-standard hover:bg-muted ${conv.id === chatState.conversationId ? "bg-primary/10" : ""}`,
-                        children: [
-                          /* @__PURE__ */ jsxs77(
-                            "button",
-                            {
-                              onClick: () => handleLoadConversation(conv.id),
-                              className: `flex-1 min-w-0 text-start px-2.5 py-2 text-xs`,
-                              children: [
-                                /* @__PURE__ */ jsx89("p", { className: "font-medium text-foreground line-clamp-1", children: conv.title || conv.context_label || "Untitled" }),
-                                /* @__PURE__ */ jsx89("p", { className: "text-[10px] text-muted-foreground mt-0.5", children: new Date(conv.updated_at).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US") })
-                              ]
-                            }
-                          ),
-                          chatState.onDeleteConversation && /* @__PURE__ */ jsx89(
-                            "button",
-                            {
-                              onClick: () => handleDeleteConversation(conv.id),
-                              className: "shrink-0 me-1.5 p-1 rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all duration-fast ease-standard",
-                              title: t2("copilot:deleteConversation"),
-                              "aria-label": t2("copilot:deleteConversation"),
-                              children: /* @__PURE__ */ jsx89(Trash25, { className: "w-3 h-3" })
-                            }
-                          )
-                        ]
-                      },
-                      conv.id
-                    )) }) })
-                  ] })
-                ] }),
-                /* @__PURE__ */ jsx89(
-                  Button,
-                  {
-                    variant: "ghost",
-                    size: "icon",
-                    className: "h-7 w-7",
-                    onClick: () => {
-                      chatState.onNewConversation();
-                      setThinkingMode(false);
-                    },
-                    title: t2("copilot:newChat"),
-                    children: /* @__PURE__ */ jsx89(Plus5, { className: "w-3.5 h-3.5" })
-                  }
-                ),
-                onExpandToFullPage && /* @__PURE__ */ jsx89(
-                  Button,
-                  {
-                    variant: "ghost",
-                    size: "icon",
-                    className: "h-7 w-7",
-                    onClick: onExpandToFullPage,
-                    title: t2("copilot:fullView"),
-                    children: /* @__PURE__ */ jsx89(Maximize2, { className: "w-3.5 h-3.5" })
-                  }
-                ),
-                /* @__PURE__ */ jsx89(
-                  Button,
-                  {
-                    variant: "ghost",
-                    size: "icon",
-                    className: "h-7 w-7",
-                    "aria-label": t2("common:close"),
-                    onClick: () => {
-                      setIsExpanded(false);
-                      onClose?.();
-                    },
-                    children: /* @__PURE__ */ jsx89(X6, { className: "w-4 h-4", "aria-hidden": "true" })
-                  }
-                )
-              ] })
-            ] }),
+                ]
+              }
+            ),
             /* @__PURE__ */ jsx89(ScrollArea, { className: "flex-1 px-4 py-3", dir: isRTL ? "rtl" : "ltr", children: /* @__PURE__ */ jsxs77("div", { className: "space-y-3", children: [
               isTwin && chatState.messages.length === 0 && /* @__PURE__ */ jsxs77("div", { className: "mx-auto max-w-md mb-3 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-start gap-2", children: [
                 /* @__PURE__ */ jsx89(AlertTriangle4, { className: "w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" }),
@@ -14186,7 +14361,18 @@ var UnifiedCopilotDock = ({
               chatState.messages.length === 0 && !chatState.isLoading && /* @__PURE__ */ jsxs77("div", { className: "text-center py-6", children: [
                 /* @__PURE__ */ jsx89("div", { className: "mx-auto mb-3 flex justify-center", children: /* @__PURE__ */ jsx89(TwinAvatar, { size: "lg" }) }),
                 seedGreeting ? /* @__PURE__ */ jsx89("div", { className: "max-w-md mx-auto mb-4 p-3 bg-muted rounded-xl border border-border text-start", children: /* @__PURE__ */ jsx89("p", { className: "text-sm text-foreground", dir: "auto", children: seedGreeting }) }) : /* @__PURE__ */ jsx89("p", { className: "text-sm text-muted-foreground mb-4", children: placeholder }),
-                /* @__PURE__ */ jsx89("div", { className: "flex flex-wrap justify-center gap-2 max-w-md mx-auto", children: context.suggestions.map((suggestion, i) => {
+                quickActions && quickActions.length > 0 ? /* @__PURE__ */ jsx89("div", { className: "flex flex-wrap justify-center gap-2 max-w-md mx-auto", children: quickActions.map((qa, i) => /* @__PURE__ */ jsxs77(
+                  "button",
+                  {
+                    onClick: () => chatState.onSend(qa.prompt, { thinkingMode }),
+                    className: "inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-primary/10 hover:bg-primary/15 text-foreground rounded-full transition-colors duration-fast ease-standard border border-primary/20 hover:border-primary/40",
+                    children: [
+                      /* @__PURE__ */ jsx89(Sparkles8, { className: "w-3 h-3 text-primary shrink-0", "aria-hidden": "true" }),
+                      language === "ar" ? qa.label_ar : qa.label_en
+                    ]
+                  },
+                  i
+                )) }) : /* @__PURE__ */ jsx89("div", { className: "flex flex-wrap justify-center gap-2 max-w-md mx-auto", children: context.suggestions.map((suggestion, i) => {
                   const text = typeof suggestion === "string" ? suggestion : language === "ar" ? suggestion.ar : suggestion.en;
                   return /* @__PURE__ */ jsx89(
                     "button",
@@ -14365,7 +14551,7 @@ var UnifiedCopilotDock = ({
                 /* @__PURE__ */ jsx89("div", { className: "mt-1 shrink-0", children: /* @__PURE__ */ jsx89(TwinAvatar, { size: "sm" }) }),
                 /* @__PURE__ */ jsx89("div", { className: "min-w-0 flex-1 max-w-[calc(85%-2rem)]", children: /* @__PURE__ */ jsx89(AgentSteps_default, { steps: chatState.agentSteps, isStreaming: true, language, dir: isRTL ? "rtl" : "ltr" }) })
               ] }),
-              (chatState.isLoading || chatState.isStreaming) && !chatState.isReceiving && chatState.agentSteps.length === 0 && /* @__PURE__ */ jsxs77("div", { className: "flex gap-2 justify-start", children: [
+              (chatState.isLoading || chatState.isStreaming || chatState.isFinalizing) && !chatState.isReceiving && chatState.agentSteps.length === 0 && /* @__PURE__ */ jsxs77("div", { className: "flex gap-2 justify-start", children: [
                 /* @__PURE__ */ jsx89("div", { className: "w-6 h-6 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0", children: /* @__PURE__ */ jsx89(Loader29, { className: "w-3 h-3 text-primary-foreground animate-spin" }) }),
                 /* @__PURE__ */ jsx89("div", { className: "bg-muted rounded-xl px-3 py-2 border border-border", children: /* @__PURE__ */ jsx89("span", { className: "text-xs text-muted-foreground animate-pulse", children: t2("copilot:thinkingIndicator") }) })
               ] }),
@@ -14739,6 +14925,7 @@ var CopilotProvider = ({
   context = DEFAULT_CONTEXT,
   defaultOpen = false,
   pageContext,
+  quickActions,
   client: injectedClient
 }) => {
   const { language } = useSafeLanguage();
@@ -14751,6 +14938,7 @@ var CopilotProvider = ({
   const [isLoading, setIsLoading] = useState45(false);
   const [isStreaming, setIsStreaming] = useState45(false);
   const [isReceiving, setIsReceiving] = useState45(false);
+  const [isFinalizing, setIsFinalizing] = useState45(false);
   const [streamingText, setStreamingText] = useState45("");
   const [agentSteps, setAgentSteps] = useState45([]);
   const [streamError, setStreamError] = useState45(null);
@@ -14818,6 +15006,7 @@ var CopilotProvider = ({
       setIsLoading(true);
       setIsStreaming(false);
       setIsReceiving(false);
+      setIsFinalizing(false);
       setAgentSteps([]);
       setStreamingText("");
       const assistantId = `streaming-${genId()}`;
@@ -14890,7 +15079,9 @@ var CopilotProvider = ({
           }
         }
         const cleanContent = stripA2UI(accumulated);
-        if (!abort.signal.aborted && (cleanContent || finalArtifacts.length > 0)) {
+        const committed = !abort.signal.aborted && (cleanContent || finalArtifacts.length > 0);
+        if (committed) {
+          setIsFinalizing(true);
           const assistantMsg = {
             id: assistantId,
             role: "assistant",
@@ -14899,6 +15090,13 @@ var CopilotProvider = ({
             a2uiArtifacts: finalArtifacts.length > 0 ? finalArtifacts : void 0
           };
           setMessages((prev) => [...prev, assistantMsg]);
+          if (typeof requestAnimationFrame !== "undefined") {
+            requestAnimationFrame(
+              () => requestAnimationFrame(() => setIsFinalizing(false))
+            );
+          } else {
+            setIsFinalizing(false);
+          }
         }
       } catch (err) {
         if (abort.signal.aborted) {
@@ -14936,6 +15134,7 @@ var CopilotProvider = ({
     setIsLoading(false);
     setIsStreaming(false);
     setIsReceiving(false);
+    setIsFinalizing(false);
     setStreamingText("");
     setAgentSteps([]);
     lastPayloadRef.current = null;
@@ -15008,6 +15207,7 @@ var CopilotProvider = ({
     setIsLoading(false);
     setIsStreaming(false);
     setIsReceiving(false);
+    setIsFinalizing(false);
   }, []);
   const chatState = {
     messages,
@@ -15015,6 +15215,7 @@ var CopilotProvider = ({
     isReceiving,
     isLoading,
     isStreaming,
+    isFinalizing,
     agentSteps,
     streamError,
     inputValue,
@@ -15086,6 +15287,7 @@ var CopilotProvider = ({
         context,
         language,
         defaultExpanded: isOpen,
+        quickActions,
         onClose: handleClose,
         personas: dynamicPersonas,
         allowedTools: config?.allowed_tools,
@@ -15188,30 +15390,157 @@ var CopilotLauncher = ({
 };
 CopilotLauncher.displayName = "CopilotLauncher";
 
+// src/components/copilot/CopilotSelectionTrigger.tsx
+import { useCallback as useCallback16, useEffect as useEffect28, useRef as useRef19, useState as useState46 } from "react";
+import { Sparkles as Sparkles10 } from "lucide-react";
+import { jsx as jsx92, jsxs as jsxs80 } from "react/jsx-runtime";
+function useSafeT3() {
+  try {
+    return useT2();
+  } catch {
+    return null;
+  }
+}
+var CopilotSelectionTrigger = ({
+  minChars = 8,
+  maxChars = 2e3,
+  autoSend = false,
+  label,
+  boundarySelector,
+  getPrompt
+}) => {
+  const { open } = useCopilot();
+  const ctx = useSafeT3();
+  const language = ctx?.language ?? "en";
+  const t2 = ctx?.t ?? fallbackT;
+  const isRTL = language === "ar";
+  const [anchor, setAnchor] = useState46(null);
+  const dismissedRef = useRef19(false);
+  const withinBoundary = useCallback16(
+    (node) => {
+      if (!boundarySelector) return true;
+      let el = node && node.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement ?? null;
+      return !!el?.closest(boundarySelector);
+    },
+    [boundarySelector]
+  );
+  const evaluateSelection = useCallback16(() => {
+    if (dismissedRef.current) {
+      dismissedRef.current = false;
+      return;
+    }
+    const sel = typeof window !== "undefined" ? window.getSelection() : null;
+    if (!sel || sel.isCollapsed || sel.rangeCount === 0) {
+      setAnchor(null);
+      return;
+    }
+    const raw = sel.toString().trim();
+    if (raw.length < minChars) {
+      setAnchor(null);
+      return;
+    }
+    const range = sel.getRangeAt(0);
+    if (!withinBoundary(range.commonAncestorContainer)) {
+      setAnchor(null);
+      return;
+    }
+    const rects = range.getClientRects();
+    const rect = rects.length ? rects[rects.length - 1] : range.getBoundingClientRect();
+    if (!rect || rect.width === 0 && rect.height === 0) {
+      setAnchor(null);
+      return;
+    }
+    const x = isRTL ? rect.left : rect.right;
+    const y = rect.bottom;
+    setAnchor({ x, y, text: raw.slice(0, maxChars) });
+  }, [minChars, maxChars, withinBoundary, isRTL]);
+  useEffect28(() => {
+    const onUp = () => requestAnimationFrame(evaluateSelection);
+    const onKey = (e) => {
+      if (e.key === "Escape") {
+        setAnchor(null);
+        return;
+      }
+      if (e.shiftKey || e.key === "ArrowLeft" || e.key === "ArrowRight") {
+        requestAnimationFrame(evaluateSelection);
+      }
+    };
+    const onScroll = () => setAnchor(null);
+    document.addEventListener("mouseup", onUp);
+    document.addEventListener("keyup", onKey);
+    window.addEventListener("scroll", onScroll, true);
+    return () => {
+      document.removeEventListener("mouseup", onUp);
+      document.removeEventListener("keyup", onKey);
+      window.removeEventListener("scroll", onScroll, true);
+    };
+  }, [evaluateSelection]);
+  if (!anchor) return null;
+  const resolvedLabel = label ?? t2("copilot:askCopilot");
+  const handleAsk = () => {
+    const message = getPrompt ? getPrompt(anchor.text, language) : isRTL ? `\u0627\u0634\u0631\u062D \u0645\u0627 \u064A\u0644\u064A:
+
+"${anchor.text}"` : `Explain the following:
+
+"${anchor.text}"`;
+    dismissedRef.current = true;
+    setAnchor(null);
+    try {
+      window.getSelection()?.removeAllRanges();
+    } catch {
+    }
+    open({ message, autoSend });
+  };
+  const vw = typeof window !== "undefined" ? window.innerWidth : 9999;
+  const vh = typeof window !== "undefined" ? window.innerHeight : 9999;
+  const style = {
+    position: "fixed",
+    top: Math.min(anchor.y + 6, vh - 44),
+    left: Math.max(8, Math.min(anchor.x, vw - 8)),
+    transform: isRTL ? "translateX(-100%)" : void 0,
+    zIndex: 60
+  };
+  return /* @__PURE__ */ jsx92("div", { style, dir: isRTL ? "rtl" : "ltr", "data-testid": "copilot-selection-trigger", children: /* @__PURE__ */ jsxs80(
+    "button",
+    {
+      type: "button",
+      onMouseDown: (e) => e.preventDefault(),
+      onClick: handleAsk,
+      "aria-label": resolvedLabel,
+      className: "inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-primary text-primary-foreground text-xs font-medium shadow-lg border border-primary/30 hover:bg-primary/90 transition-colors duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 animate-in fade-in zoom-in-95",
+      children: [
+        /* @__PURE__ */ jsx92(Sparkles10, { className: "h-3.5 w-3.5", "aria-hidden": "true" }),
+        resolvedLabel
+      ]
+    }
+  ) });
+};
+CopilotSelectionTrigger.displayName = "CopilotSelectionTrigger";
+
 // src/components/copilot/ChatThread.tsx
-import { useRef as useRef19, useEffect as useEffect28 } from "react";
-import { User as User2, Sparkles as Sparkles11 } from "lucide-react";
+import { useRef as useRef20, useEffect as useEffect29 } from "react";
+import { User as User2, Sparkles as Sparkles12 } from "lucide-react";
 
 // src/components/copilot/StreamingMessage.tsx
-import { Loader2 as Loader210, Sparkles as Sparkles10 } from "lucide-react";
-import { jsx as jsx92, jsxs as jsxs80 } from "react/jsx-runtime";
+import { Loader2 as Loader210, Sparkles as Sparkles11 } from "lucide-react";
+import { jsx as jsx93, jsxs as jsxs81 } from "react/jsx-runtime";
 var StreamingMessage = ({ text, isStreaming, language = "en", dir }) => {
   const isAR = language === "ar";
   const resolvedDir = dir ?? (isAR ? "rtl" : "ltr");
   if (!text && isStreaming) {
-    return /* @__PURE__ */ jsxs80("div", { className: "flex items-center gap-2 px-3 py-2 bg-muted rounded-xl border border-border", children: [
-      /* @__PURE__ */ jsx92(Loader210, { className: "w-3.5 h-3.5 animate-spin text-muted-foreground shrink-0" }),
-      /* @__PURE__ */ jsx92("span", { className: "text-xs text-muted-foreground animate-pulse", children: isAR ? "\u062C\u0627\u0631\u064D \u0627\u0644\u062A\u0641\u0643\u064A\u0631..." : "Thinking..." })
+    return /* @__PURE__ */ jsxs81("div", { className: "flex items-center gap-2 px-3 py-2 bg-muted rounded-xl border border-border", children: [
+      /* @__PURE__ */ jsx93(Loader210, { className: "w-3.5 h-3.5 animate-spin text-muted-foreground shrink-0" }),
+      /* @__PURE__ */ jsx93("span", { className: "text-xs text-muted-foreground animate-pulse", children: isAR ? "\u062C\u0627\u0631\u064D \u0627\u0644\u062A\u0641\u0643\u064A\u0631..." : "Thinking..." })
     ] });
   }
-  return /* @__PURE__ */ jsxs80(
+  return /* @__PURE__ */ jsxs81(
     "div",
     {
       className: "bg-muted rounded-xl px-3 py-2 border border-border text-sm text-foreground",
       dir: resolvedDir,
       children: [
-        /* @__PURE__ */ jsx92(MarkdownContent_default, { content: text, dir: resolvedDir, className: "max-w-none" }),
-        isStreaming && /* @__PURE__ */ jsx92("span", { className: "inline-block w-1.5 h-3.5 bg-primary animate-pulse rounded-sm ms-0.5 align-middle" })
+        /* @__PURE__ */ jsx93(MarkdownContent_default, { content: text, dir: resolvedDir, className: "max-w-none" }),
+        isStreaming && /* @__PURE__ */ jsx93("span", { className: "inline-block w-1.5 h-3.5 bg-primary animate-pulse rounded-sm ms-0.5 align-middle" })
       ]
     }
   );
@@ -15219,57 +15548,57 @@ var StreamingMessage = ({ text, isStreaming, language = "en", dir }) => {
 StreamingMessage.displayName = "StreamingMessage";
 var StreamingMessage_default = StreamingMessage;
 var StreamingSpinner = ({ language = "en" }) => {
-  return /* @__PURE__ */ jsxs80("div", { className: "flex gap-2 items-start", children: [
-    /* @__PURE__ */ jsx92("div", { className: "w-6 h-6 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 mt-0.5", children: /* @__PURE__ */ jsx92(Sparkles10, { className: "w-3.5 h-3.5 text-primary-foreground" }) }),
-    /* @__PURE__ */ jsx92("div", { className: "bg-muted rounded-xl px-3 py-2 border border-border", children: /* @__PURE__ */ jsx92("span", { className: "text-xs text-muted-foreground animate-pulse", children: language === "ar" ? "\u062C\u0627\u0631\u064D \u0627\u0644\u062A\u062D\u0645\u064A\u0644..." : "Loading..." }) })
+  return /* @__PURE__ */ jsxs81("div", { className: "flex gap-2 items-start", children: [
+    /* @__PURE__ */ jsx93("div", { className: "w-6 h-6 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 mt-0.5", children: /* @__PURE__ */ jsx93(Sparkles11, { className: "w-3.5 h-3.5 text-primary-foreground" }) }),
+    /* @__PURE__ */ jsx93("div", { className: "bg-muted rounded-xl px-3 py-2 border border-border", children: /* @__PURE__ */ jsx93("span", { className: "text-xs text-muted-foreground animate-pulse", children: language === "ar" ? "\u062C\u0627\u0631\u064D \u0627\u0644\u062A\u062D\u0645\u064A\u0644..." : "Loading..." }) })
   ] });
 };
 StreamingSpinner.displayName = "StreamingSpinner";
 
 // src/components/copilot/ArtifactViewer.tsx
-import { jsx as jsx93, jsxs as jsxs81 } from "react/jsx-runtime";
-var MapOfEventsArtifact = ({ data, language = "en" }) => /* @__PURE__ */ jsxs81("div", { className: "rounded-lg border border-border bg-muted/40 p-3", children: [
-  /* @__PURE__ */ jsx93("p", { className: "text-xs font-medium text-muted-foreground mb-2", children: language === "ar" ? "\u062E\u0631\u064A\u0637\u0629 \u0627\u0644\u0623\u062D\u062F\u0627\u062B" : "Map of Events" }),
-  /* @__PURE__ */ jsx93("pre", { className: "text-xs text-foreground/80 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
+import { jsx as jsx94, jsxs as jsxs82 } from "react/jsx-runtime";
+var MapOfEventsArtifact = ({ data, language = "en" }) => /* @__PURE__ */ jsxs82("div", { className: "rounded-lg border border-border bg-muted/40 p-3", children: [
+  /* @__PURE__ */ jsx94("p", { className: "text-xs font-medium text-muted-foreground mb-2", children: language === "ar" ? "\u062E\u0631\u064A\u0637\u0629 \u0627\u0644\u0623\u062D\u062F\u0627\u062B" : "Map of Events" }),
+  /* @__PURE__ */ jsx94("pre", { className: "text-xs text-foreground/80 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
 ] });
 MapOfEventsArtifact.displayName = "MapOfEventsArtifact";
-var TimelineArtifact = ({ data, language = "en" }) => /* @__PURE__ */ jsxs81("div", { className: "rounded-lg border border-border bg-muted/40 p-3", children: [
-  /* @__PURE__ */ jsx93("p", { className: "text-xs font-medium text-muted-foreground mb-2", children: language === "ar" ? "\u0627\u0644\u062C\u062F\u0648\u0644 \u0627\u0644\u0632\u0645\u0646\u064A" : "Timeline" }),
-  /* @__PURE__ */ jsx93("pre", { className: "text-xs text-foreground/80 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
+var TimelineArtifact = ({ data, language = "en" }) => /* @__PURE__ */ jsxs82("div", { className: "rounded-lg border border-border bg-muted/40 p-3", children: [
+  /* @__PURE__ */ jsx94("p", { className: "text-xs font-medium text-muted-foreground mb-2", children: language === "ar" ? "\u0627\u0644\u062C\u062F\u0648\u0644 \u0627\u0644\u0632\u0645\u0646\u064A" : "Timeline" }),
+  /* @__PURE__ */ jsx94("pre", { className: "text-xs text-foreground/80 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
 ] });
 TimelineArtifact.displayName = "TimelineArtifact";
-var NetworkGraphArtifact = ({ data, language = "en" }) => /* @__PURE__ */ jsxs81("div", { className: "rounded-lg border border-border bg-muted/40 p-3", children: [
-  /* @__PURE__ */ jsx93("p", { className: "text-xs font-medium text-muted-foreground mb-2", children: language === "ar" ? "\u0631\u0633\u0645 \u0627\u0644\u0634\u0628\u0643\u0629" : "Network Graph" }),
-  /* @__PURE__ */ jsx93("pre", { className: "text-xs text-foreground/80 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
+var NetworkGraphArtifact = ({ data, language = "en" }) => /* @__PURE__ */ jsxs82("div", { className: "rounded-lg border border-border bg-muted/40 p-3", children: [
+  /* @__PURE__ */ jsx94("p", { className: "text-xs font-medium text-muted-foreground mb-2", children: language === "ar" ? "\u0631\u0633\u0645 \u0627\u0644\u0634\u0628\u0643\u0629" : "Network Graph" }),
+  /* @__PURE__ */ jsx94("pre", { className: "text-xs text-foreground/80 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
 ] });
 NetworkGraphArtifact.displayName = "NetworkGraphArtifact";
-var KpiCardArtifact = ({ data, language = "en" }) => /* @__PURE__ */ jsxs81("div", { className: "rounded-lg border border-border bg-muted/40 p-3", children: [
-  /* @__PURE__ */ jsx93("p", { className: "text-xs font-medium text-muted-foreground mb-2", children: language === "ar" ? "\u0645\u0624\u0634\u0631\u0627\u062A \u0627\u0644\u0623\u062F\u0627\u0621" : "KPI Card" }),
-  /* @__PURE__ */ jsx93("pre", { className: "text-xs text-foreground/80 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
+var KpiCardArtifact = ({ data, language = "en" }) => /* @__PURE__ */ jsxs82("div", { className: "rounded-lg border border-border bg-muted/40 p-3", children: [
+  /* @__PURE__ */ jsx94("p", { className: "text-xs font-medium text-muted-foreground mb-2", children: language === "ar" ? "\u0645\u0624\u0634\u0631\u0627\u062A \u0627\u0644\u0623\u062F\u0627\u0621" : "KPI Card" }),
+  /* @__PURE__ */ jsx94("pre", { className: "text-xs text-foreground/80 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
 ] });
 KpiCardArtifact.displayName = "KpiCardArtifact";
-var FallbackArtifact = ({ slug, data, language = "en" }) => /* @__PURE__ */ jsxs81("div", { className: "rounded-lg border border-dashed border-border bg-muted/30 p-3", children: [
-  /* @__PURE__ */ jsx93("p", { className: "text-xs font-medium text-muted-foreground mb-1", children: language === "ar" ? `\u0645\u0643\u0648\u0651\u0646: ${slug}` : `Artifact: ${slug}` }),
-  /* @__PURE__ */ jsx93("pre", { className: "text-xs text-foreground/70 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
+var FallbackArtifact = ({ slug, data, language = "en" }) => /* @__PURE__ */ jsxs82("div", { className: "rounded-lg border border-dashed border-border bg-muted/30 p-3", children: [
+  /* @__PURE__ */ jsx94("p", { className: "text-xs font-medium text-muted-foreground mb-1", children: language === "ar" ? `\u0645\u0643\u0648\u0651\u0646: ${slug}` : `Artifact: ${slug}` }),
+  /* @__PURE__ */ jsx94("pre", { className: "text-xs text-foreground/70 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
 ] });
 FallbackArtifact.displayName = "FallbackArtifact";
 var ArtifactViewer = ({ artifact, language = "en", dir }) => {
   const resolvedDir = dir ?? (language === "ar" ? "rtl" : "ltr");
   const title = language === "ar" ? artifact.title_ar || artifact.title || artifact.controller_slug : artifact.title || artifact.controller_slug;
-  return /* @__PURE__ */ jsxs81("div", { className: "space-y-1.5", dir: resolvedDir, children: [
-    title && /* @__PURE__ */ jsx93("p", { className: "text-xs font-semibold text-foreground/70 px-0.5", children: title }),
+  return /* @__PURE__ */ jsxs82("div", { className: "space-y-1.5", dir: resolvedDir, children: [
+    title && /* @__PURE__ */ jsx94("p", { className: "text-xs font-semibold text-foreground/70 px-0.5", children: title }),
     (() => {
       switch (artifact.controller_slug) {
         case "map-of-events":
-          return /* @__PURE__ */ jsx93(MapOfEventsArtifact, { data: artifact.data, language });
+          return /* @__PURE__ */ jsx94(MapOfEventsArtifact, { data: artifact.data, language });
         case "timeline":
-          return /* @__PURE__ */ jsx93(TimelineArtifact, { data: artifact.data, language });
+          return /* @__PURE__ */ jsx94(TimelineArtifact, { data: artifact.data, language });
         case "network-graph":
-          return /* @__PURE__ */ jsx93(NetworkGraphArtifact, { data: artifact.data, language });
+          return /* @__PURE__ */ jsx94(NetworkGraphArtifact, { data: artifact.data, language });
         case "kpi-card":
-          return /* @__PURE__ */ jsx93(KpiCardArtifact, { data: artifact.data, language });
+          return /* @__PURE__ */ jsx94(KpiCardArtifact, { data: artifact.data, language });
         default:
-          return /* @__PURE__ */ jsx93(FallbackArtifact, { slug: artifact.controller_slug, data: artifact.data, language });
+          return /* @__PURE__ */ jsx94(FallbackArtifact, { slug: artifact.controller_slug, data: artifact.data, language });
       }
     })()
   ] });
@@ -15278,10 +15607,10 @@ ArtifactViewer.displayName = "ArtifactViewer";
 var ArtifactViewer_default = ArtifactViewer;
 
 // src/components/copilot/ChatThread.tsx
-import { jsx as jsx94, jsxs as jsxs82 } from "react/jsx-runtime";
-var AssistantAvatar = () => /* @__PURE__ */ jsx94("div", { className: "w-6 h-6 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 mt-1", children: /* @__PURE__ */ jsx94(Sparkles11, { className: "w-3.5 h-3.5 text-primary-foreground" }) });
+import { jsx as jsx95, jsxs as jsxs83 } from "react/jsx-runtime";
+var AssistantAvatar = () => /* @__PURE__ */ jsx95("div", { className: "w-6 h-6 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 mt-1", children: /* @__PURE__ */ jsx95(Sparkles12, { className: "w-3.5 h-3.5 text-primary-foreground" }) });
 AssistantAvatar.displayName = "AssistantAvatar";
-var UserAvatar = () => /* @__PURE__ */ jsx94("div", { className: "w-6 h-6 rounded-md bg-muted flex items-center justify-center shrink-0 mt-1", children: /* @__PURE__ */ jsx94(User2, { className: "w-3.5 h-3.5 text-muted-foreground" }) });
+var UserAvatar = () => /* @__PURE__ */ jsx95("div", { className: "w-6 h-6 rounded-md bg-muted flex items-center justify-center shrink-0 mt-1", children: /* @__PURE__ */ jsx95(User2, { className: "w-3.5 h-3.5 text-muted-foreground" }) });
 UserAvatar.displayName = "UserAvatar";
 var ChatThread = ({
   messages,
@@ -15291,29 +15620,29 @@ var ChatThread = ({
   dir
 }) => {
   const isRTL = dir === "rtl" || dir === void 0 && language === "ar";
-  const bottomRef = useRef19(null);
-  useEffect28(() => {
+  const bottomRef = useRef20(null);
+  useEffect29(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length, streamingText]);
   const isEmpty = messages.length === 0 && !isStreaming;
-  return /* @__PURE__ */ jsx94(ScrollArea, { className: "flex-1 px-4 py-3", children: /* @__PURE__ */ jsxs82("div", { className: "space-y-3 min-h-full", dir: isRTL ? "rtl" : "ltr", children: [
-    isEmpty && /* @__PURE__ */ jsxs82("div", { className: "flex flex-col items-center justify-center py-16 gap-3", children: [
-      /* @__PURE__ */ jsx94("div", { className: "w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center", children: /* @__PURE__ */ jsx94(Sparkles11, { className: "w-5 h-5 text-primary-foreground" }) }),
-      /* @__PURE__ */ jsx94("p", { className: "text-sm text-muted-foreground text-center max-w-xs", children: language === "ar" ? "\u0627\u0633\u0623\u0644 \u0627\u0644\u0645\u0633\u0627\u0639\u062F \u0623\u064A \u0633\u0624\u0627\u0644 \u0648\u0633\u064A\u0631\u062F \u0628\u0627\u0644\u0645\u0639\u0644\u0648\u0645\u0627\u062A \u0627\u0644\u062A\u064A \u062A\u062D\u062A\u0627\u062C\u0647\u0627" : "Ask the copilot anything \u2014 it will answer with the information you need" })
+  return /* @__PURE__ */ jsx95(ScrollArea, { className: "flex-1 px-4 py-3", children: /* @__PURE__ */ jsxs83("div", { className: "space-y-3 min-h-full", dir: isRTL ? "rtl" : "ltr", children: [
+    isEmpty && /* @__PURE__ */ jsxs83("div", { className: "flex flex-col items-center justify-center py-16 gap-3", children: [
+      /* @__PURE__ */ jsx95("div", { className: "w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center", children: /* @__PURE__ */ jsx95(Sparkles12, { className: "w-5 h-5 text-primary-foreground" }) }),
+      /* @__PURE__ */ jsx95("p", { className: "text-sm text-muted-foreground text-center max-w-xs", children: language === "ar" ? "\u0627\u0633\u0623\u0644 \u0627\u0644\u0645\u0633\u0627\u0639\u062F \u0623\u064A \u0633\u0624\u0627\u0644 \u0648\u0633\u064A\u0631\u062F \u0628\u0627\u0644\u0645\u0639\u0644\u0648\u0645\u0627\u062A \u0627\u0644\u062A\u064A \u062A\u062D\u062A\u0627\u062C\u0647\u0627" : "Ask the copilot anything \u2014 it will answer with the information you need" })
     ] }),
     messages.map((msg) => {
       const text = language === "ar" ? msg.text_ar || msg.text_en : msg.text_en;
       const isUser = msg.role === "user";
-      return /* @__PURE__ */ jsxs82(
+      return /* @__PURE__ */ jsxs83(
         "div",
         {
           className: `flex gap-2 ${isUser ? isRTL ? "justify-start flex-row-reverse" : "justify-end" : isRTL ? "justify-end flex-row-reverse" : "justify-start"}`,
           children: [
-            !isUser && !isRTL && /* @__PURE__ */ jsx94(AssistantAvatar, {}),
-            isUser && isRTL && /* @__PURE__ */ jsx94(UserAvatar, {}),
-            /* @__PURE__ */ jsxs82("div", { className: "max-w-[85%] space-y-1.5", children: [
-              isUser ? /* @__PURE__ */ jsx94("div", { className: "rounded-xl px-3 py-2 bg-primary text-primary-foreground text-sm", children: text }) : /* @__PURE__ */ jsx94(StreamingMessage_default, { text, isStreaming: false, language, dir: isRTL ? "rtl" : "ltr" }),
-              msg.artifacts && msg.artifacts.length > 0 && /* @__PURE__ */ jsx94("div", { className: "space-y-2", children: msg.artifacts.map((artifact, idx) => /* @__PURE__ */ jsx94(
+            !isUser && !isRTL && /* @__PURE__ */ jsx95(AssistantAvatar, {}),
+            isUser && isRTL && /* @__PURE__ */ jsx95(UserAvatar, {}),
+            /* @__PURE__ */ jsxs83("div", { className: "max-w-[85%] space-y-1.5", children: [
+              isUser ? /* @__PURE__ */ jsx95("div", { className: "rounded-xl px-3 py-2 bg-primary text-primary-foreground text-sm", children: text }) : /* @__PURE__ */ jsx95(StreamingMessage_default, { text, isStreaming: false, language, dir: isRTL ? "rtl" : "ltr" }),
+              msg.artifacts && msg.artifacts.length > 0 && /* @__PURE__ */ jsx95("div", { className: "space-y-2", children: msg.artifacts.map((artifact, idx) => /* @__PURE__ */ jsx95(
                 ArtifactViewer_default,
                 {
                   artifact,
@@ -15322,7 +15651,7 @@ var ChatThread = ({
                 },
                 `${msg.id}-artifact-${idx}`
               )) }),
-              msg.a2uiArtifacts && msg.a2uiArtifacts.length > 0 && /* @__PURE__ */ jsx94("div", { className: "space-y-2", children: msg.a2uiArtifacts.map((artifact, idx) => /* @__PURE__ */ jsx94(
+              msg.a2uiArtifacts && msg.a2uiArtifacts.length > 0 && /* @__PURE__ */ jsx95("div", { className: "space-y-2", children: msg.a2uiArtifacts.map((artifact, idx) => /* @__PURE__ */ jsx95(
                 ArtifactRenderer,
                 {
                   artifact,
@@ -15332,16 +15661,16 @@ var ChatThread = ({
                 `${msg.id}-a2ui-${idx}`
               )) })
             ] }),
-            !isUser && isRTL && /* @__PURE__ */ jsx94(AssistantAvatar, {}),
-            isUser && !isRTL && /* @__PURE__ */ jsx94(UserAvatar, {})
+            !isUser && isRTL && /* @__PURE__ */ jsx95(AssistantAvatar, {}),
+            isUser && !isRTL && /* @__PURE__ */ jsx95(UserAvatar, {})
           ]
         },
         msg.id
       );
     }),
-    (isStreaming || streamingText) && /* @__PURE__ */ jsxs82("div", { className: `flex gap-2 ${isRTL ? "justify-end flex-row-reverse" : "justify-start"}`, children: [
-      !isRTL && /* @__PURE__ */ jsx94(AssistantAvatar, {}),
-      /* @__PURE__ */ jsx94("div", { className: "max-w-[85%]", children: /* @__PURE__ */ jsx94(
+    (isStreaming || streamingText) && /* @__PURE__ */ jsxs83("div", { className: `flex gap-2 ${isRTL ? "justify-end flex-row-reverse" : "justify-start"}`, children: [
+      !isRTL && /* @__PURE__ */ jsx95(AssistantAvatar, {}),
+      /* @__PURE__ */ jsx95("div", { className: "max-w-[85%]", children: /* @__PURE__ */ jsx95(
         StreamingMessage_default,
         {
           text: streamingText,
@@ -15350,9 +15679,9 @@ var ChatThread = ({
           dir: isRTL ? "rtl" : "ltr"
         }
       ) }),
-      isRTL && /* @__PURE__ */ jsx94(AssistantAvatar, {})
+      isRTL && /* @__PURE__ */ jsx95(AssistantAvatar, {})
     ] }),
-    /* @__PURE__ */ jsx94("div", { ref: bottomRef })
+    /* @__PURE__ */ jsx95("div", { ref: bottomRef })
   ] }) });
 };
 ChatThread.displayName = "ChatThread";
@@ -15465,6 +15794,7 @@ export {
   ContextualSkeleton,
   CopilotLauncher,
   CopilotProvider,
+  CopilotSelectionTrigger,
   DEFAULT_LAYERS,
   DEFAULT_LEGEND_GROUPS,
   DEFAULT_REGION_PRESETS,

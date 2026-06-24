@@ -3,7 +3,9 @@ import { ArtifactRenderer } from "../components/copilot/artifacts";
 import ChatThread from "../components/copilot/ChatThread";
 import { CopilotProvider } from "../components/copilot/CopilotProvider";
 import { CopilotLauncher } from "../components/copilot/CopilotLauncher";
+import { CopilotSelectionTrigger } from "../components/copilot/CopilotSelectionTrigger";
 import type { CopilotClient } from "../components/copilot/client";
+import type { CopilotQuickAction } from "../components/copilot/types";
 import { LanguageProvider } from "../i18n/LanguageProvider";
 
 const meta: Meta = {
@@ -147,20 +149,41 @@ const mockClient: CopilotClient = {
   },
 };
 
+// Intro quick-action chips (empty state). Each sends its prompt on click.
+const quickActions: CopilotQuickAction[] = [
+  { label_en: "Summarise alerts", label_ar: "لخّص التنبيهات", prompt: "Summarise the latest alerts." },
+  { label_en: "Top sources", label_ar: "أبرز المصادر", prompt: "Which sources are driving the coverage?" },
+  { label_en: "7-day trend", label_ar: "اتجاه 7 أيام", prompt: "Show the mention trend over the last 7 days." },
+];
+
 export const FullDock: StoryObj = {
   name: "Full Dock — markdown + artifacts (mock streaming)",
   parameters: { layout: "fullscreen", fullBleed: true, docs: { story: { inline: false, height: "640px" } } },
   render: () => (
     <LanguageProvider initialLanguage="en">
-      <CopilotProvider client={mockClient} context={{ contextType: "global", contextRef: "", title_en: "Demo", title_ar: "تجربة", suggestions: [] } as any}>
+      <CopilotProvider
+        client={mockClient}
+        quickActions={quickActions}
+        context={{ contextType: "global", contextRef: "", title_en: "Demo", title_ar: "تجربة", suggestions: [] } as any}
+      >
         <div className="min-h-screen bg-background p-8 text-foreground">
           <h1 className="mb-2 text-2xl font-semibold">Copilot demo</h1>
-          <p className="mb-6 max-w-prose text-sm text-muted-foreground">
-            Click the launcher → send a message. The reply streams a markdown table + a code block
-            (rendered via the kit DataTable + CodeBlock) and returns a rich card + chart artifact —
-            the full response parses over markdown and artifacts.
+          <p className="mb-4 max-w-prose text-sm text-muted-foreground">
+            Click the launcher → the intro shows <strong>quick-action chips</strong>. Send a message and
+            the reply streams a markdown table + code block (kit DataTable + CodeBlock) and returns a
+            rich card + chart artifact. The thinking indicator stays until the full response renders.
+          </p>
+          <ul className="mb-6 max-w-prose list-disc ps-5 text-sm text-muted-foreground space-y-1">
+            <li><strong>Float mode:</strong> open the ⋮ menu → “Float (undock)”, or click the undock icon in the header. Then drag the window by its header and resize it from the bottom corner — position + size persist across reloads.</li>
+            <li><strong>Smart action:</strong> select any of this paragraph’s text → an “Ask Copilot” bubble appears → click it to open the dock pre-filled with your selection.</li>
+          </ul>
+          <p data-copilot-selectable className="mb-6 max-w-prose rounded-lg border border-border bg-muted/40 p-3 text-sm text-foreground">
+            Try selecting this sentence. Coordinated activity rose 23% this week across two source
+            clusters, with renewable-energy policy the dominant narrative in the Gulf region.
           </p>
           <CopilotLauncher variant="header" />
+          {/* Smart action: select page text → "Ask Copilot" → opens prefilled. */}
+          <CopilotSelectionTrigger boundarySelector="[data-copilot-selectable]" />
         </div>
       </CopilotProvider>
     </LanguageProvider>

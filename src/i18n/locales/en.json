@@ -80,7 +80,8 @@
     "dockFloat": "Float (undock)",
     "undock": "Undock",
     "redock": "Re-dock",
-    "resize": "Resize"
+    "resize": "Resize",
+    "askCopilot": "Ask Copilot"
   },
   "auth": {
     "signIn": "Sign In",
