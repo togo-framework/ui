@@ -119,3 +119,5 @@ export type { CopilotClient, CopilotRequest, CopilotEvent } from "./components/c
 // Marketing / section components (compose landing & docs pages from the kit)
 export * from "./components/marketing/Marketing";
 export * from "./components/marketing/Glass";
+export * from "./components/marketing/Marketplace";
+export * from "./components/marketing/Docs";
