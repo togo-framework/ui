@@ -51,6 +51,7 @@ import type {
   AgentStep,
   SendOptions,
   A2UIArtifact,
+  CopilotQuickAction,
 } from './types'
 import UnifiedCopilotDock from './UnifiedCopilotDock'
 import type { A2UIActionItem, ArtifactInteraction } from './artifacts/types'
@@ -280,6 +281,12 @@ export interface CopilotProviderProps {
    * tool, skill, agent. The user can enable/disable plugins here."
    */
   pageContext?: string
+
+  /**
+   * Quick-action chips shown in the dock's empty/intro state. Each chip sends
+   * its `prompt` when clicked. Falls back to `context.suggestions` when omitted.
+   */
+  quickActions?: CopilotQuickAction[]
 }
 
 // ── Default context ───────────────────────────────────────────────────────────
@@ -305,6 +312,7 @@ const CopilotProvider = ({
   context = DEFAULT_CONTEXT,
   defaultOpen = false,
   pageContext,
+  quickActions,
   client: injectedClient,
 }: CopilotProviderProps) => {
   const { language } = useSafeLanguage()
@@ -327,6 +335,10 @@ const CopilotProvider = ({
   const [isLoading, setIsLoading] = useState(false)
   const [isStreaming, setIsStreaming] = useState(false)
   const [isReceiving, setIsReceiving] = useState(false)
+  // True after [DONE] while the committed assistant message paints (markdown,
+  // tables, charts, artifacts). Cleared on a post-commit double-rAF so the dock
+  // keeps its thinking indicator until the rendered content is on screen.
+  const [isFinalizing, setIsFinalizing] = useState(false)
   const [streamingText, setStreamingText] = useState('')
   const [agentSteps, setAgentSteps] = useState<AgentStep[]>([])
   const [streamError, setStreamError] = useState<string | null>(null)
@@ -424,6 +436,7 @@ const CopilotProvider = ({
       setIsLoading(true)
       setIsStreaming(false)
       setIsReceiving(false)
+      setIsFinalizing(false)
       setAgentSteps([])
       setStreamingText('')
 
@@ -518,7 +531,13 @@ const CopilotProvider = ({
         // The ```a2ui block is removed from content (rendered as a widget instead);
         // commit when there is prose OR at least one artifact.
         const cleanContent = stripA2UI(accumulated)
-        if (!abort.signal.aborted && (cleanContent || finalArtifacts.length > 0)) {
+        const committed = !abort.signal.aborted && (cleanContent || finalArtifacts.length > 0)
+        if (committed) {
+          // Enter the finalizing phase BEFORE committing so the dock's busy
+          // indicator survives the streaming→done transition. Cleared after the
+          // message has had two animation frames to mount + paint its markdown,
+          // tables, charts and artifacts.
+          setIsFinalizing(true)
           const assistantMsg: CopilotMessage = {
             id: assistantId,
             role: 'assistant',
@@ -527,6 +546,13 @@ const CopilotProvider = ({
             a2uiArtifacts: finalArtifacts.length > 0 ? finalArtifacts : undefined,
           }
           setMessages(prev => [...prev, assistantMsg])
+          if (typeof requestAnimationFrame !== 'undefined') {
+            requestAnimationFrame(() =>
+              requestAnimationFrame(() => setIsFinalizing(false)),
+            )
+          } else {
+            setIsFinalizing(false)
+          }
         }
       } catch (err) {
         if (abort.signal.aborted) {
@@ -569,6 +595,7 @@ const CopilotProvider = ({
     setIsLoading(false)
     setIsStreaming(false)
     setIsReceiving(false)
+    setIsFinalizing(false)
     setStreamingText('')
     setAgentSteps([])
     lastPayloadRef.current = null
@@ -672,6 +699,7 @@ const CopilotProvider = ({
     setIsLoading(false)
     setIsStreaming(false)
     setIsReceiving(false)
+    setIsFinalizing(false)
   }, [])
 
   // ── CopilotChatState object ────────────────────────────────────────────────
@@ -682,6 +710,7 @@ const CopilotProvider = ({
     isReceiving,
     isLoading,
     isStreaming,
+    isFinalizing,
     agentSteps,
     streamError,
     inputValue,
@@ -778,6 +807,8 @@ const CopilotProvider = ({
         context={context}
         language={language}
         defaultExpanded={isOpen}
+        // Intro quick-action chips (empty state). Falls back to suggestions.
+        quickActions={quickActions}
         onClose={handleClose}
         // B1: dynamic personas from config (undefined = use hardcoded fallback)
         personas={dynamicPersonas}

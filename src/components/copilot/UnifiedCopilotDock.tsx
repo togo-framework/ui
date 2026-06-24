@@ -2,6 +2,7 @@
 
 import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react'
 import { useT as _useT } from '../../i18n/LanguageProvider'
+import { fallbackT } from './copilotStrings'
 
 // Safely read the shared LanguageProvider context without throwing when outside it
 function useSafeT(): ReturnType<typeof _useT> | null {
@@ -19,6 +20,7 @@ import {
   ExternalLink, MoreVertical, Brain, Zap, Lightbulb,
   PanelLeft, PanelRight, PanelBottom, Check, Copy, Share2,
   Wrench, ChevronDown, AtSign, Terminal, Trash2,
+  Move, GripVertical, Minimize2,
 } from 'lucide-react'
 import { Button } from '../ui/button'
 import { Textarea } from '../ui/textarea'
@@ -57,6 +59,7 @@ import type {
   SendOptions,
   DockPosition,
   ChatPersona,
+  CopilotQuickAction,
 } from './types'
 import type { SlugChecker } from '../chat/ChatStructuredData'
 
@@ -186,6 +189,13 @@ export interface UnifiedCopilotDockProps {
   /** Quick-action chips shown after the first insight response */
   followUpChips?: string[]
 
+  /**
+   * Quick-action chips shown in the empty/intro state (before any messages).
+   * Each chip sends its `prompt` when clicked. When omitted, the dock falls
+   * back to rendering `context.suggestions` as chips (back-compat).
+   */
+  quickActions?: CopilotQuickAction[]
+
   /** Start the dock in expanded state */
   defaultExpanded?: boolean
 
@@ -301,6 +311,7 @@ const UnifiedCopilotDock = ({
   pendingAutoSend,
   onPendingMessageConsumed,
   followUpChips,
+  quickActions,
   defaultExpanded,
   seedGreeting,
   onClose,
@@ -316,7 +327,9 @@ const UnifiedCopilotDock = ({
   // Context wins over prop — ensures AR/EN follows the shared LanguageProvider
   const langCtx = useSafeT()
   const language: 'en' | 'ar' = langCtx ? langCtx.language : languageProp
-  const t = langCtx ? langCtx.t : (key: string) => key
+  // Without a LanguageProvider, fall back to the bundled English copilot
+  // dictionary (copilotStrings) instead of echoing raw "copilot:*" keys.
+  const t = langCtx ? langCtx.t : fallbackT
   const isRTL = language === 'ar'
 
   // ── A2UI: default artifact action handler ─────────────────────────────────
@@ -389,7 +402,7 @@ const UnifiedCopilotDock = ({
   const getInitialDockPosition = (): DockPosition => {
     try {
       const saved = localStorage.getItem('sentra-copilot-dock-position')
-      if (saved === 'left' || saved === 'right' || saved === 'bottom') return saved
+      if (saved === 'left' || saved === 'right' || saved === 'bottom' || saved === 'float') return saved
     } catch { /* ignore */ }
     return 'bottom'
   }
@@ -400,14 +413,114 @@ const UnifiedCopilotDock = ({
     try { localStorage.setItem('sentra-copilot-dock-position', pos) } catch { /* ignore */ }
   }
 
+  // ── Float mode: free-floating, draggable + resizable window ────────────────
+  // Persisted geometry (top-left x/y + width/height in CSS px). Clamped to the
+  // viewport on read so a saved rect from a larger screen still lands on-screen.
+  const FLOAT_MIN_W = 320
+  const FLOAT_MIN_H = 360
+  type FloatRect = { x: number; y: number; w: number; h: number }
+  const defaultFloatRect = useCallback((): FloatRect => {
+    const w = 420
+    const h = 560
+    const vw = typeof window !== 'undefined' ? window.innerWidth : 1280
+    const vh = typeof window !== 'undefined' ? window.innerHeight : 800
+    // RTL → open near the left edge; LTR → near the right edge.
+    const x = isRTL ? 24 : Math.max(24, vw - w - 24)
+    const y = Math.max(24, vh - h - 24)
+    return { x, y, w, h }
+  }, [isRTL])
+  const clampFloatRect = useCallback((r: FloatRect): FloatRect => {
+    if (typeof window === 'undefined') return r
+    const vw = window.innerWidth
+    const vh = window.innerHeight
+    const w = Math.min(Math.max(r.w, FLOAT_MIN_W), vw - 16)
+    const h = Math.min(Math.max(r.h, FLOAT_MIN_H), vh - 16)
+    const x = Math.min(Math.max(r.x, 8), Math.max(8, vw - w - 8))
+    const y = Math.min(Math.max(r.y, 8), Math.max(8, vh - h - 8))
+    return { x, y, w, h }
+  }, [])
+  const [floatRect, setFloatRect] = useState<FloatRect>(() => {
+    try {
+      const saved = localStorage.getItem('sentra-copilot-float-rect')
+      if (saved) return clampFloatRect(JSON.parse(saved) as FloatRect)
+    } catch { /* ignore */ }
+    return defaultFloatRect()
+  })
+  const persistFloatRect = useCallback((r: FloatRect) => {
+    try { localStorage.setItem('sentra-copilot-float-rect', JSON.stringify(r)) } catch { /* ignore */ }
+  }, [])
+  // Live pointer-drag/resize gesture state (refs avoid re-render per move).
+  const floatGestureRef = useRef<
+    | null
+    | { mode: 'move' | 'resize'; startX: number; startY: number; orig: FloatRect }
+  >(null)
+
   const effectiveDockPosition = useMemo<DockPosition>(() => {
+    // On phones a free-floating window is unusable → force bottom sheet.
     if (typeof window !== 'undefined' && window.innerWidth < 640) return 'bottom'
     return dockPosition
   }, [dockPosition])
 
+  const isFloat = effectiveDockPosition === 'float'
+
+  // Pointer-based move (drag by header) + resize (corner handle). Works with
+  // mouse + touch + pen via Pointer Events; RTL flips the resize handle side.
+  const onFloatPointerMove = useCallback((e: PointerEvent) => {
+    const g = floatGestureRef.current
+    if (!g) return
+    const dx = e.clientX - g.startX
+    const dy = e.clientY - g.startY
+    if (g.mode === 'move') {
+      setFloatRect(clampFloatRect({ ...g.orig, x: g.orig.x + dx, y: g.orig.y + dy }))
+    } else {
+      // Resize from the inner-bottom corner. In RTL the handle sits bottom-left,
+      // so width grows as the pointer moves left (negative dx).
+      const w = g.orig.w + (isRTL ? -dx : dx)
+      const x = isRTL ? g.orig.x + dx : g.orig.x
+      setFloatRect(clampFloatRect({ x, y: g.orig.y, w, h: g.orig.h + dy }))
+    }
+  }, [clampFloatRect, isRTL])
+
+  const endFloatGesture = useCallback(() => {
+    if (!floatGestureRef.current) return
+    floatGestureRef.current = null
+    window.removeEventListener('pointermove', onFloatPointerMove)
+    window.removeEventListener('pointerup', endFloatGesture)
+    setFloatRect(r => { persistFloatRect(r); return r })
+  }, [onFloatPointerMove, persistFloatRect])
+
+  const startFloatGesture = useCallback(
+    (mode: 'move' | 'resize') => (e: React.PointerEvent) => {
+      if (!isFloat) return
+      e.preventDefault()
+      floatGestureRef.current = { mode, startX: e.clientX, startY: e.clientY, orig: floatRect }
+      window.addEventListener('pointermove', onFloatPointerMove)
+      window.addEventListener('pointerup', endFloatGesture)
+    },
+    [isFloat, floatRect, onFloatPointerMove, endFloatGesture],
+  )
+
+  // Cleanup any in-flight gesture on unmount.
+  useEffect(() => () => {
+    window.removeEventListener('pointermove', onFloatPointerMove)
+    window.removeEventListener('pointerup', endFloatGesture)
+  }, [onFloatPointerMove, endFloatGesture])
+
+  // Re-clamp the float rect when the viewport shrinks so it never drifts off-screen.
+  useEffect(() => {
+    if (!isFloat) return
+    const onResize = () => setFloatRect(r => clampFloatRect(r))
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [isFloat, clampFloatRect])
+
   const dockClasses = useMemo(() => {
     if (!isExpanded) return 'fixed bottom-0 left-0 right-0 z-50 h-14 transition-all duration-300'
     switch (effectiveDockPosition) {
+      case 'float':
+        // Geometry comes from inline style (floatStyle); no transition so drag
+        // tracks the pointer 1:1.
+        return 'fixed z-50'
       case 'left':
         return 'fixed top-[3.5rem] left-0 bottom-0 w-full sm:w-[420px] z-50 transition-all duration-300'
       case 'right':
@@ -418,10 +531,16 @@ const UnifiedCopilotDock = ({
     }
   }, [isExpanded, effectiveDockPosition])
 
+  const floatStyle = useMemo<React.CSSProperties | undefined>(() => {
+    if (!isFloat || !isExpanded) return undefined
+    return { left: floatRect.x, top: floatRect.y, width: floatRect.w, height: floatRect.h }
+  }, [isFloat, isExpanded, floatRect])
+
   const expandedBorderClass = useMemo(() => {
     switch (effectiveDockPosition) {
       case 'left':  return 'border-e'
       case 'right': return 'border-s'
+      case 'float': return 'border rounded-2xl overflow-hidden'
       default:      return 'border-t'
     }
   }, [effectiveDockPosition])
@@ -430,6 +549,7 @@ const UnifiedCopilotDock = ({
     switch (effectiveDockPosition) {
       case 'left':  return 'shadow-[4px_0_15px_rgba(0,0,0,0.12)]'
       case 'right': return 'shadow-[-4px_0_15px_rgba(0,0,0,0.12)]'
+      case 'float': return 'shadow-2xl'
       default:      return 'shadow-2xl'
     }
   }, [effectiveDockPosition])
@@ -482,6 +602,13 @@ const UnifiedCopilotDock = ({
       setHistoryItems(chatState.conversationHistory)
     }
   }, [historyOpen, chatState])
+
+  // Sync controlled open: the provider flips defaultExpanded (from isOpen) when
+  // the launcher / a smart-action calls open(). Expand the dock to match so a
+  // bare open() (no pending message) reliably opens the panel.
+  useEffect(() => {
+    if (defaultExpanded) setIsExpanded(true)
+  }, [defaultExpanded])
 
   // Escape to collapse
   useEffect(() => {
@@ -756,7 +883,11 @@ const UnifiedCopilotDock = ({
         dir={isRTL ? 'rtl' : 'ltr'}
         // E: token-scoped accent — override the --primary CSS var so bg-primary/
         // text-primary children pick it up. No-op when branding.primaryColor unset.
-        style={branding?.primaryColor ? ({ ['--primary']: branding.primaryColor } as React.CSSProperties) : undefined}
+        // In float mode, floatStyle supplies the free-floating geometry.
+        style={{
+          ...(branding?.primaryColor ? ({ ['--primary']: branding.primaryColor } as React.CSSProperties) : {}),
+          ...(floatStyle ?? {}),
+        }}
       >
 
         {/* ── Collapsed bar ──────────────────────────────────────────────── */}
@@ -793,11 +924,32 @@ const UnifiedCopilotDock = ({
 
         {/* ── Expanded panel ─────────────────────────────────────────────── */}
         {isExpanded && (
-          <div className={`h-full bg-card/95 backdrop-blur-lg ${expandedBorderClass} border-border ${expandedShadowClass} flex flex-col`}>
+          <div className={`relative h-full bg-card/95 backdrop-blur-lg ${expandedBorderClass} border-border ${expandedShadowClass} flex flex-col`}>
 
-            {/* Header */}
-            <div className="px-4 py-2.5 border-b border-border flex items-center justify-between shrink-0 bg-background/50">
+            {/* Float-mode resize handle (inner-bottom corner; RTL → bottom-left) */}
+            {isFloat && (
+              <div
+                role="separator"
+                aria-label={t('copilot:resize')}
+                onPointerDown={startFloatGesture('resize')}
+                className={`absolute bottom-0 ${isRTL ? 'left-0' : 'right-0'} z-10 h-5 w-5 ${isRTL ? 'cursor-sw-resize' : 'cursor-se-resize'} touch-none flex items-end justify-end p-0.5 text-muted-foreground/50 hover:text-muted-foreground`}
+                style={isRTL ? { transform: 'scaleX(-1)' } : undefined}
+              >
+                <svg viewBox="0 0 10 10" className="h-2.5 w-2.5" fill="currentColor" aria-hidden="true">
+                  <path d="M9 1 1 9M9 5 5 9M9 9 9 9" stroke="currentColor" strokeWidth="1.2" fill="none" />
+                </svg>
+              </div>
+            )}
+
+            {/* Header — doubles as the float-mode drag handle */}
+            <div
+              className={`px-4 py-2.5 border-b border-border flex items-center justify-between shrink-0 bg-background/50 ${isFloat ? 'cursor-move select-none' : ''}`}
+              onPointerDown={isFloat ? startFloatGesture('move') : undefined}
+            >
               <div className="flex items-center gap-2.5">
+                {isFloat && (
+                  <GripVertical className="w-3.5 h-3.5 text-muted-foreground/60 shrink-0" aria-hidden="true" />
+                )}
                 <TwinAvatar size="md" />
                 <div>
                   <div className="flex items-center gap-2">
@@ -838,8 +990,8 @@ const UnifiedCopilotDock = ({
                 </div>
               </div>
 
-              {/* Header actions */}
-              <div className="flex items-center gap-1">
+              {/* Header actions — never start a float drag from a control. */}
+              <div className="flex items-center gap-1" onPointerDown={(e) => e.stopPropagation()}>
                 <DropdownMenu dir={isRTL ? 'rtl' : 'ltr'}>
                   <DropdownMenuTrigger asChild>
                     <Button
@@ -882,8 +1034,30 @@ const UnifiedCopilotDock = ({
                       {t('copilot:dockBottom')}
                       {dockPosition === 'bottom' && <Check className={`w-3 h-3 ms-auto text-primary`} />}
                     </DropdownMenuItem>
+                    <DropdownMenuSeparator />
+                    <DropdownMenuItem
+                      onClick={() => handleDockPositionChange('float')}
+                      dir={isRTL ? 'rtl' : 'ltr'}
+                      className={dockPosition === 'float' ? 'text-primary' : ''}
+                    >
+                      <Move className={`w-3.5 h-3.5 me-2`} />
+                      {t('copilot:dockFloat')}
+                      {dockPosition === 'float' && <Check className={`w-3 h-3 ms-auto text-primary`} />}
+                    </DropdownMenuItem>
                   </DropdownMenuContent>
                 </DropdownMenu>
+
+                {/* Quick undock / re-dock toggle (float ⇄ bottom) */}
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="h-7 w-7"
+                  onClick={() => handleDockPositionChange(isFloat ? 'bottom' : 'float')}
+                  title={isFloat ? t('copilot:redock') : t('copilot:undock')}
+                  aria-label={isFloat ? t('copilot:redock') : t('copilot:undock')}
+                >
+                  {isFloat ? <Minimize2 className="w-3.5 h-3.5" /> : <Move className="w-3.5 h-3.5" />}
+                </Button>
 
                 {(chatState.onFetchHistory || chatState.conversationHistory) && (
                   <Popover open={historyOpen} onOpenChange={setHistoryOpen}>
@@ -996,27 +1170,44 @@ const UnifiedCopilotDock = ({
                     ) : (
                       <p className="text-sm text-muted-foreground mb-4">{placeholder}</p>
                     )}
-                    <div className="flex flex-wrap justify-center gap-2 max-w-md mx-auto">
-                      {context.suggestions.map((suggestion, i) => {
-                        // Suggestions may be a plain string (back-compat) or a
-                        // {en,ar} pair — render the active language.
-                        const text =
-                          typeof suggestion === 'string'
-                            ? suggestion
-                            : language === 'ar'
-                              ? suggestion.ar
-                              : suggestion.en
-                        return (
+                    {/* Quick actions (preferred) — explicit intro prompts.
+                        Falls back to context.suggestions when none provided. */}
+                    {quickActions && quickActions.length > 0 ? (
+                      <div className="flex flex-wrap justify-center gap-2 max-w-md mx-auto">
+                        {quickActions.map((qa, i) => (
                           <button
                             key={i}
-                            onClick={() => chatState.onSend(text, { thinkingMode })}
-                            className="text-xs px-3 py-1.5 bg-muted hover:bg-accent text-muted-foreground hover:text-foreground rounded-full transition-colors duration-fast ease-standard border border-border hover:border-primary/30"
+                            onClick={() => chatState.onSend(qa.prompt, { thinkingMode })}
+                            className="inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-primary/10 hover:bg-primary/15 text-foreground rounded-full transition-colors duration-fast ease-standard border border-primary/20 hover:border-primary/40"
                           >
-                            {text}
+                            <Sparkles className="w-3 h-3 text-primary shrink-0" aria-hidden="true" />
+                            {language === 'ar' ? qa.label_ar : qa.label_en}
                           </button>
-                        )
-                      })}
-                    </div>
+                        ))}
+                      </div>
+                    ) : (
+                      <div className="flex flex-wrap justify-center gap-2 max-w-md mx-auto">
+                        {context.suggestions.map((suggestion, i) => {
+                          // Suggestions may be a plain string (back-compat) or a
+                          // {en,ar} pair — render the active language.
+                          const text =
+                            typeof suggestion === 'string'
+                              ? suggestion
+                              : language === 'ar'
+                                ? suggestion.ar
+                                : suggestion.en
+                          return (
+                            <button
+                              key={i}
+                              onClick={() => chatState.onSend(text, { thinkingMode })}
+                              className="text-xs px-3 py-1.5 bg-muted hover:bg-accent text-muted-foreground hover:text-foreground rounded-full transition-colors duration-fast ease-standard border border-border hover:border-primary/30"
+                            >
+                              {text}
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
                 )}
 
@@ -1261,8 +1452,10 @@ const UnifiedCopilotDock = ({
                   </div>
                 )}
 
-                {/* Thinking indicator (no steps yet) — always at leading edge */}
-                {(chatState.isLoading || chatState.isStreaming) && !chatState.isReceiving && chatState.agentSteps.length === 0 && (
+                {/* Thinking indicator (no steps yet) — always at leading edge.
+                    Stays visible through isFinalizing so the spinner doesn't
+                    clear a frame before the committed response paints. */}
+                {(chatState.isLoading || chatState.isStreaming || chatState.isFinalizing) && !chatState.isReceiving && chatState.agentSteps.length === 0 && (
                   <div className="flex gap-2 justify-start">
                     <div className="w-6 h-6 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0">
                       <Loader2 className="w-3 h-3 text-primary-foreground animate-spin" />
