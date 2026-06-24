@@ -121,3 +121,5 @@ export * from "./components/marketing/Marketing";
 export * from "./components/marketing/Glass";
 export * from "./components/marketing/Marketplace";
 export * from "./components/marketing/Docs";
+export * from "./components/marketing/Terminal";
+export * from "./components/marketing/MascotMark";

@@ -151,8 +151,8 @@ const BrandCrest = ({
   const crestChrome = cn(
     'flex items-center justify-center rounded-2xl',
     box,
-    onPanel ? 'border-2 border-primary-foreground/30 bg-primary-foreground/10' : 'bg-primary/10',
-    onPanel ? 'text-primary-foreground' : 'text-primary',
+    onPanel ? 'border-2 border-white/30 bg-white/10' : 'bg-primary/10',
+    onPanel ? 'text-white' : 'text-primary',
   )
 
   // Fallback when there is no usable logo (none set, OR set-but-broken/404):
@@ -184,23 +184,23 @@ BrandCrest.displayName = 'BrandCrest'
 // ── Brand panel (the "sidebar") ─────────────────────────────────────────────────
 
 const BrandPanel = ({ brand, ar }: { brand: ResolvedBrand; ar: boolean }) => (
-  <div className="relative hidden lg:flex lg:w-1/2 flex-col items-center justify-center overflow-hidden px-12 py-16 bg-primary">
+  <div className="relative hidden lg:flex lg:w-1/2 flex-col items-center justify-center overflow-hidden px-12 py-16 bg-gradient-to-br from-[#1FC7DC] via-[#2D8CE6] to-[#1659C8]">
     {/* Subtle dot-grid texture — keeps the flat solid panel from feeling empty */}
     <div
       className="absolute inset-0 opacity-[0.08]"
       style={{
         backgroundImage:
-          'radial-gradient(circle, hsl(var(--primary-foreground)) 1px, transparent 1px)',
+          'radial-gradient(circle, #ffffff 1px, transparent 1px)',
         backgroundSize: '24px 24px',
       }}
       aria-hidden="true"
     />
 
-    <div className="relative z-10 flex w-full max-w-sm flex-col items-center gap-7 text-center text-primary-foreground">
+    <div className="relative z-10 flex w-full max-w-sm flex-col items-center gap-7 text-center text-white">
       <BrandCrest brand={brand} size="lg" onPanel />
       <div className="flex flex-col gap-2.5">
         <h1 className="text-[2rem] font-bold leading-tight tracking-tight">{brandName(brand, ar)}</h1>
-        <p className="text-sm leading-relaxed text-primary-foreground/75">
+        <p className="text-sm leading-relaxed text-white/75">
           {ar ? brand.tagline.ar : brand.tagline.en}
         </p>
       </div>
@@ -208,11 +208,11 @@ const BrandPanel = ({ brand, ar }: { brand: ResolvedBrand; ar: boolean }) => (
       {/* Feature bullets — only rendered when the product supplies them.
           Default brand omits them for the clean mofa.id look. */}
       {brand.bullets.length > 0 && (
-        <ul className="mt-1 flex w-full flex-col items-center gap-3.5 text-center text-sm text-primary-foreground/85">
+        <ul className="mt-1 flex w-full flex-col items-center gap-3.5 text-center text-sm text-white/85">
           {brand.bullets.map((bullet, i) => (
             <li key={i} className="flex items-center justify-center gap-2.5">
               <span
-                className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-primary-foreground/15"
+                className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-white/15"
                 aria-hidden="true"
               >
                 <svg className="h-2.5 w-2.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3">
@@ -225,7 +225,7 @@ const BrandPanel = ({ brand, ar }: { brand: ResolvedBrand; ar: boolean }) => (
         </ul>
       )}
 
-      <div className="mt-3 flex items-center gap-2 text-xs text-primary-foreground/55">
+      <div className="mt-3 flex items-center gap-2 text-xs text-white/55">
         <svg className="h-3.5 w-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" aria-hidden="true">
           <rect x="3" y="11" width="18" height="11" rx="2" ry="2" />
           <path d="M7 11V7a5 5 0 0 1 10 0v4" />
