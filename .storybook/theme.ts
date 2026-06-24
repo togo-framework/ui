@@ -5,7 +5,7 @@ export default create({
   base: "dark",
   brandTitle: "ToGO UI · Design System",
   brandUrl: "https://to-go.dev",
-  brandImage: "togo-storybook-logo.svg",
+  brandImage: "togo-storybook-logo.svg?v=3",
   brandTarget: "_self",
 
   colorPrimary: "#1FC7DC",
