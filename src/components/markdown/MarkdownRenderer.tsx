@@ -4,12 +4,109 @@ import * as React from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
+import { Copy, Check, ImageDown } from "lucide-react";
+import type { ColumnDef } from "@tanstack/react-table";
 import { cn } from "../../lib/utils";
+import { DataTable } from "../data-table/DataTable";
 
 export interface MarkdownRendererProps {
   content: string;
   language?: "en" | "ar";
   className?: string;
+}
+
+// ── Markdown table → kit DataTable (sortable + CSV export) ──────────────────────
+function hastText(node: any): string {
+  if (!node) return "";
+  if (node.type === "text") return node.value ?? "";
+  if (Array.isArray(node.children)) return node.children.map(hastText).join("");
+  return "";
+}
+function parseTable(node: any): { headers: string[]; rows: string[][] } {
+  const kids = node?.children ?? [];
+  const thead = kids.find((c: any) => c.tagName === "thead");
+  const tbody = kids.find((c: any) => c.tagName === "tbody");
+  const hRow = (thead?.children ?? []).find((c: any) => c.tagName === "tr");
+  const headers = (hRow?.children ?? []).filter((c: any) => c.tagName === "th").map((c: any) => hastText(c).trim());
+  const rows = (tbody?.children ?? []).filter((c: any) => c.tagName === "tr").map((tr: any) =>
+    (tr.children ?? []).filter((c: any) => c.tagName === "td").map((c: any) => hastText(c).trim()));
+  return { headers, rows };
+}
+
+/** MarkdownTable — renders a GFM table via the kit's DataTable (sortable, searchable,
+ * CSV export). Exported so apps can reuse the markdown-table → DataTable mapping. */
+export function MarkdownTable({ node, language = "en" }: { node: any; language?: "en" | "ar" }) {
+  const { headers, rows } = React.useMemo(() => parseTable(node), [node]);
+  if (!headers.length) {
+    return <div className="my-3 overflow-x-auto rounded-lg border border-border"><table className="w-full text-start text-sm" /></div>;
+  }
+  const columns: ColumnDef<Record<string, string>>[] = headers.map((h, i) => ({
+    accessorKey: `c${i}`,
+    header: h,
+    meta: { header_en: h, header_ar: h },
+  }));
+  const data = rows.map((r, i) => {
+    const o: Record<string, string> = { _id: String(i) };
+    r.forEach((c, j) => { o[`c${j}`] = c; });
+    return o;
+  });
+  return (
+    <div className="my-3">
+      <DataTable
+        columns={columns}
+        data={data}
+        getRowId={(r) => (r as { _id: string })._id}
+        language={language}
+        showGlobalSearch={rows.length > 8}
+        showCsvExport
+        showDensityToggle={false}
+        pageSize={rows.length > 25 ? 25 : 1000}
+      />
+    </div>
+  );
+}
+
+// ── Code block — styled header + copy + PNG export ──────────────────────────────
+/** CodeBlock — a fenced code block with a language label, Copy, and download-as-PNG.
+ * Exported so apps can render standalone code with the same chrome. */
+export function CodeBlock({ lang, children }: { lang?: string; children?: React.ReactNode }) {
+  const boxRef = React.useRef<HTMLDivElement>(null);
+  const codeRef = React.useRef<HTMLElement>(null);
+  const [copied, setCopied] = React.useState(false);
+
+  const copy = () => {
+    const text = codeRef.current?.textContent ?? "";
+    navigator.clipboard?.writeText(text).then(() => { setCopied(true); setTimeout(() => setCopied(false), 1400); });
+  };
+  const downloadPng = async () => {
+    if (!boxRef.current) return;
+    const { toPng } = await import("html-to-image");
+    const bg = getComputedStyle(boxRef.current).backgroundColor;
+    const url = await toPng(boxRef.current, { pixelRatio: 2, backgroundColor: bg });
+    const a = document.createElement("a");
+    a.href = url; a.download = `code.${lang || "txt"}.png`; a.click();
+  };
+
+  return (
+    <div className="my-3 overflow-hidden rounded-lg border border-border">
+      <div className="flex items-center justify-between border-b border-border bg-muted/60 px-3 py-1.5">
+        <span className="font-mono text-xs text-muted-foreground">{lang || "code"}</span>
+        <span className="flex items-center gap-1">
+          <button onClick={copy} className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-muted-foreground transition hover:bg-accent hover:text-foreground">
+            {copied ? <Check className="h-3 w-3" /> : <Copy className="h-3 w-3" />}{copied ? "Copied" : "Copy"}
+          </button>
+          <button onClick={downloadPng} aria-label="Download as PNG" className="flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-muted-foreground transition hover:bg-accent hover:text-foreground">
+            <ImageDown className="h-3 w-3" />PNG
+          </button>
+        </span>
+      </div>
+      <div ref={boxRef} className="bg-muted/40 p-3">
+        <pre dir="ltr" className="overflow-x-auto text-[0.8rem] leading-relaxed [&>code]:bg-transparent [&>code]:p-0">
+          <code ref={codeRef} className={cn("hljs", lang && `language-${lang}`)}>{children}</code>
+        </pre>
+      </div>
+    </div>
+  );
 }
 
 // ── Mermaid diagram block (rendered client-side, lazily) ────────────────────────
@@ -70,10 +167,8 @@ export function MarkdownRenderer({ content, language = "en", className }: Markdo
           li: (p) => <li className="marker:text-muted-foreground" {...p} />,
           blockquote: (p) => <blockquote className="my-3 border-s-4 border-primary/40 ps-4 text-muted-foreground" {...p} />,
           hr: () => <hr className="my-5 border-border" />,
-          table: (p) => <div className="my-3 overflow-x-auto rounded-lg border border-border"><table className="w-full text-start text-sm" {...p} /></div>,
-          thead: (p) => <thead className="bg-muted/50 text-muted-foreground" {...p} />,
-          th: (p) => <th className="border-b border-border px-3 py-2 text-start font-medium" {...p} />,
-          td: (p) => <td className="border-t border-border px-3 py-2" {...p} />,
+          // GFM tables render through the kit DataTable (sortable + CSV export).
+          table: (p: any) => <MarkdownTable node={p.node} language={language} />,
           code(props) {
             const { children, className: cls, node, ...rest } = props as any;
             const text = String(children ?? "");
@@ -81,9 +176,10 @@ export function MarkdownRenderer({ content, language = "en", className }: Markdo
             const inline = !node || node.position?.start.line === node.position?.end.line;
             if (lang === "mermaid") return <MermaidBlock code={text.replace(/\n$/, "")} />;
             if (inline && !cls) return <code className="rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em] text-foreground" {...rest}>{children}</code>;
-            return <code className={cn("hljs", cls)} {...rest}>{children}</code>;
+            // Block code → styled CodeBlock (copy + PNG export). pre passes through.
+            return <CodeBlock lang={lang}>{children}</CodeBlock>;
           },
-          pre: (p) => <pre className="my-3 overflow-x-auto rounded-lg border border-border bg-muted/40 p-3 text-[0.8rem] leading-relaxed [&>code]:bg-transparent [&>code]:p-0" dir="ltr" {...p} />,
+          pre: (p: any) => <>{p.children}</>,
         }}
       >
         {content}

@@ -12203,7 +12203,92 @@ import * as React21 from "react";
 import ReactMarkdown2 from "react-markdown";
 import remarkGfm2 from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
-import { jsx as jsx81, jsxs as jsxs69 } from "react/jsx-runtime";
+import { Copy, Check as Check3, ImageDown } from "lucide-react";
+import { Fragment as Fragment19, jsx as jsx81, jsxs as jsxs69 } from "react/jsx-runtime";
+function hastText(node) {
+  if (!node) return "";
+  if (node.type === "text") return node.value ?? "";
+  if (Array.isArray(node.children)) return node.children.map(hastText).join("");
+  return "";
+}
+function parseTable(node) {
+  const kids = node?.children ?? [];
+  const thead = kids.find((c) => c.tagName === "thead");
+  const tbody = kids.find((c) => c.tagName === "tbody");
+  const hRow = (thead?.children ?? []).find((c) => c.tagName === "tr");
+  const headers = (hRow?.children ?? []).filter((c) => c.tagName === "th").map((c) => hastText(c).trim());
+  const rows = (tbody?.children ?? []).filter((c) => c.tagName === "tr").map((tr2) => (tr2.children ?? []).filter((c) => c.tagName === "td").map((c) => hastText(c).trim()));
+  return { headers, rows };
+}
+function MarkdownTable({ node, language = "en" }) {
+  const { headers, rows } = React21.useMemo(() => parseTable(node), [node]);
+  if (!headers.length) {
+    return /* @__PURE__ */ jsx81("div", { className: "my-3 overflow-x-auto rounded-lg border border-border", children: /* @__PURE__ */ jsx81("table", { className: "w-full text-start text-sm" }) });
+  }
+  const columns = headers.map((h, i) => ({
+    accessorKey: `c${i}`,
+    header: h,
+    meta: { header_en: h, header_ar: h }
+  }));
+  const data = rows.map((r, i) => {
+    const o = { _id: String(i) };
+    r.forEach((c, j) => {
+      o[`c${j}`] = c;
+    });
+    return o;
+  });
+  return /* @__PURE__ */ jsx81("div", { className: "my-3", children: /* @__PURE__ */ jsx81(
+    DataTable,
+    {
+      columns,
+      data,
+      getRowId: (r) => r._id,
+      language,
+      showGlobalSearch: rows.length > 8,
+      showCsvExport: true,
+      showDensityToggle: false,
+      pageSize: rows.length > 25 ? 25 : 1e3
+    }
+  ) });
+}
+function CodeBlock({ lang, children }) {
+  const boxRef = React21.useRef(null);
+  const codeRef = React21.useRef(null);
+  const [copied, setCopied] = React21.useState(false);
+  const copy = () => {
+    const text = codeRef.current?.textContent ?? "";
+    navigator.clipboard?.writeText(text).then(() => {
+      setCopied(true);
+      setTimeout(() => setCopied(false), 1400);
+    });
+  };
+  const downloadPng = async () => {
+    if (!boxRef.current) return;
+    const { toPng } = await import("html-to-image");
+    const bg = getComputedStyle(boxRef.current).backgroundColor;
+    const url = await toPng(boxRef.current, { pixelRatio: 2, backgroundColor: bg });
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `code.${lang || "txt"}.png`;
+    a.click();
+  };
+  return /* @__PURE__ */ jsxs69("div", { className: "my-3 overflow-hidden rounded-lg border border-border", children: [
+    /* @__PURE__ */ jsxs69("div", { className: "flex items-center justify-between border-b border-border bg-muted/60 px-3 py-1.5", children: [
+      /* @__PURE__ */ jsx81("span", { className: "font-mono text-xs text-muted-foreground", children: lang || "code" }),
+      /* @__PURE__ */ jsxs69("span", { className: "flex items-center gap-1", children: [
+        /* @__PURE__ */ jsxs69("button", { onClick: copy, className: "flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-muted-foreground transition hover:bg-accent hover:text-foreground", children: [
+          copied ? /* @__PURE__ */ jsx81(Check3, { className: "h-3 w-3" }) : /* @__PURE__ */ jsx81(Copy, { className: "h-3 w-3" }),
+          copied ? "Copied" : "Copy"
+        ] }),
+        /* @__PURE__ */ jsxs69("button", { onClick: downloadPng, "aria-label": "Download as PNG", className: "flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-muted-foreground transition hover:bg-accent hover:text-foreground", children: [
+          /* @__PURE__ */ jsx81(ImageDown, { className: "h-3 w-3" }),
+          "PNG"
+        ] })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx81("div", { ref: boxRef, className: "bg-muted/40 p-3", children: /* @__PURE__ */ jsx81("pre", { dir: "ltr", className: "overflow-x-auto text-[0.8rem] leading-relaxed [&>code]:bg-transparent [&>code]:p-0", children: /* @__PURE__ */ jsx81("code", { ref: codeRef, className: cn("hljs", lang && `language-${lang}`), children }) }) })
+  ] });
+}
 var _mermaidPromise = null;
 function loadMermaid() {
   if (!_mermaidPromise) {
@@ -12257,10 +12342,8 @@ function MarkdownRenderer({ content, language = "en", className }) {
         li: (p) => /* @__PURE__ */ jsx81("li", { className: "marker:text-muted-foreground", ...p }),
         blockquote: (p) => /* @__PURE__ */ jsx81("blockquote", { className: "my-3 border-s-4 border-primary/40 ps-4 text-muted-foreground", ...p }),
         hr: () => /* @__PURE__ */ jsx81("hr", { className: "my-5 border-border" }),
-        table: (p) => /* @__PURE__ */ jsx81("div", { className: "my-3 overflow-x-auto rounded-lg border border-border", children: /* @__PURE__ */ jsx81("table", { className: "w-full text-start text-sm", ...p }) }),
-        thead: (p) => /* @__PURE__ */ jsx81("thead", { className: "bg-muted/50 text-muted-foreground", ...p }),
-        th: (p) => /* @__PURE__ */ jsx81("th", { className: "border-b border-border px-3 py-2 text-start font-medium", ...p }),
-        td: (p) => /* @__PURE__ */ jsx81("td", { className: "border-t border-border px-3 py-2", ...p }),
+        // GFM tables render through the kit DataTable (sortable + CSV export).
+        table: (p) => /* @__PURE__ */ jsx81(MarkdownTable, { node: p.node, language }),
         code(props) {
           const { children, className: cls, node, ...rest } = props;
           const text = String(children ?? "");
@@ -12268,9 +12351,9 @@ function MarkdownRenderer({ content, language = "en", className }) {
           const inline = !node || node.position?.start.line === node.position?.end.line;
           if (lang === "mermaid") return /* @__PURE__ */ jsx81(MermaidBlock, { code: text.replace(/\n$/, "") });
           if (inline && !cls) return /* @__PURE__ */ jsx81("code", { className: "rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em] text-foreground", ...rest, children });
-          return /* @__PURE__ */ jsx81("code", { className: cn("hljs", cls), ...rest, children });
+          return /* @__PURE__ */ jsx81(CodeBlock, { lang, children });
         },
-        pre: (p) => /* @__PURE__ */ jsx81("pre", { className: "my-3 overflow-x-auto rounded-lg border border-border bg-muted/40 p-3 text-[0.8rem] leading-relaxed [&>code]:bg-transparent [&>code]:p-0", dir: "ltr", ...p })
+        pre: (p) => /* @__PURE__ */ jsx81(Fragment19, { children: p.children })
       },
       children: content
     }
@@ -12412,7 +12495,7 @@ import {
 } from "react";
 
 // src/components/copilot/UnifiedCopilotDock.tsx
-import { useState as useState44, useRef as useRef17, useEffect as useEffect26, useCallback as useCallback14, useMemo as useMemo11 } from "react";
+import { useState as useState44, useRef as useRef17, useEffect as useEffect26, useCallback as useCallback14, useMemo as useMemo12 } from "react";
 import {
   Send,
   Sparkles as Sparkles7,
@@ -12433,8 +12516,8 @@ import {
   PanelLeft,
   PanelRight,
   PanelBottom,
-  Check as Check5,
-  Copy,
+  Check as Check6,
+  Copy as Copy2,
   Share2,
   Wrench,
   ChevronDown as ChevronDown10,
@@ -12444,13 +12527,13 @@ import {
 } from "lucide-react";
 
 // src/components/copilot/AgentSteps.tsx
-import { useState as useState40, useMemo as useMemo10 } from "react";
+import { useState as useState40, useMemo as useMemo11 } from "react";
 import {
   Search as Search7,
   Database as Database4,
   Globe as Globe4,
   Sparkles as Sparkles6,
-  Check as Check3,
+  Check as Check4,
   ChevronDown as ChevronDown8,
   ExternalLink as ExternalLink4,
   Brain,
@@ -12543,22 +12626,22 @@ var STEP_ICONS2 = {
   deep_research_progress: { active: Clock3, complete: Clock3 },
   deep_research_results: { active: Microscope, complete: Microscope },
   file_processing: { active: FileText2, complete: FileText2 },
-  tool_check: { active: Search7, complete: Check3 },
+  tool_check: { active: Search7, complete: Check4 },
   profile_entity: { active: Search7, complete: Search7 },
-  profile_result: { active: Search7, complete: Check3 },
+  profile_result: { active: Search7, complete: Check4 },
   track_narrative: { active: Search7, complete: Search7 },
-  narrative_result: { active: Search7, complete: Check3 },
+  narrative_result: { active: Search7, complete: Check4 },
   composing: { active: Sparkles6, complete: Sparkles6 },
   twin_recall: { active: Brain, complete: Brain },
   twin_reflect: { active: Globe4, complete: Globe4 },
   twin_composing: { active: Sparkles6, complete: Sparkles6 },
   compare_detect: { active: Search7, complete: Search7 },
-  compare_profiling: { active: Clock3, complete: Check3 },
+  compare_profiling: { active: Clock3, complete: Check4 },
   compare_factors: { active: Sparkles6, complete: Sparkles6 },
   compare_running: { active: Clock3, complete: Clock3 },
-  compare_result: { active: Check3, complete: Check3 },
-  auto_profile: { active: Search7, complete: Check3 },
-  compare_ready: { active: Check3, complete: Check3 }
+  compare_result: { active: Check4, complete: Check4 },
+  auto_profile: { active: Search7, complete: Check4 },
+  compare_ready: { active: Check4, complete: Check4 }
 };
 function getStepState(step, allSteps, isStreaming) {
   if (isStreaming === false) return "complete";
@@ -12587,7 +12670,7 @@ function StepIndicator({ state, step }) {
   const icons = STEP_ICONS2[step] || { active: Sparkles6, complete: Sparkles6 };
   if (state === "error") return /* @__PURE__ */ jsx83(XIcon, { className: "w-3 h-3 text-destructive" });
   if (state === "complete") {
-    return /* @__PURE__ */ jsx83(Check3, { className: "w-3 h-3 text-emerald-400" });
+    return /* @__PURE__ */ jsx83(Check4, { className: "w-3 h-3 text-emerald-400" });
   }
   const Icon = icons.active;
   return /* @__PURE__ */ jsxs71("span", { className: "relative flex h-3 w-3 items-center justify-center", children: [
@@ -12679,7 +12762,7 @@ var AgentSteps = ({ steps, isStreaming, language = "en", dir }) => {
   const [isExpanded, setIsExpanded] = useState40(true);
   const isAr = language === "ar";
   const isRTL = dir === "rtl" || dir === void 0 && isAr;
-  const displaySteps = useMemo10(() => {
+  const displaySteps = useMemo11(() => {
     const resultTypes = new Set(steps.filter((s) => s.step.endsWith("_results")).map((s) => s.step.replace("_results", "_search")));
     const hasDeepResults = steps.some((s) => s.step === "deep_research_results");
     return steps.filter((s) => {
@@ -12700,7 +12783,7 @@ var AgentSteps = ({ steps, isStreaming, language = "en", dir }) => {
   const totalDuration = [ragResult, webResult, socialResult].reduce((sum, s) => sum + (s?.duration_ms || 0), 0);
   const allDone = !isStreaming || steps.some((s) => s.step === "composing" || s.step === "twin_composing");
   const summary = summaryParts.length > 0 ? isAr ? `\u062A\u0645 \u062A\u062D\u0644\u064A\u0644 ${summaryParts.join("\u060C ")} \u0645\u0635\u0627\u062F\u0631${totalDuration ? ` (${(totalDuration / 1e3).toFixed(1)}\u062B)` : ""}` : `Analyzed ${summaryParts.join(", ")} sources${totalDuration ? ` (${(totalDuration / 1e3).toFixed(1)}s)` : ""}` : allDone ? isAr ? "\u0627\u0643\u062A\u0645\u0644 \u0627\u0644\u062A\u062D\u0644\u064A\u0644" : "Analysis complete" : isAr ? "\u062C\u0627\u0631\u064D \u0627\u0644\u0628\u062D\u062B..." : "Searching...";
-  const triggerIcon = !isStreaming || allDone ? /* @__PURE__ */ jsx83(Check3, { className: "w-3 h-3 text-emerald-400" }) : /* @__PURE__ */ jsxs71("span", { className: "relative flex h-3 w-3 items-center justify-center", children: [
+  const triggerIcon = !isStreaming || allDone ? /* @__PURE__ */ jsx83(Check4, { className: "w-3 h-3 text-emerald-400" }) : /* @__PURE__ */ jsxs71("span", { className: "relative flex h-3 w-3 items-center justify-center", children: [
     /* @__PURE__ */ jsx83("span", { className: "absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/40" }),
     /* @__PURE__ */ jsx83(Search7, { className: "relative w-2.5 h-2.5 text-emerald-400" })
   ] });
@@ -12739,7 +12822,7 @@ var AgentSteps_default = AgentSteps;
 
 // src/components/copilot/StreamErrorBanner.tsx
 import { WifiOff, RefreshCw as RefreshCw2 } from "lucide-react";
-import { Fragment as Fragment19, jsx as jsx84, jsxs as jsxs72 } from "react/jsx-runtime";
+import { Fragment as Fragment20, jsx as jsx84, jsxs as jsxs72 } from "react/jsx-runtime";
 var StreamErrorBanner = ({ onRetry, isRetrying = false, language = "en", dir }) => {
   const isAR = language === "ar";
   const resolvedDir = dir ?? (isAR ? "rtl" : "ltr");
@@ -12767,10 +12850,10 @@ var StreamErrorBanner = ({ onRetry, isRetrying = false, language = "en", dir }) 
               className: "h-7 text-xs border-destructive/40 text-destructive hover:bg-destructive/10 hover:text-destructive",
               onClick: handleRetry,
               disabled: isRetrying,
-              children: isRetrying ? /* @__PURE__ */ jsxs72(Fragment19, { children: [
+              children: isRetrying ? /* @__PURE__ */ jsxs72(Fragment20, { children: [
                 /* @__PURE__ */ jsx84(RefreshCw2, { className: "w-3 h-3 animate-spin me-1.5", "aria-hidden": "true" }),
                 isAR ? "\u062C\u0627\u0631\u064D \u0627\u0644\u0645\u062D\u0627\u0648\u0644\u0629..." : "Retrying..."
-              ] }) : /* @__PURE__ */ jsxs72(Fragment19, { children: [
+              ] }) : /* @__PURE__ */ jsxs72(Fragment20, { children: [
                 /* @__PURE__ */ jsx84(RefreshCw2, { className: "w-3 h-3 me-1.5", "aria-hidden": "true" }),
                 isAR ? "\u0625\u0639\u0627\u062F\u0629 \u0627\u0644\u0645\u062D\u0627\u0648\u0644\u0629" : "Retry"
               ] })
@@ -13029,7 +13112,7 @@ var ChatToolbar_default = ChatToolbar;
 
 // src/components/chat/CompareFactorsCard.tsx
 import { useState as useState42, useCallback as useCallback13 } from "react";
-import { Scale, Plus as Plus4, X as X5, Check as Check4 } from "lucide-react";
+import { Scale, Plus as Plus4, X as X5, Check as Check5 } from "lucide-react";
 import { jsx as jsx87, jsxs as jsxs75 } from "react/jsx-runtime";
 var CompareFactorsCard = ({
   data,
@@ -13088,7 +13171,7 @@ var CompareFactorsCard = ({
         ] }),
         /* @__PURE__ */ jsx87("p", { className: "text-[10px] text-muted-foreground", children: isAR ? `${enabledCount} \u0639\u0627\u0645\u0644 \u0645\u062D\u062F\u062F` : `${enabledCount} factors selected` })
       ] }),
-      disabled && /* @__PURE__ */ jsx87(Check4, { className: "w-4 h-4 text-emerald-500 shrink-0" })
+      disabled && /* @__PURE__ */ jsx87(Check5, { className: "w-4 h-4 text-emerald-500 shrink-0" })
     ] }),
     /* @__PURE__ */ jsx87("div", { className: "divide-y divide-border/50", children: factors.map((factor) => /* @__PURE__ */ jsxs75("div", { className: "px-3 py-2 flex items-center gap-2 hover:bg-muted/30 transition-colors duration-fast ease-standard", children: [
       /* @__PURE__ */ jsx87(
@@ -13143,7 +13226,7 @@ var CompareFactorsCard = ({
           autoFocus: true
         }
       ),
-      /* @__PURE__ */ jsx87(Button, { size: "sm", variant: "ghost", className: "h-7 px-2", onClick: addCustomFactor, children: /* @__PURE__ */ jsx87(Check4, { className: "w-3 h-3" }) }),
+      /* @__PURE__ */ jsx87(Button, { size: "sm", variant: "ghost", className: "h-7 px-2", onClick: addCustomFactor, children: /* @__PURE__ */ jsx87(Check5, { className: "w-3 h-3" }) }),
       /* @__PURE__ */ jsx87(
         Button,
         {
@@ -13498,7 +13581,7 @@ ChatStructuredData.displayName = "ChatStructuredData";
 var ChatStructuredData_default = ChatStructuredData;
 
 // src/components/copilot/UnifiedCopilotDock.tsx
-import { Fragment as Fragment20, jsx as jsx89, jsxs as jsxs77 } from "react/jsx-runtime";
+import { Fragment as Fragment21, jsx as jsx89, jsxs as jsxs77 } from "react/jsx-runtime";
 function useSafeT() {
   try {
     return useT2();
@@ -13642,11 +13725,11 @@ var UnifiedCopilotDock = ({
     } catch {
     }
   };
-  const effectiveDockPosition = useMemo11(() => {
+  const effectiveDockPosition = useMemo12(() => {
     if (typeof window !== "undefined" && window.innerWidth < 640) return "bottom";
     return dockPosition;
   }, [dockPosition]);
-  const dockClasses = useMemo11(() => {
+  const dockClasses = useMemo12(() => {
     if (!isExpanded) return "fixed bottom-0 left-0 right-0 z-50 h-14 transition-all duration-300";
     switch (effectiveDockPosition) {
       case "left":
@@ -13658,7 +13741,7 @@ var UnifiedCopilotDock = ({
         return "fixed bottom-0 left-0 right-0 z-50 h-[calc(100vh-3.5rem)] sm:h-[60vh] transition-all duration-300";
     }
   }, [isExpanded, effectiveDockPosition]);
-  const expandedBorderClass = useMemo11(() => {
+  const expandedBorderClass = useMemo12(() => {
     switch (effectiveDockPosition) {
       case "left":
         return "border-e";
@@ -13668,7 +13751,7 @@ var UnifiedCopilotDock = ({
         return "border-t";
     }
   }, [effectiveDockPosition]);
-  const expandedShadowClass = useMemo11(() => {
+  const expandedShadowClass = useMemo12(() => {
     switch (effectiveDockPosition) {
       case "left":
         return "shadow-[4px_0_15px_rgba(0,0,0,0.12)]";
@@ -13901,7 +13984,7 @@ var UnifiedCopilotDock = ({
     return /* @__PURE__ */ jsx89("div", { className: `${sizeClasses} ${borderRadius} flex items-center justify-center shrink-0 bg-gradient-to-br from-primary to-primary/70`, children: /* @__PURE__ */ jsx89(Sparkles7, { className: `${iconSize} text-primary-foreground` }) });
   };
   const emptyMessage = t2("copilot:noDataAvailable");
-  return /* @__PURE__ */ jsxs77(Fragment20, { children: [
+  return /* @__PURE__ */ jsxs77(Fragment21, { children: [
     /* @__PURE__ */ jsx89("div", { className: "h-16 w-full shrink-0", "aria-hidden": "true" }),
     /* @__PURE__ */ jsxs77(
       "div",
@@ -14003,7 +14086,7 @@ var UnifiedCopilotDock = ({
                         children: [
                           /* @__PURE__ */ jsx89(PanelLeft, { className: `w-3.5 h-3.5 me-2` }),
                           t2("copilot:dockLeft"),
-                          dockPosition === "left" && /* @__PURE__ */ jsx89(Check5, { className: `w-3 h-3 ms-auto text-primary` })
+                          dockPosition === "left" && /* @__PURE__ */ jsx89(Check6, { className: `w-3 h-3 ms-auto text-primary` })
                         ]
                       }
                     ),
@@ -14016,7 +14099,7 @@ var UnifiedCopilotDock = ({
                         children: [
                           /* @__PURE__ */ jsx89(PanelRight, { className: `w-3.5 h-3.5 me-2` }),
                           t2("copilot:dockRight"),
-                          dockPosition === "right" && /* @__PURE__ */ jsx89(Check5, { className: `w-3 h-3 ms-auto text-primary` })
+                          dockPosition === "right" && /* @__PURE__ */ jsx89(Check6, { className: `w-3 h-3 ms-auto text-primary` })
                         ]
                       }
                     ),
@@ -14029,7 +14112,7 @@ var UnifiedCopilotDock = ({
                         children: [
                           /* @__PURE__ */ jsx89(PanelBottom, { className: `w-3.5 h-3.5 me-2` }),
                           t2("copilot:dockBottom"),
-                          dockPosition === "bottom" && /* @__PURE__ */ jsx89(Check5, { className: `w-3 h-3 ms-auto text-primary` })
+                          dockPosition === "bottom" && /* @__PURE__ */ jsx89(Check6, { className: `w-3 h-3 ms-auto text-primary` })
                         ]
                       }
                     )
@@ -14249,7 +14332,7 @@ var UnifiedCopilotDock = ({
                         }),
                         className: "flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors duration-fast ease-standard",
                         children: [
-                          /* @__PURE__ */ jsx89(Copy, { className: "w-3 h-3" }),
+                          /* @__PURE__ */ jsx89(Copy2, { className: "w-3 h-3" }),
                           /* @__PURE__ */ jsx89("span", { children: t2("copilot:copyResponse") })
                         ]
                       }
@@ -15366,6 +15449,7 @@ export {
   ChartTooltipContent,
   ChatThread_default as ChatThread,
   Checkbox,
+  CodeBlock,
   Collapsible,
   CollapsibleContent,
   CollapsibleTrigger,
@@ -15483,6 +15567,7 @@ export {
   MarkdownContent_default as MarkdownContent,
   MarkdownEditor,
   MarkdownRenderer,
+  MarkdownTable,
   Menubar,
   MenubarCheckboxItem,
   MenubarContent,
