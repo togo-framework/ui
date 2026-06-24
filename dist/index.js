@@ -29,7 +29,6 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-  Button,
   Calendar,
   Card,
   CardContent,
@@ -98,21 +97,6 @@ import {
   DrawerPortal,
   DrawerTitle,
   DrawerTrigger,
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuPortal,
-  DropdownMenuRadioGroup,
-  DropdownMenuRadioItem,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuSub,
-  DropdownMenuSubContent,
-  DropdownMenuSubTrigger,
-  DropdownMenuTrigger,
   Form,
   FormControl,
   FormDescription,
@@ -242,20 +226,18 @@ import {
   TooltipProvider,
   TooltipTrigger,
   badgeVariants,
-  buttonVariants,
-  cn,
-  formatRelativeTime,
   navigationMenuTriggerStyle,
   toast,
   toggleVariants,
   useFormField,
   useOptionalSidebar,
   useSidebar
-} from "./chunk-XXP2ZYPY.js";
+} from "./chunk-YYV7ECKZ.js";
 import {
   BrandingProvider,
   SENTRA_BRAND,
   STORAGE_KEY,
+  ThemePicker,
   ThemeProvider,
   applyBrand,
   hexToHSL,
@@ -268,7 +250,28 @@ import {
   toHSLSafe,
   useBrand,
   useTheme
-} from "./chunk-KD4MPGYQ.js";
+} from "./chunk-7B6OKTGY.js";
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuCheckboxItem,
+  DropdownMenuContent,
+  DropdownMenuGroup,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuPortal,
+  DropdownMenuRadioGroup,
+  DropdownMenuRadioItem,
+  DropdownMenuSeparator,
+  DropdownMenuShortcut,
+  DropdownMenuSub,
+  DropdownMenuSubContent,
+  DropdownMenuSubTrigger,
+  DropdownMenuTrigger,
+  buttonVariants,
+  cn,
+  formatRelativeTime
+} from "./chunk-NRF3KNQX.js";
 
 // src/components/status/EmptyState.tsx
 import { jsx, jsxs } from "react/jsx-runtime";
@@ -17035,6 +17038,7 @@ export {
   TabsTrigger,
   TestRunPanel,
   Textarea,
+  ThemePicker,
   ThemeProvider,
   Toaster,
   Toggle,

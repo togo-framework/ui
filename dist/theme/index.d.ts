@@ -133,6 +133,8 @@ interface ThemeDef {
     label: string;
     /** Whether this theme toggles the `.dark` class (keeps `dark:` utilities in sync). */
     base: ThemeBase;
+    /** Optional accent hex for swatch display (not used by ThemeProvider itself). */
+    accent?: string;
 }
 declare const themes: ThemeDef[];
 declare function themeBase(id: string): ThemeBase;
@@ -181,4 +183,26 @@ declare namespace ThemeProvider {
 }
 declare function useTheme(): ThemeContextValue;
 
-export { type BrandContextValue, type BrandTokens, BrandingProvider, type BrandingProviderProps, type Dir, SENTRA_BRAND, STORAGE_KEY, type ThemeBase, type ThemeContextValue, type ThemeDef, type ThemeOverrides, ThemeProvider, type ThemeProviderProps, type TogoTheme, applyBrand, hexToHSL, isHSL, isValidColor, nudgeL, themeBase, themeInitScript, themes, toHSLSafe, useBrand, useTheme };
+/**
+ * ThemePicker — a compact dropdown that lists every registered theme with a colour
+ * swatch and checks the currently active one. Wires directly to useTheme(); no
+ * external props needed unless you want to pass a custom theme list.
+ *
+ * Design: semantic tokens only, RTL-safe, accessible (role="menuitemradio").
+ */
+
+interface ThemePickerProps {
+    /** Override the list of themes shown (defaults to the kit's built-in presets). */
+    themes?: ThemeDef[];
+    /** Button size */
+    size?: "sm" | "default";
+    className?: string;
+    /** Label shown in the dropdown header (defaults to no header). */
+    label?: string;
+}
+declare function ThemePicker({ themes, size, className, label }: ThemePickerProps): React.JSX.Element;
+declare namespace ThemePicker {
+    var displayName: string;
+}
+
+export { type BrandContextValue, type BrandTokens, BrandingProvider, type BrandingProviderProps, type Dir, SENTRA_BRAND, STORAGE_KEY, type ThemeBase, type ThemeContextValue, type ThemeDef, type ThemeOverrides, ThemePicker, type ThemePickerProps, ThemeProvider, type ThemeProviderProps, type TogoTheme, applyBrand, hexToHSL, isHSL, isValidColor, nudgeL, themeBase, themeInitScript, themes, toHSLSafe, useBrand, useTheme };

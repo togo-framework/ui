@@ -1,3 +1,13 @@
+import {
+  Button,
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuSeparator,
+  DropdownMenuTrigger,
+  cn
+} from "./chunk-NRF3KNQX.js";
+
 // src/theme/brand.ts
 function isHSL(value) {
   return /^\d+(\.\d+)?\s+\d+(\.\d+)?%\s+\d+(\.\d+)?%$/.test(value.trim());
@@ -111,8 +121,14 @@ import * as React from "react";
 
 // src/theme/themes.ts
 var themes = [
-  { id: "dark", label: "Dark", base: "dark" },
-  { id: "light", label: "Light", base: "light" }
+  { id: "dark", label: "Dark", base: "dark", accent: "#1FC7DC" },
+  { id: "light", label: "Light", base: "light", accent: "#1659C8" },
+  { id: "purple", label: "Purple", base: "dark", accent: "#9B6DF5" },
+  { id: "rose", label: "Rose", base: "dark", accent: "#F5427B" },
+  { id: "emerald", label: "Emerald", base: "dark", accent: "#10B981" },
+  { id: "purple-light", label: "Purple Light", base: "light", accent: "#7C3AED" },
+  { id: "rose-light", label: "Rose Light", base: "light", accent: "#E11D48" },
+  { id: "emerald-light", label: "Emerald Light", base: "light", accent: "#059669" }
 ];
 function themeBase(id) {
   return themes.find((t) => t.id === id)?.base ?? "dark";
@@ -191,6 +207,65 @@ function useTheme() {
   return ctx;
 }
 
+// src/theme/ThemePicker.tsx
+import { Palette } from "lucide-react";
+import { jsx as jsx3, jsxs } from "react/jsx-runtime";
+function Swatch({ color, className }) {
+  if (!color) return null;
+  return /* @__PURE__ */ jsx3(
+    "span",
+    {
+      className: cn("inline-block h-3.5 w-3.5 shrink-0 rounded-full border border-white/20", className),
+      style: { backgroundColor: color }
+    }
+  );
+}
+function ThemePicker({ themes: themes2 = themes, size = "default", className, label }) {
+  const { theme, setTheme } = useTheme();
+  const current = themes2.find((t) => t.id === theme) ?? themes2[0];
+  const iconCls = size === "sm" ? "h-3.5 w-3.5" : "h-4 w-4";
+  const btnCls = size === "sm" ? "h-7 w-7" : "h-8 w-8";
+  const dark = themes2.filter((t) => t.base === "dark");
+  const light = themes2.filter((t) => t.base === "light");
+  return /* @__PURE__ */ jsxs(DropdownMenu, { children: [
+    /* @__PURE__ */ jsx3(DropdownMenuTrigger, { asChild: true, children: /* @__PURE__ */ jsx3(
+      Button,
+      {
+        variant: "ghost",
+        size: "icon",
+        className: cn(btnCls, "text-muted-foreground", className),
+        "aria-label": "Switch theme",
+        children: current?.accent ? /* @__PURE__ */ jsx3(Swatch, { color: current.accent, className: "h-4 w-4" }) : /* @__PURE__ */ jsx3(Palette, { className: iconCls })
+      }
+    ) }),
+    /* @__PURE__ */ jsxs(DropdownMenuContent, { align: "end", className: "w-44", children: [
+      label && /* @__PURE__ */ jsx3("div", { className: "px-2 py-1.5 text-xs font-medium text-muted-foreground", children: label }),
+      /* @__PURE__ */ jsx3("div", { className: "px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground/70", children: "Dark" }),
+      dark.map((t) => /* @__PURE__ */ jsx3(ThemeItem, { def: t, active: theme === t.id, onSelect: () => setTheme(t.id) }, t.id)),
+      /* @__PURE__ */ jsx3(DropdownMenuSeparator, {}),
+      /* @__PURE__ */ jsx3("div", { className: "px-2 py-1 text-[10px] uppercase tracking-wider text-muted-foreground/70", children: "Light" }),
+      light.map((t) => /* @__PURE__ */ jsx3(ThemeItem, { def: t, active: theme === t.id, onSelect: () => setTheme(t.id) }, t.id))
+    ] })
+  ] });
+}
+function ThemeItem({ def, active, onSelect }) {
+  return /* @__PURE__ */ jsxs(
+    DropdownMenuItem,
+    {
+      role: "menuitemradio",
+      "aria-checked": active,
+      onClick: onSelect,
+      className: cn("flex items-center gap-2", active && "font-medium text-foreground"),
+      children: [
+        /* @__PURE__ */ jsx3(Swatch, { color: def.accent }),
+        /* @__PURE__ */ jsx3("span", { className: "flex-1", children: def.label }),
+        active && /* @__PURE__ */ jsx3("span", { className: "text-xs text-muted-foreground", children: "\u2713" })
+      ]
+    }
+  );
+}
+ThemePicker.displayName = "ThemePicker";
+
 export {
   isHSL,
   isValidColor,
@@ -206,6 +281,7 @@ export {
   STORAGE_KEY,
   themeInitScript,
   ThemeProvider,
-  useTheme
+  useTheme,
+  ThemePicker
 };
-//# sourceMappingURL=chunk-KD4MPGYQ.js.map
+//# sourceMappingURL=chunk-7B6OKTGY.js.map

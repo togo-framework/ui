@@ -9,11 +9,19 @@ export interface ThemeDef {
   label: string;
   /** Whether this theme toggles the `.dark` class (keeps `dark:` utilities in sync). */
   base: ThemeBase;
+  /** Optional accent hex for swatch display (not used by ThemeProvider itself). */
+  accent?: string;
 }
 
 export const themes: ThemeDef[] = [
-  { id: "dark", label: "Dark", base: "dark" },
-  { id: "light", label: "Light", base: "light" },
+  { id: "dark",    label: "Dark",    base: "dark",  accent: "#1FC7DC" },
+  { id: "light",   label: "Light",   base: "light", accent: "#1659C8" },
+  { id: "purple",  label: "Purple",  base: "dark",  accent: "#9B6DF5" },
+  { id: "rose",    label: "Rose",    base: "dark",  accent: "#F5427B" },
+  { id: "emerald", label: "Emerald", base: "dark",  accent: "#10B981" },
+  { id: "purple-light",  label: "Purple Light",  base: "light", accent: "#7C3AED" },
+  { id: "rose-light",    label: "Rose Light",    base: "light", accent: "#E11D48" },
+  { id: "emerald-light", label: "Emerald Light", base: "light", accent: "#059669" },
 ];
 
 export function themeBase(id: string): ThemeBase {

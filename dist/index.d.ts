@@ -6,7 +6,7 @@ import { VariantProps } from 'class-variance-authority';
 import { ColumnDef, SortingState, ColumnFiltersState, PaginationState } from '@tanstack/react-table';
 export { ColumnDef, ColumnFiltersState, PaginationState, RowSelectionState, SortingState, VisibilityState } from '@tanstack/react-table';
 import { LucideIcon } from 'lucide-react';
-export { BrandContextValue, BrandTokens, BrandingProvider, BrandingProviderProps, Dir, SENTRA_BRAND, STORAGE_KEY, ThemeBase, ThemeContextValue, ThemeDef, ThemeOverrides, ThemeProvider, ThemeProviderProps, TogoTheme, applyBrand, hexToHSL, isHSL, isValidColor, nudgeL, themeBase, themeInitScript, themes, toHSLSafe, useBrand, useTheme } from './theme/index.js';
+export { BrandContextValue, BrandTokens, BrandingProvider, BrandingProviderProps, Dir, SENTRA_BRAND, STORAGE_KEY, ThemeBase, ThemeContextValue, ThemeDef, ThemeOverrides, ThemePicker, ThemePickerProps, ThemeProvider, ThemeProviderProps, TogoTheme, applyBrand, hexToHSL, isHSL, isValidColor, nudgeL, themeBase, themeInitScript, themes, toHSLSafe, useBrand, useTheme } from './theme/index.js';
 import { ClassValue } from 'clsx';
 export { toast } from 'sonner';
 export { useTranslation } from 'react-i18next';

@@ -33,3 +33,5 @@ export {
 } from "./ThemeProvider";
 
 export { themes, themeInitScript, themeBase, STORAGE_KEY, type ThemeDef, type ThemeBase } from "./themes";
+
+export { ThemePicker, type ThemePickerProps } from "./ThemePicker";
