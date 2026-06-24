@@ -252,6 +252,23 @@ import {
   useOptionalSidebar,
   useSidebar
 } from "./chunk-XXP2ZYPY.js";
+import {
+  BrandingProvider,
+  SENTRA_BRAND,
+  STORAGE_KEY,
+  ThemeProvider,
+  applyBrand,
+  hexToHSL,
+  isHSL,
+  isValidColor,
+  nudgeL,
+  themeBase,
+  themeInitScript,
+  themes,
+  toHSLSafe,
+  useBrand,
+  useTheme
+} from "./chunk-KD4MPGYQ.js";
 
 // src/components/status/EmptyState.tsx
 import { jsx, jsxs } from "react/jsx-runtime";
@@ -4941,7 +4958,7 @@ var MapPlaceholder = ({ isDark }) => /* @__PURE__ */ jsxs31(
   {
     className: cn(
       "w-full h-full flex flex-col items-center justify-center gap-3",
-      isDark ? "bg-[#0a0e1a]" : "bg-slate-100"
+      isDark ? "bg-[hsl(var(--sr-navy-deep))]" : "bg-muted"
     ),
     role: "img",
     "aria-label": "Map placeholder \u2014 supply renderMap prop to render the actual map",
@@ -10139,206 +10156,13 @@ var SectionSkeleton = ({ title, rows = 3 }) => {
 };
 SectionSkeleton.displayName = "SectionSkeleton";
 
-// src/theme/brand.ts
-function isHSL(value) {
-  return /^\d+(\.\d+)?\s+\d+(\.\d+)?%\s+\d+(\.\d+)?%$/.test(value.trim());
-}
-function isValidColor(value) {
-  const t2 = value.trim();
-  return isHSL(t2) || /^#([0-9a-fA-F]{3}|[0-9a-fA-F]{6})$/.test(t2);
-}
-function hexToHSL(hex) {
-  let h = hex.replace("#", "").trim();
-  if (h.length === 3) h = h.split("").map((c) => c + c).join("");
-  if (h.length !== 6) return "";
-  const r = parseInt(h.substring(0, 2), 16) / 255;
-  const g = parseInt(h.substring(2, 4), 16) / 255;
-  const b = parseInt(h.substring(4, 6), 16) / 255;
-  const max = Math.max(r, g, b);
-  const min = Math.min(r, g, b);
-  const l = (max + min) / 2;
-  if (max === min) return `0 0% ${Math.round(l * 100)}%`;
-  const d = max - min;
-  const s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
-  let hue = 0;
-  if (max === r) hue = ((g - b) / d + (g < b ? 6 : 0)) / 6;
-  else if (max === g) hue = ((b - r) / d + 2) / 6;
-  else hue = ((r - g) / d + 4) / 6;
-  return `${Math.round(hue * 360)} ${Math.round(s * 100)}% ${Math.round(l * 100)}%`;
-}
-function toHSLSafe(color) {
-  if (!color) return null;
-  const t2 = color.trim();
-  if (isHSL(t2)) return t2;
-  const result = hexToHSL(t2);
-  return result !== "" ? result : null;
-}
-function nudgeL(hsl, delta) {
-  const parts = hsl.trim().split(/\s+/);
-  if (parts.length < 3) return hsl;
-  const l = parseFloat(parts[2] ?? "0");
-  const newL = Math.max(0, Math.min(100, l + delta));
-  return `${parts[0]} ${parts[1]} ${Math.round(newL)}%`;
-}
-var SENTRA_BRAND = {
-  /** Brand primary: Sentra crimson (--primary 345 75% 33%). */
-  primaryHex: "#931535",
-  /** Brand accent: Tailwind violet-500. */
-  accentHex: "#daab4e",
-  /** Logo path — products serve this from their own /public directory. */
-  logoUrl: "/sentra-logo-full.png"
-};
-var SENTRA_PRIMARY_HSL = toHSLSafe(SENTRA_BRAND.primaryHex);
-var SENTRA_ACCENT_HSL = toHSLSafe(SENTRA_BRAND.accentHex);
-function applyBrand(root, tokens = {}) {
-  const primaryHSL = (tokens.primaryHex ? toHSLSafe(tokens.primaryHex) : null) ?? SENTRA_PRIMARY_HSL;
-  root.style.setProperty("--primary", primaryHSL);
-  root.style.setProperty("--brand-primary", primaryHSL);
-  root.style.setProperty("--brand-primary-glow", nudgeL(primaryHSL, 7));
-  root.style.setProperty("--ring", primaryHSL);
-  root.style.setProperty("--sidebar-primary", primaryHSL);
-  root.style.setProperty("--sidebar-ring", primaryHSL);
-  root.style.setProperty("--ai-glow", primaryHSL);
-  const accentHSL = (tokens.accentHex ? toHSLSafe(tokens.accentHex) : null) ?? SENTRA_ACCENT_HSL;
-  root.style.setProperty("--accent-muted", nudgeL(accentHSL, -13));
-  const rawLogo = tokens.logoUrl;
-  if (rawLogo && rawLogo.trim() !== "") {
-    root.style.setProperty("--logo-url", `url("${rawLogo}")`);
-  } else {
-    root.style.setProperty("--logo-url", "none");
-  }
-}
-
-// src/theme/BrandingProvider.tsx
-import { createContext, useContext, useEffect as useEffect18 } from "react";
-import { jsx as jsx63 } from "react/jsx-runtime";
-var BrandContext = createContext({
-  primaryHex: SENTRA_BRAND.primaryHex,
-  accentHex: SENTRA_BRAND.accentHex,
-  logoUrl: null,
-  iconName: null,
-  productName: ""
-});
-function useBrand() {
-  return useContext(BrandContext);
-}
-var BrandingProvider = ({
-  primaryHex,
-  accentHex,
-  logoUrl,
-  iconName,
-  productName,
-  children
-}) => {
-  useEffect18(() => {
-    if (typeof document === "undefined") return;
-    applyBrand(document.documentElement, { primaryHex, accentHex, logoUrl });
-  }, [primaryHex, accentHex, logoUrl]);
-  const contextValue = {
-    primaryHex: primaryHex ?? SENTRA_BRAND.primaryHex,
-    accentHex: accentHex ?? SENTRA_BRAND.accentHex,
-    // RAW logo: null when the tenant has none (empty/whitespace counts as none),
-    // so consumers fall back to the icon mark instead of the Sentra default PNG.
-    logoUrl: logoUrl && logoUrl.trim() !== "" ? logoUrl : null,
-    iconName: iconName ?? null,
-    productName: productName ?? ""
-  };
-  return /* @__PURE__ */ jsx63(BrandContext.Provider, { value: contextValue, children });
-};
-BrandingProvider.displayName = "BrandingProvider";
-
-// src/theme/ThemeProvider.tsx
-import * as React17 from "react";
-
-// src/theme/themes.ts
-var themes = [
-  { id: "dark", label: "Dark", base: "dark" },
-  { id: "light", label: "Light", base: "light" }
-];
-function themeBase(id) {
-  return themes.find((t2) => t2.id === id)?.base ?? "dark";
-}
-var STORAGE_KEY = "togo-theme";
-var themeInitScript = `(function(){try{
-var k=${JSON.stringify(STORAGE_KEY)};
-var t=localStorage.getItem(k);
-if(!t){t=window.matchMedia&&window.matchMedia('(prefers-color-scheme: light)').matches?'light':'dark';}
-var d=document.documentElement;
-d.setAttribute('data-theme',t);
-d.classList.toggle('dark', t!=='light');
-}catch(e){}})();`;
-
-// src/theme/ThemeProvider.tsx
-import { jsx as jsx64 } from "react/jsx-runtime";
-var ThemeContext = React17.createContext(null);
-function applyToElement(el, theme, dir, overrides) {
-  el.setAttribute("data-theme", theme);
-  el.classList.toggle("dark", themeBase(theme) === "dark");
-  el.setAttribute("dir", dir);
-  if (overrides) for (const [k, v] of Object.entries(overrides)) el.style.setProperty(k, v);
-}
-function ThemeProvider({
-  theme: themeProp,
-  overrides,
-  dir: dirProp,
-  scope = "html",
-  themes: themes2 = themes,
-  persist = true,
-  className,
-  children
-}) {
-  const [theme, setThemeState] = React17.useState(themeProp ?? "dark");
-  const [dir, setDirState] = React17.useState(dirProp ?? "ltr");
-  const selfRef = React17.useRef(null);
-  React17.useEffect(() => {
-    if (themeProp != null || !persist || typeof window === "undefined") return;
-    const stored = window.localStorage.getItem(STORAGE_KEY);
-    if (stored) setThemeState(stored);
-    else if (window.matchMedia?.("(prefers-color-scheme: light)").matches) setThemeState("light");
-  }, []);
-  React17.useEffect(() => {
-    if (themeProp != null) setThemeState(themeProp);
-  }, [themeProp]);
-  React17.useEffect(() => {
-    if (dirProp != null) setDirState(dirProp);
-  }, [dirProp]);
-  const setTheme = React17.useCallback((t2) => {
-    setThemeState(t2);
-    if (persist && typeof window !== "undefined") window.localStorage.setItem(STORAGE_KEY, String(t2));
-  }, [persist]);
-  const setDir = React17.useCallback((d) => setDirState(d), []);
-  React17.useEffect(() => {
-    if (typeof document === "undefined") return;
-    const el = scope === "self" ? selfRef.current : document.documentElement;
-    if (el) applyToElement(el, String(theme), dir, overrides);
-  }, [theme, dir, overrides, scope]);
-  const value = React17.useMemo(() => ({ theme, setTheme, themes: themes2, dir, setDir }), [theme, setTheme, themes2, dir, setDir]);
-  return /* @__PURE__ */ jsx64(ThemeContext.Provider, { value, children: scope === "self" ? /* @__PURE__ */ jsx64(
-    "div",
-    {
-      ref: selfRef,
-      "data-theme": theme,
-      dir,
-      className: ["tg-root", themeBase(String(theme)) === "dark" ? "dark" : "", "bg-background text-foreground", className].filter(Boolean).join(" "),
-      style: overrides,
-      children
-    }
-  ) : children });
-}
-ThemeProvider.displayName = "ThemeProvider";
-function useTheme() {
-  const ctx = React17.useContext(ThemeContext);
-  if (!ctx) throw new Error("useTheme must be used within a <ThemeProvider>");
-  return ctx;
-}
-
 // src/i18n/LanguageProvider.tsx
 import {
-  createContext as createContext3,
-  useContext as useContext3,
-  useState as useState34,
-  useCallback as useCallback12,
-  useEffect as useEffect20
+  createContext,
+  useContext,
+  useState as useState33,
+  useCallback as useCallback11,
+  useEffect as useEffect18
 } from "react";
 
 // src/i18n/index.ts
@@ -10596,8 +10420,8 @@ var i18n_default = i18n;
 
 // src/i18n/LanguageProvider.tsx
 import { useTranslation } from "react-i18next";
-import { jsx as jsx65 } from "react/jsx-runtime";
-var LanguageContext = createContext3(null);
+import { jsx as jsx63 } from "react/jsx-runtime";
+var LanguageContext = createContext(null);
 initI18n();
 var LANG_STORAGE_KEY = "sentra:lang";
 var LANG_COOKIE_NAME = "sentra_lang";
@@ -10619,13 +10443,13 @@ var LanguageProvider = ({
   initialLanguage = "en",
   onLanguageChange
 }) => {
-  const [language, setLanguageState] = useState34(initialLanguage);
-  const applyDirToDocument = useCallback12((l) => {
+  const [language, setLanguageState] = useState33(initialLanguage);
+  const applyDirToDocument = useCallback11((l) => {
     if (typeof document === "undefined") return;
     document.documentElement.dir = l === "ar" ? "rtl" : "ltr";
     document.documentElement.lang = l;
   }, []);
-  useEffect20(() => {
+  useEffect18(() => {
     const cached = readCachedLang();
     const resolved = cached ?? initialLanguage;
     if (resolved !== language) setLanguageState(resolved);
@@ -10635,7 +10459,7 @@ var LanguageProvider = ({
       i18n_default.changeLanguage(resolved);
     }
   }, []);
-  const setLanguage = useCallback12(
+  const setLanguage = useCallback11(
     (l) => {
       setLanguageState(l);
       applyDirToDocument(l);
@@ -10649,7 +10473,7 @@ var LanguageProvider = ({
     },
     [applyDirToDocument, onLanguageChange]
   );
-  const seedLanguage = useCallback12(
+  const seedLanguage = useCallback11(
     (l) => {
       if (readCachedLang()) return;
       setLanguageState(l);
@@ -10658,7 +10482,7 @@ var LanguageProvider = ({
     },
     [applyDirToDocument]
   );
-  const t2 = useCallback12(
+  const t2 = useCallback11(
     (key, vars) => {
       return i18n_default.t(key, { ...vars, lng: language });
     },
@@ -10672,11 +10496,11 @@ var LanguageProvider = ({
     seedLanguage,
     t: t2
   };
-  return /* @__PURE__ */ jsx65(LanguageContext.Provider, { value, children });
+  return /* @__PURE__ */ jsx63(LanguageContext.Provider, { value, children });
 };
 LanguageProvider.displayName = "LanguageProvider";
 var useT2 = () => {
-  const ctx = useContext3(LanguageContext);
+  const ctx = useContext(LanguageContext);
   if (!ctx) {
     throw new Error("[useT] Must be used inside <LanguageProvider> from @prism/ui");
   }
@@ -10685,7 +10509,7 @@ var useT2 = () => {
 var useLanguage = () => useT2();
 
 // src/components/copilot/artifacts/ArtifactTable.tsx
-import { jsx as jsx66, jsxs as jsxs56 } from "react/jsx-runtime";
+import { jsx as jsx64, jsxs as jsxs56 } from "react/jsx-runtime";
 var ArtifactTable = ({ data, language = "en", dir }) => {
   const resolvedDir = dir ?? (language === "ar" ? "rtl" : "ltr");
   const rawCols = data?.columns ?? [];
@@ -10695,10 +10519,10 @@ var ArtifactTable = ({ data, language = "en", dir }) => {
   const rawRows = data?.rows ?? [];
   const cellOf = (row, col, colIdx) => Array.isArray(row) ? row[colIdx] : row?.[col.key];
   if (cols.length === 0) {
-    return /* @__PURE__ */ jsx66("p", { className: "text-xs text-muted-foreground italic", children: language === "ar" ? "\u0644\u0627 \u062A\u0648\u062C\u062F \u0628\u064A\u0627\u0646\u0627\u062A" : "No data" });
+    return /* @__PURE__ */ jsx64("p", { className: "text-xs text-muted-foreground italic", children: language === "ar" ? "\u0644\u0627 \u062A\u0648\u062C\u062F \u0628\u064A\u0627\u0646\u0627\u062A" : "No data" });
   }
-  return /* @__PURE__ */ jsx66("div", { className: "overflow-x-auto rounded-md border border-border", dir: resolvedDir, children: /* @__PURE__ */ jsxs56(Table, { children: [
-    /* @__PURE__ */ jsx66(TableHeader, { children: /* @__PURE__ */ jsx66(TableRow, { children: cols.map((col, colIdx) => /* @__PURE__ */ jsx66(
+  return /* @__PURE__ */ jsx64("div", { className: "overflow-x-auto rounded-md border border-border", dir: resolvedDir, children: /* @__PURE__ */ jsxs56(Table, { children: [
+    /* @__PURE__ */ jsx64(TableHeader, { children: /* @__PURE__ */ jsx64(TableRow, { children: cols.map((col, colIdx) => /* @__PURE__ */ jsx64(
       TableHead,
       {
         className: "text-start text-xs font-semibold text-muted-foreground bg-muted/40 px-3 py-2",
@@ -10706,16 +10530,16 @@ var ArtifactTable = ({ data, language = "en", dir }) => {
       },
       col.key ?? colIdx
     )) }) }),
-    /* @__PURE__ */ jsx66(TableBody, { children: rawRows.length === 0 ? /* @__PURE__ */ jsx66(TableRow, { children: /* @__PURE__ */ jsx66(
+    /* @__PURE__ */ jsx64(TableBody, { children: rawRows.length === 0 ? /* @__PURE__ */ jsx64(TableRow, { children: /* @__PURE__ */ jsx64(
       TableCell,
       {
         colSpan: cols.length,
         className: "text-center text-xs text-muted-foreground py-4",
         children: language === "ar" ? "\u0644\u0627 \u062A\u0648\u062C\u062F \u0635\u0641\u0648\u0641" : "No rows"
       }
-    ) }) : rawRows.map((row, rowIdx) => /* @__PURE__ */ jsx66(TableRow, { className: "hover:bg-muted/30 transition-colors duration-fast ease-standard", children: cols.map((col, colIdx) => {
+    ) }) : rawRows.map((row, rowIdx) => /* @__PURE__ */ jsx64(TableRow, { className: "hover:bg-muted/30 transition-colors duration-fast ease-standard", children: cols.map((col, colIdx) => {
       const v = cellOf(row, col, colIdx);
-      return /* @__PURE__ */ jsx66(
+      return /* @__PURE__ */ jsx64(
         TableCell,
         {
           className: "text-start text-xs text-foreground px-3 py-2",
@@ -10743,7 +10567,7 @@ import {
   Legend,
   ResponsiveContainer as ResponsiveContainer3
 } from "recharts";
-import { jsx as jsx67, jsxs as jsxs57 } from "react/jsx-runtime";
+import { jsx as jsx65, jsxs as jsxs57 } from "react/jsx-runtime";
 var CHART_PALETTE = [
   "hsl(var(--primary))",
   "hsl(var(--info))",
@@ -10766,17 +10590,17 @@ var BarChartView = ({ series, language }) => {
     });
     return row;
   });
-  return /* @__PURE__ */ jsx67(ResponsiveContainer3, { width: "100%", height: 180, children: /* @__PURE__ */ jsxs57(BarChart, { data: chartData, margin: { top: 4, right: 4, left: -16, bottom: 0 }, children: [
-    /* @__PURE__ */ jsx67(XAxis, { dataKey: "x", tick: { fontSize: 10, fill: "hsl(var(--muted-foreground))" } }),
-    /* @__PURE__ */ jsx67(YAxis, { tick: { fontSize: 10, fill: "hsl(var(--muted-foreground))" } }),
-    /* @__PURE__ */ jsx67(
+  return /* @__PURE__ */ jsx65(ResponsiveContainer3, { width: "100%", height: 180, children: /* @__PURE__ */ jsxs57(BarChart, { data: chartData, margin: { top: 4, right: 4, left: -16, bottom: 0 }, children: [
+    /* @__PURE__ */ jsx65(XAxis, { dataKey: "x", tick: { fontSize: 10, fill: "hsl(var(--muted-foreground))" } }),
+    /* @__PURE__ */ jsx65(YAxis, { tick: { fontSize: 10, fill: "hsl(var(--muted-foreground))" } }),
+    /* @__PURE__ */ jsx65(
       Tooltip2,
       {
         contentStyle: { background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 11 },
         labelStyle: { color: "hsl(var(--foreground))" }
       }
     ),
-    series.length > 1 && /* @__PURE__ */ jsx67(
+    series.length > 1 && /* @__PURE__ */ jsx65(
       Legend,
       {
         formatter: (value) => {
@@ -10786,7 +10610,7 @@ var BarChartView = ({ series, language }) => {
         wrapperStyle: { fontSize: 10 }
       }
     ),
-    series.map((s, i) => /* @__PURE__ */ jsx67(Bar, { dataKey: `s${i}`, fill: CHART_PALETTE[i % CHART_PALETTE.length], radius: [2, 2, 0, 0] }, `s${i}`))
+    series.map((s, i) => /* @__PURE__ */ jsx65(Bar, { dataKey: `s${i}`, fill: CHART_PALETTE[i % CHART_PALETTE.length], radius: [2, 2, 0, 0] }, `s${i}`))
   ] }) });
 };
 BarChartView.displayName = "BarChartView";
@@ -10800,17 +10624,17 @@ var LineChartView = ({ series, language }) => {
     });
     return row;
   });
-  return /* @__PURE__ */ jsx67(ResponsiveContainer3, { width: "100%", height: 180, children: /* @__PURE__ */ jsxs57(LineChart, { data: chartData, margin: { top: 4, right: 4, left: -16, bottom: 0 }, children: [
-    /* @__PURE__ */ jsx67(XAxis, { dataKey: "x", tick: { fontSize: 10, fill: "hsl(var(--muted-foreground))" } }),
-    /* @__PURE__ */ jsx67(YAxis, { tick: { fontSize: 10, fill: "hsl(var(--muted-foreground))" } }),
-    /* @__PURE__ */ jsx67(
+  return /* @__PURE__ */ jsx65(ResponsiveContainer3, { width: "100%", height: 180, children: /* @__PURE__ */ jsxs57(LineChart, { data: chartData, margin: { top: 4, right: 4, left: -16, bottom: 0 }, children: [
+    /* @__PURE__ */ jsx65(XAxis, { dataKey: "x", tick: { fontSize: 10, fill: "hsl(var(--muted-foreground))" } }),
+    /* @__PURE__ */ jsx65(YAxis, { tick: { fontSize: 10, fill: "hsl(var(--muted-foreground))" } }),
+    /* @__PURE__ */ jsx65(
       Tooltip2,
       {
         contentStyle: { background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 11 },
         labelStyle: { color: "hsl(var(--foreground))" }
       }
     ),
-    series.length > 1 && /* @__PURE__ */ jsx67(
+    series.length > 1 && /* @__PURE__ */ jsx65(
       Legend,
       {
         formatter: (value) => {
@@ -10820,7 +10644,7 @@ var LineChartView = ({ series, language }) => {
         wrapperStyle: { fontSize: 10 }
       }
     ),
-    series.map((s, i) => /* @__PURE__ */ jsx67(
+    series.map((s, i) => /* @__PURE__ */ jsx65(
       Line,
       {
         type: "monotone",
@@ -10841,8 +10665,8 @@ var PieChartView = ({ series, language }) => {
     name: String(p.x),
     value: p.y
   }));
-  return /* @__PURE__ */ jsx67(ResponsiveContainer3, { width: "100%", height: 180, children: /* @__PURE__ */ jsxs57(PieChart, { children: [
-    /* @__PURE__ */ jsx67(
+  return /* @__PURE__ */ jsx65(ResponsiveContainer3, { width: "100%", height: 180, children: /* @__PURE__ */ jsxs57(PieChart, { children: [
+    /* @__PURE__ */ jsx65(
       Pie,
       {
         data: pieData,
@@ -10854,22 +10678,22 @@ var PieChartView = ({ series, language }) => {
         dataKey: "value",
         label: ({ name, percent }) => `${name} ${(percent * 100).toFixed(0)}%`,
         labelLine: false,
-        children: pieData.map((_, idx) => /* @__PURE__ */ jsx67(Cell, { fill: CHART_PALETTE[idx % CHART_PALETTE.length] }, `cell-${idx}`))
+        children: pieData.map((_, idx) => /* @__PURE__ */ jsx65(Cell, { fill: CHART_PALETTE[idx % CHART_PALETTE.length] }, `cell-${idx}`))
       }
     ),
-    /* @__PURE__ */ jsx67(
+    /* @__PURE__ */ jsx65(
       Tooltip2,
       {
         contentStyle: { background: "hsl(var(--card))", border: "1px solid hsl(var(--border))", fontSize: 11 }
       }
     ),
-    series.length > 1 && /* @__PURE__ */ jsx67(
+    series.length > 1 && /* @__PURE__ */ jsx65(
       Legend,
       {
         wrapperStyle: { fontSize: 10 }
       }
     ),
-    series.length === 1 && first.label_ar && language === "ar" && first.label_ar !== first.label_en && /* @__PURE__ */ jsx67(Legend, { wrapperStyle: { fontSize: 10 } })
+    series.length === 1 && first.label_ar && language === "ar" && first.label_ar !== first.label_en && /* @__PURE__ */ jsx65(Legend, { wrapperStyle: { fontSize: 10 } })
   ] }) });
 };
 PieChartView.displayName = "PieChartView";
@@ -10885,12 +10709,12 @@ var ArtifactChart = ({ data, language = "en" }) => {
     }));
   }
   if (series.length === 0) {
-    return /* @__PURE__ */ jsx67("p", { className: "text-xs text-muted-foreground italic", children: language === "ar" ? "\u0644\u0627 \u062A\u0648\u062C\u062F \u0628\u064A\u0627\u0646\u0627\u062A" : "No data" });
+    return /* @__PURE__ */ jsx65("p", { className: "text-xs text-muted-foreground italic", children: language === "ar" ? "\u0644\u0627 \u062A\u0648\u062C\u062F \u0628\u064A\u0627\u0646\u0627\u062A" : "No data" });
   }
   return /* @__PURE__ */ jsxs57("div", { className: "w-full", dir: "ltr", children: [
-    type === "bar" && /* @__PURE__ */ jsx67(BarChartView, { series, language }),
-    type === "line" && /* @__PURE__ */ jsx67(LineChartView, { series, language }),
-    type === "pie" && /* @__PURE__ */ jsx67(PieChartView, { series, language })
+    type === "bar" && /* @__PURE__ */ jsx65(BarChartView, { series, language }),
+    type === "line" && /* @__PURE__ */ jsx65(LineChartView, { series, language }),
+    type === "pie" && /* @__PURE__ */ jsx65(PieChartView, { series, language })
   ] });
 };
 ArtifactChart.displayName = "ArtifactChart";
@@ -10910,7 +10734,7 @@ import {
 } from "lucide-react";
 
 // src/components/intel/SeverityChip.tsx
-import { jsx as jsx68, jsxs as jsxs58 } from "react/jsx-runtime";
+import { jsx as jsx66, jsxs as jsxs58 } from "react/jsx-runtime";
 var SEVERITY_LABELS = {
   critical: { en: "Critical", ar: "\u062D\u0631\u062C" },
   high: { en: "High", ar: "\u0645\u0631\u062A\u0641\u0639" },
@@ -10946,7 +10770,7 @@ var SeverityChip = ({ severity, scopeName, language = "en", className }) => {
             ),
             "aria-hidden": "true",
             children: [
-              /* @__PURE__ */ jsx68(
+              /* @__PURE__ */ jsx66(
                 "span",
                 {
                   className: cn("size-1.5 rounded-full shrink-0", SEVERITY_DOT[severity]),
@@ -10957,7 +10781,7 @@ var SeverityChip = ({ severity, scopeName, language = "en", className }) => {
             ]
           }
         ),
-        scopeName && /* @__PURE__ */ jsx68(
+        scopeName && /* @__PURE__ */ jsx66(
           "span",
           {
             className: "inline-flex items-center rounded-md border border-border/60 bg-muted/40 px-1.5 py-0.5 text-[10px] font-medium leading-none text-muted-foreground",
@@ -10972,7 +10796,7 @@ var SeverityChip = ({ severity, scopeName, language = "en", className }) => {
 SeverityChip.displayName = "SeverityChip";
 
 // src/components/copilot/artifacts/ArtifactCard.tsx
-import { Fragment as Fragment17, jsx as jsx69, jsxs as jsxs59 } from "react/jsx-runtime";
+import { Fragment as Fragment17, jsx as jsx67, jsxs as jsxs59 } from "react/jsx-runtime";
 var ICONS = {
   trend: TrendingUp,
   users: Users,
@@ -10995,7 +10819,7 @@ function Sparkline({ values, className }) {
   const min = Math.min(...values), max = Math.max(...values);
   const span = max - min || 1;
   const pts = values.map((v, i) => `${i / (values.length - 1) * w},${h - (v - min) / span * h}`).join(" ");
-  return /* @__PURE__ */ jsx69("svg", { viewBox: `0 0 ${w} ${h}`, width: w, height: h, className, "aria-hidden": true, children: /* @__PURE__ */ jsx69("polyline", { points: pts, fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round", strokeLinejoin: "round" }) });
+  return /* @__PURE__ */ jsx67("svg", { viewBox: `0 0 ${w} ${h}`, width: w, height: h, className, "aria-hidden": true, children: /* @__PURE__ */ jsx67("polyline", { points: pts, fill: "none", stroke: "currentColor", strokeWidth: 1.5, strokeLinecap: "round", strokeLinejoin: "round" }) });
 }
 function MetricTile({ m, language }) {
   const tone = TONE[m.tone ?? "neutral"];
@@ -11003,11 +10827,11 @@ function MetricTile({ m, language }) {
   const label = language === "ar" && m.label_ar ? m.label_ar : m.label_en;
   return /* @__PURE__ */ jsxs59("div", { className: cn("flex items-start justify-between gap-2 rounded-lg border p-3", tone.tile), children: [
     /* @__PURE__ */ jsxs59("span", { className: "min-w-0", children: [
-      /* @__PURE__ */ jsx69("span", { className: "block truncate text-[11px] text-muted-foreground", children: label }),
-      /* @__PURE__ */ jsx69("span", { className: cn("mt-0.5 block text-lg font-bold leading-tight", tone.value), children: String(m.value) }),
-      m.trend && m.trend.length > 1 && /* @__PURE__ */ jsx69(Sparkline, { values: m.trend, className: cn("mt-1", tone.icon) })
+      /* @__PURE__ */ jsx67("span", { className: "block truncate text-[11px] text-muted-foreground", children: label }),
+      /* @__PURE__ */ jsx67("span", { className: cn("mt-0.5 block text-lg font-bold leading-tight", tone.value), children: String(m.value) }),
+      m.trend && m.trend.length > 1 && /* @__PURE__ */ jsx67(Sparkline, { values: m.trend, className: cn("mt-1", tone.icon) })
     ] }),
-    Icon && /* @__PURE__ */ jsx69(Icon, { className: cn("mt-0.5 h-4 w-4 shrink-0", tone.icon) })
+    Icon && /* @__PURE__ */ jsx67(Icon, { className: cn("mt-0.5 h-4 w-4 shrink-0", tone.icon) })
   ] });
 }
 var ArtifactCard = ({ data, artifactTitle, language = "en", dir }) => {
@@ -11023,25 +10847,25 @@ var ArtifactCard = ({ data, artifactTitle, language = "en", dir }) => {
   const isRich = data.metrics && data.metrics.length > 0 || !!summary || related.length > 0 || !!footer;
   return /* @__PURE__ */ jsxs59("div", { className: "space-y-3 rounded-xl border border-border bg-card p-4 text-foreground", dir: resolvedDir, children: [
     (cardTitle || severity) && /* @__PURE__ */ jsxs59("div", { className: "flex items-start justify-between gap-2", children: [
-      cardTitle && /* @__PURE__ */ jsx69("p", { className: "min-w-0 flex-1 text-sm font-semibold leading-snug", children: cardTitle }),
-      severity && /* @__PURE__ */ jsx69(SeverityChip, { severity, language, className: "mt-0.5 shrink-0" })
+      cardTitle && /* @__PURE__ */ jsx67("p", { className: "min-w-0 flex-1 text-sm font-semibold leading-snug", children: cardTitle }),
+      severity && /* @__PURE__ */ jsx67(SeverityChip, { severity, language, className: "mt-0.5 shrink-0" })
     ] }),
     isRich ? /* @__PURE__ */ jsxs59(Fragment17, { children: [
-      summary && /* @__PURE__ */ jsx69("p", { className: "text-sm leading-relaxed text-foreground/90", dir: "auto", children: summary }),
-      data.metrics && data.metrics.length > 0 && /* @__PURE__ */ jsx69("div", { className: "grid grid-cols-2 gap-2.5", children: data.metrics.map((m, i) => /* @__PURE__ */ jsx69(MetricTile, { m, language }, i)) }),
-      related.length > 0 && /* @__PURE__ */ jsx69("ul", { className: "space-y-1.5 border-t border-border/60 pt-3", children: related.map((r, i) => /* @__PURE__ */ jsxs59("li", { className: "flex items-start gap-2 text-xs text-muted-foreground", children: [
-        /* @__PURE__ */ jsx69(Sparkles6, { className: "mt-0.5 h-3.5 w-3.5 shrink-0 text-primary/70" }),
-        /* @__PURE__ */ jsx69("span", { className: "min-w-0", dir: "auto", children: r })
+      summary && /* @__PURE__ */ jsx67("p", { className: "text-sm leading-relaxed text-foreground/90", dir: "auto", children: summary }),
+      data.metrics && data.metrics.length > 0 && /* @__PURE__ */ jsx67("div", { className: "grid grid-cols-2 gap-2.5", children: data.metrics.map((m, i) => /* @__PURE__ */ jsx67(MetricTile, { m, language }, i)) }),
+      related.length > 0 && /* @__PURE__ */ jsx67("ul", { className: "space-y-1.5 border-t border-border/60 pt-3", children: related.map((r, i) => /* @__PURE__ */ jsxs59("li", { className: "flex items-start gap-2 text-xs text-muted-foreground", children: [
+        /* @__PURE__ */ jsx67(Sparkles6, { className: "mt-0.5 h-3.5 w-3.5 shrink-0 text-primary/70" }),
+        /* @__PURE__ */ jsx67("span", { className: "min-w-0", dir: "auto", children: r })
       ] }, i)) }),
       footer && /* @__PURE__ */ jsxs59("div", { className: "flex items-start gap-2 border-t border-border/60 pt-3 text-xs font-medium text-success", children: [
-        /* @__PURE__ */ jsx69(Sparkles6, { className: "mt-0.5 h-3.5 w-3.5 shrink-0" }),
-        /* @__PURE__ */ jsx69("span", { className: "min-w-0", dir: "auto", children: footer })
+        /* @__PURE__ */ jsx67(Sparkles6, { className: "mt-0.5 h-3.5 w-3.5 shrink-0" }),
+        /* @__PURE__ */ jsx67("span", { className: "min-w-0", dir: "auto", children: footer })
       ] })
     ] }) : /* @__PURE__ */ jsxs59(Fragment17, { children: [
-      cardBody && /* @__PURE__ */ jsx69("p", { className: "text-xs leading-relaxed text-muted-foreground", dir: "auto", children: cardBody }),
-      data.fields && data.fields.length > 0 && /* @__PURE__ */ jsx69("dl", { className: "space-y-1 border-t border-border/50 pt-2", children: data.fields.map((field, i) => /* @__PURE__ */ jsxs59("div", { className: "flex items-start gap-2 text-xs", children: [
-        /* @__PURE__ */ jsx69("dt", { className: "min-w-[6rem] max-w-[8rem] shrink-0 truncate font-medium text-muted-foreground", children: field.label }),
-        /* @__PURE__ */ jsx69("dd", { className: "min-w-0 flex-1 break-words text-foreground", dir: "auto", children: String(field.value) })
+      cardBody && /* @__PURE__ */ jsx67("p", { className: "text-xs leading-relaxed text-muted-foreground", dir: "auto", children: cardBody }),
+      data.fields && data.fields.length > 0 && /* @__PURE__ */ jsx67("dl", { className: "space-y-1 border-t border-border/50 pt-2", children: data.fields.map((field, i) => /* @__PURE__ */ jsxs59("div", { className: "flex items-start gap-2 text-xs", children: [
+        /* @__PURE__ */ jsx67("dt", { className: "min-w-[6rem] max-w-[8rem] shrink-0 truncate font-medium text-muted-foreground", children: field.label }),
+        /* @__PURE__ */ jsx67("dd", { className: "min-w-0 flex-1 break-words text-foreground", dir: "auto", children: String(field.value) })
       ] }, i)) })
     ] })
   ] });
@@ -11049,7 +10873,7 @@ var ArtifactCard = ({ data, artifactTitle, language = "en", dir }) => {
 ArtifactCard.displayName = "ArtifactCard";
 
 // src/components/copilot/artifacts/ArtifactActions.tsx
-import { jsx as jsx70 } from "react/jsx-runtime";
+import { jsx as jsx68 } from "react/jsx-runtime";
 var ArtifactActions = ({ data, onAction, language = "en", dir }) => {
   const resolvedDir = dir ?? (language === "ar" ? "rtl" : "ltr");
   if (!data.items || data.items.length === 0) {
@@ -11058,7 +10882,7 @@ var ArtifactActions = ({ data, onAction, language = "en", dir }) => {
   const handleClick = (item) => {
     onAction?.(item);
   };
-  return /* @__PURE__ */ jsx70(
+  return /* @__PURE__ */ jsx68(
     "div",
     {
       className: "flex flex-wrap gap-2",
@@ -11067,7 +10891,7 @@ var ArtifactActions = ({ data, onAction, language = "en", dir }) => {
       "aria-label": language === "ar" ? "\u0625\u062C\u0631\u0627\u0621\u0627\u062A \u0645\u0642\u062A\u0631\u062D\u0629" : "Suggested actions",
       children: data.items.map((item) => {
         const label = language === "ar" && item.label_ar ? item.label_ar : item.label_en;
-        return /* @__PURE__ */ jsx70(
+        return /* @__PURE__ */ jsx68(
           "button",
           {
             type: "button",
@@ -11085,12 +10909,12 @@ var ArtifactActions = ({ data, onAction, language = "en", dir }) => {
 ArtifactActions.displayName = "ArtifactActions";
 
 // src/components/markdown/MarkdownRenderer.tsx
-import * as React18 from "react";
+import * as React17 from "react";
 import ReactMarkdown from "react-markdown";
 import remarkGfm from "remark-gfm";
 import rehypeHighlight from "rehype-highlight";
 import { Copy, Check as Check5, ImageDown } from "lucide-react";
-import { Fragment as Fragment18, jsx as jsx71, jsxs as jsxs60 } from "react/jsx-runtime";
+import { Fragment as Fragment18, jsx as jsx69, jsxs as jsxs60 } from "react/jsx-runtime";
 function hastText(node) {
   if (!node) return "";
   if (node.type === "text") return node.value ?? "";
@@ -11107,9 +10931,9 @@ function parseTable(node) {
   return { headers, rows };
 }
 function MarkdownTable({ node, language = "en" }) {
-  const { headers, rows } = React18.useMemo(() => parseTable(node), [node]);
+  const { headers, rows } = React17.useMemo(() => parseTable(node), [node]);
   if (!headers.length) {
-    return /* @__PURE__ */ jsx71("div", { className: "my-3 overflow-x-auto rounded-lg border border-border", children: /* @__PURE__ */ jsx71("table", { className: "w-full text-start text-sm" }) });
+    return /* @__PURE__ */ jsx69("div", { className: "my-3 overflow-x-auto rounded-lg border border-border", children: /* @__PURE__ */ jsx69("table", { className: "w-full text-start text-sm" }) });
   }
   const columns = headers.map((h, i) => ({
     accessorKey: `c${i}`,
@@ -11123,7 +10947,7 @@ function MarkdownTable({ node, language = "en" }) {
     });
     return o;
   });
-  return /* @__PURE__ */ jsx71("div", { className: "my-3", children: /* @__PURE__ */ jsx71(
+  return /* @__PURE__ */ jsx69("div", { className: "my-3", children: /* @__PURE__ */ jsx69(
     DataTable,
     {
       columns,
@@ -11138,9 +10962,9 @@ function MarkdownTable({ node, language = "en" }) {
   ) });
 }
 function CodeBlock({ lang, children }) {
-  const boxRef = React18.useRef(null);
-  const codeRef = React18.useRef(null);
-  const [copied, setCopied] = React18.useState(false);
+  const boxRef = React17.useRef(null);
+  const codeRef = React17.useRef(null);
+  const [copied, setCopied] = React17.useState(false);
   const copy = () => {
     const text = codeRef.current?.textContent ?? "";
     navigator.clipboard?.writeText(text).then(() => {
@@ -11160,19 +10984,19 @@ function CodeBlock({ lang, children }) {
   };
   return /* @__PURE__ */ jsxs60("div", { className: "my-3 overflow-hidden rounded-lg border border-border", children: [
     /* @__PURE__ */ jsxs60("div", { className: "flex items-center justify-between border-b border-border bg-muted/60 px-3 py-1.5", children: [
-      /* @__PURE__ */ jsx71("span", { className: "font-mono text-xs text-muted-foreground", children: lang || "code" }),
+      /* @__PURE__ */ jsx69("span", { className: "font-mono text-xs text-muted-foreground", children: lang || "code" }),
       /* @__PURE__ */ jsxs60("span", { className: "flex items-center gap-1", children: [
         /* @__PURE__ */ jsxs60("button", { onClick: copy, className: "flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-muted-foreground transition hover:bg-accent hover:text-foreground", children: [
-          copied ? /* @__PURE__ */ jsx71(Check5, { className: "h-3 w-3" }) : /* @__PURE__ */ jsx71(Copy, { className: "h-3 w-3" }),
+          copied ? /* @__PURE__ */ jsx69(Check5, { className: "h-3 w-3" }) : /* @__PURE__ */ jsx69(Copy, { className: "h-3 w-3" }),
           copied ? "Copied" : "Copy"
         ] }),
         /* @__PURE__ */ jsxs60("button", { onClick: downloadPng, "aria-label": "Download as PNG", className: "flex items-center gap-1 rounded px-1.5 py-0.5 text-xs text-muted-foreground transition hover:bg-accent hover:text-foreground", children: [
-          /* @__PURE__ */ jsx71(ImageDown, { className: "h-3 w-3" }),
+          /* @__PURE__ */ jsx69(ImageDown, { className: "h-3 w-3" }),
           "PNG"
         ] })
       ] })
     ] }),
-    /* @__PURE__ */ jsx71("div", { ref: boxRef, className: "bg-muted/40 p-3", children: /* @__PURE__ */ jsx71("pre", { dir: "ltr", className: "overflow-x-auto text-[0.8rem] leading-relaxed [&>code]:bg-transparent [&>code]:p-0", children: /* @__PURE__ */ jsx71("code", { ref: codeRef, className: cn("hljs", lang && `language-${lang}`), children }) }) })
+    /* @__PURE__ */ jsx69("div", { ref: boxRef, className: "bg-muted/40 p-3", children: /* @__PURE__ */ jsx69("pre", { dir: "ltr", className: "overflow-x-auto text-[0.8rem] leading-relaxed [&>code]:bg-transparent [&>code]:p-0", children: /* @__PURE__ */ jsx69("code", { ref: codeRef, className: cn("hljs", lang && `language-${lang}`), children }) }) })
   ] });
 }
 var _mermaidPromise = null;
@@ -11187,9 +11011,9 @@ function loadMermaid() {
 }
 var _mermaidSeq = 0;
 function MermaidBlock({ code }) {
-  const ref = React18.useRef(null);
-  const [error, setError] = React18.useState(null);
-  React18.useEffect(() => {
+  const ref = React17.useRef(null);
+  const [error, setError] = React17.useState(null);
+  React17.useEffect(() => {
     let cancelled = false;
     loadMermaid().then(async (mermaid) => {
       const id = `tg-mermaid-${++_mermaidSeq}`;
@@ -11208,38 +11032,38 @@ function MermaidBlock({ code }) {
       code
     ] });
   }
-  return /* @__PURE__ */ jsx71("div", { ref, className: "my-3 flex justify-center overflow-x-auto rounded-lg border border-border bg-card p-3" });
+  return /* @__PURE__ */ jsx69("div", { ref, className: "my-3 flex justify-center overflow-x-auto rounded-lg border border-border bg-card p-3" });
 }
 function MarkdownRenderer({ content, language = "en", className }) {
   const isRTL = language === "ar";
-  return /* @__PURE__ */ jsx71("div", { dir: isRTL ? "rtl" : "ltr", className: cn("tg-md text-sm leading-relaxed text-foreground", className), children: /* @__PURE__ */ jsx71(
+  return /* @__PURE__ */ jsx69("div", { dir: isRTL ? "rtl" : "ltr", className: cn("tg-md text-sm leading-relaxed text-foreground", className), children: /* @__PURE__ */ jsx69(
     ReactMarkdown,
     {
       remarkPlugins: [remarkGfm],
       rehypePlugins: [[rehypeHighlight, { detect: true, ignoreMissing: true }]],
       components: {
-        h1: (p) => /* @__PURE__ */ jsx71("h1", { className: "mb-3 mt-5 text-2xl font-bold", ...p }),
-        h2: (p) => /* @__PURE__ */ jsx71("h2", { className: "mb-2 mt-5 border-b border-border pb-1 text-xl font-semibold", ...p }),
-        h3: (p) => /* @__PURE__ */ jsx71("h3", { className: "mb-2 mt-4 text-lg font-semibold", ...p }),
-        p: (p) => /* @__PURE__ */ jsx71("p", { className: "my-2.5", ...p }),
-        a: (p) => /* @__PURE__ */ jsx71("a", { className: "font-medium text-primary underline-offset-2 hover:underline", ...p }),
-        ul: (p) => /* @__PURE__ */ jsx71("ul", { className: "my-2.5 list-disc space-y-1 ps-6", ...p }),
-        ol: (p) => /* @__PURE__ */ jsx71("ol", { className: "my-2.5 list-decimal space-y-1 ps-6", ...p }),
-        li: (p) => /* @__PURE__ */ jsx71("li", { className: "marker:text-muted-foreground", ...p }),
-        blockquote: (p) => /* @__PURE__ */ jsx71("blockquote", { className: "my-3 border-s-4 border-primary/40 ps-4 text-muted-foreground", ...p }),
-        hr: () => /* @__PURE__ */ jsx71("hr", { className: "my-5 border-border" }),
+        h1: (p) => /* @__PURE__ */ jsx69("h1", { className: "mb-3 mt-5 text-2xl font-bold", ...p }),
+        h2: (p) => /* @__PURE__ */ jsx69("h2", { className: "mb-2 mt-5 border-b border-border pb-1 text-xl font-semibold", ...p }),
+        h3: (p) => /* @__PURE__ */ jsx69("h3", { className: "mb-2 mt-4 text-lg font-semibold", ...p }),
+        p: (p) => /* @__PURE__ */ jsx69("p", { className: "my-2.5", ...p }),
+        a: (p) => /* @__PURE__ */ jsx69("a", { className: "font-medium text-primary underline-offset-2 hover:underline", ...p }),
+        ul: (p) => /* @__PURE__ */ jsx69("ul", { className: "my-2.5 list-disc space-y-1 ps-6", ...p }),
+        ol: (p) => /* @__PURE__ */ jsx69("ol", { className: "my-2.5 list-decimal space-y-1 ps-6", ...p }),
+        li: (p) => /* @__PURE__ */ jsx69("li", { className: "marker:text-muted-foreground", ...p }),
+        blockquote: (p) => /* @__PURE__ */ jsx69("blockquote", { className: "my-3 border-s-4 border-primary/40 ps-4 text-muted-foreground", ...p }),
+        hr: () => /* @__PURE__ */ jsx69("hr", { className: "my-5 border-border" }),
         // GFM tables render through the kit DataTable (sortable + CSV export).
-        table: (p) => /* @__PURE__ */ jsx71(MarkdownTable, { node: p.node, language }),
+        table: (p) => /* @__PURE__ */ jsx69(MarkdownTable, { node: p.node, language }),
         code(props) {
           const { children, className: cls, node, ...rest } = props;
           const text = String(children ?? "");
           const lang = /language-(\w+)/.exec(cls || "")?.[1];
           const inline = !node || node.position?.start.line === node.position?.end.line;
-          if (lang === "mermaid") return /* @__PURE__ */ jsx71(MermaidBlock, { code: text.replace(/\n$/, "") });
-          if (inline && !cls) return /* @__PURE__ */ jsx71("code", { className: "rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em] text-foreground", ...rest, children });
-          return /* @__PURE__ */ jsx71(CodeBlock, { lang, children });
+          if (lang === "mermaid") return /* @__PURE__ */ jsx69(MermaidBlock, { code: text.replace(/\n$/, "") });
+          if (inline && !cls) return /* @__PURE__ */ jsx69("code", { className: "rounded bg-muted px-1.5 py-0.5 font-mono text-[0.85em] text-foreground", ...rest, children });
+          return /* @__PURE__ */ jsx69(CodeBlock, { lang, children });
         },
-        pre: (p) => /* @__PURE__ */ jsx71(Fragment18, { children: p.children })
+        pre: (p) => /* @__PURE__ */ jsx69(Fragment18, { children: p.children })
       },
       children: content
     }
@@ -11247,8 +11071,8 @@ function MarkdownRenderer({ content, language = "en", className }) {
 }
 
 // src/components/chat/MarkdownContent.tsx
-import { jsx as jsx72 } from "react/jsx-runtime";
-var MarkdownContent = ({ content, dir = "ltr", className }) => /* @__PURE__ */ jsx72(
+import { jsx as jsx70 } from "react/jsx-runtime";
+var MarkdownContent = ({ content, dir = "ltr", className }) => /* @__PURE__ */ jsx70(
   MarkdownRenderer,
   {
     content,
@@ -11260,18 +11084,18 @@ MarkdownContent.displayName = "MarkdownContent";
 var MarkdownContent_default = MarkdownContent;
 
 // src/components/copilot/artifacts/ArtifactMarkdown.tsx
-import { jsx as jsx73 } from "react/jsx-runtime";
+import { jsx as jsx71 } from "react/jsx-runtime";
 var ArtifactMarkdown = ({ data, language = "en", dir }) => {
   const resolvedDir = dir ?? (language === "ar" ? "rtl" : "ltr");
   if (!data.content) {
     return null;
   }
-  return /* @__PURE__ */ jsx73("div", { className: "rounded-md bg-muted/30 border border-border/60 p-3", dir: resolvedDir, children: /* @__PURE__ */ jsx73(MarkdownContent_default, { content: data.content, dir: resolvedDir }) });
+  return /* @__PURE__ */ jsx71("div", { className: "rounded-md bg-muted/30 border border-border/60 p-3", dir: resolvedDir, children: /* @__PURE__ */ jsx71(MarkdownContent_default, { content: data.content, dir: resolvedDir }) });
 };
 ArtifactMarkdown.displayName = "ArtifactMarkdown";
 
 // src/components/copilot/artifacts/ArtifactClientCandidates.tsx
-import { jsx as jsx74, jsxs as jsxs61 } from "react/jsx-runtime";
+import { jsx as jsx72, jsxs as jsxs61 } from "react/jsx-runtime";
 var ArtifactClientCandidates = ({
   data,
   onInteract,
@@ -11295,7 +11119,7 @@ var ArtifactClientCandidates = ({
       role: "list",
       "aria-label": language === "ar" ? "\u0639\u0645\u0644\u0627\u0621 \u0645\u0631\u0634\u062D\u0648\u0646" : "Candidate clients",
       children: [
-        data.prompt && /* @__PURE__ */ jsx74("p", { className: "text-xs text-muted-foreground mb-2", dir: "auto", children: data.prompt }),
+        data.prompt && /* @__PURE__ */ jsx72("p", { className: "text-xs text-muted-foreground mb-2", dir: "auto", children: data.prompt }),
         data.candidates.map((candidate, idx) => /* @__PURE__ */ jsxs61(
           "button",
           {
@@ -11305,10 +11129,10 @@ var ArtifactClientCandidates = ({
             className: "w-full text-start rounded-lg border border-border bg-card hover:bg-accent/50 hover:border-primary/40 px-3 py-2.5 transition-colors duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1",
             "aria-label": `${chooseLabel}: ${candidate.name}`,
             children: [
-              /* @__PURE__ */ jsx74("p", { className: "text-sm font-semibold text-foreground leading-snug", children: candidate.name }),
-              candidate.website_url && /* @__PURE__ */ jsx74("p", { className: "text-xs text-muted-foreground mt-0.5 truncate", children: candidate.website_url }),
-              candidate.sector && /* @__PURE__ */ jsx74("span", { className: "mt-1 inline-block text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium", children: candidate.sector }),
-              candidate.summary && /* @__PURE__ */ jsx74("p", { className: "text-xs text-foreground/70 mt-1.5 line-clamp-2 leading-relaxed", dir: "auto", children: candidate.summary })
+              /* @__PURE__ */ jsx72("p", { className: "text-sm font-semibold text-foreground leading-snug", children: candidate.name }),
+              candidate.website_url && /* @__PURE__ */ jsx72("p", { className: "text-xs text-muted-foreground mt-0.5 truncate", children: candidate.website_url }),
+              candidate.sector && /* @__PURE__ */ jsx72("span", { className: "mt-1 inline-block text-[10px] px-1.5 py-0.5 rounded-full bg-primary/10 text-primary font-medium", children: candidate.sector }),
+              candidate.summary && /* @__PURE__ */ jsx72("p", { className: "text-xs text-foreground/70 mt-1.5 line-clamp-2 leading-relaxed", dir: "auto", children: candidate.summary })
             ]
           },
           idx
@@ -11320,8 +11144,8 @@ var ArtifactClientCandidates = ({
 ArtifactClientCandidates.displayName = "ArtifactClientCandidates";
 
 // src/components/copilot/artifacts/ArtifactClientFieldPicker.tsx
-import { useState as useState36 } from "react";
-import { jsx as jsx75, jsxs as jsxs62 } from "react/jsx-runtime";
+import { useState as useState35 } from "react";
+import { jsx as jsx73, jsxs as jsxs62 } from "react/jsx-runtime";
 var ArtifactClientFieldPicker = ({
   data,
   onInteract,
@@ -11329,7 +11153,7 @@ var ArtifactClientFieldPicker = ({
   dir
 }) => {
   const resolvedDir = dir ?? (language === "ar" ? "rtl" : "ltr");
-  const [selected, setSelected] = useState36(
+  const [selected, setSelected] = useState35(
     new Set((data.fields ?? []).map((f) => f.key))
   );
   if (!data.fields || data.fields.length === 0) return null;
@@ -11352,7 +11176,7 @@ var ArtifactClientFieldPicker = ({
     data.fields.map((field) => {
       const label = language === "ar" && field.label_ar ? field.label_ar : field.label_en;
       const isChecked = selected.has(field.key);
-      return /* @__PURE__ */ jsx75(
+      return /* @__PURE__ */ jsx73(
         "button",
         {
           type: "button",
@@ -11360,19 +11184,19 @@ var ArtifactClientFieldPicker = ({
           "aria-pressed": isChecked,
           className: `w-full text-start rounded-lg border px-3 py-2 transition-colors duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1 ${isChecked ? "border-primary/40 bg-primary/5" : "border-border bg-card hover:bg-muted/40"}`,
           children: /* @__PURE__ */ jsxs62("div", { className: "flex items-start gap-2.5", children: [
-            /* @__PURE__ */ jsx75(
+            /* @__PURE__ */ jsx73(
               "span",
               {
                 className: `mt-0.5 w-4 h-4 rounded shrink-0 flex items-center justify-center border transition-colors duration-fast ease-standard ${isChecked ? "bg-primary border-primary" : "border-border bg-background"}`,
                 "aria-hidden": "true",
-                children: isChecked && /* @__PURE__ */ jsx75(
+                children: isChecked && /* @__PURE__ */ jsx73(
                   "svg",
                   {
                     className: "w-2.5 h-2.5 text-primary-foreground",
                     fill: "none",
                     viewBox: "0 0 12 12",
                     "aria-hidden": "true",
-                    children: /* @__PURE__ */ jsx75(
+                    children: /* @__PURE__ */ jsx73(
                       "path",
                       {
                         d: "M2 6l3 3 5-5",
@@ -11387,14 +11211,14 @@ var ArtifactClientFieldPicker = ({
               }
             ),
             /* @__PURE__ */ jsxs62("div", { className: "min-w-0 flex-1", children: [
-              /* @__PURE__ */ jsx75("p", { className: "text-xs font-medium text-foreground leading-snug", children: label }),
+              /* @__PURE__ */ jsx73("p", { className: "text-xs font-medium text-foreground leading-snug", children: label }),
               field.current && /* @__PURE__ */ jsxs62("p", { className: "text-[10px] text-muted-foreground mt-0.5 truncate", children: [
-                /* @__PURE__ */ jsx75("span", { className: "font-medium", children: currentLabel }),
+                /* @__PURE__ */ jsx73("span", { className: "font-medium", children: currentLabel }),
                 " ",
                 field.current
               ] }),
               field.suggested && /* @__PURE__ */ jsxs62("p", { className: "text-[10px] text-primary mt-0.5 truncate", children: [
-                /* @__PURE__ */ jsx75("span", { className: "font-medium", children: suggestedLabel }),
+                /* @__PURE__ */ jsx73("span", { className: "font-medium", children: suggestedLabel }),
                 " ",
                 field.suggested
               ] })
@@ -11404,7 +11228,7 @@ var ArtifactClientFieldPicker = ({
         field.key
       );
     }),
-    /* @__PURE__ */ jsx75(
+    /* @__PURE__ */ jsx73(
       "button",
       {
         type: "button",
@@ -11419,7 +11243,7 @@ var ArtifactClientFieldPicker = ({
 ArtifactClientFieldPicker.displayName = "ArtifactClientFieldPicker";
 
 // src/components/copilot/artifacts/ArtifactClientDiffConfirm.tsx
-import { jsx as jsx76, jsxs as jsxs63 } from "react/jsx-runtime";
+import { jsx as jsx74, jsxs as jsxs63 } from "react/jsx-runtime";
 var ArtifactClientDiffConfirm = ({
   data,
   onInteract,
@@ -11445,12 +11269,12 @@ var ArtifactClientDiffConfirm = ({
       className: "rounded-lg border border-border bg-card overflow-hidden",
       dir: resolvedDir,
       children: [
-        title && /* @__PURE__ */ jsx76("div", { className: "px-3 py-2 border-b border-border bg-muted/40", children: /* @__PURE__ */ jsx76("p", { className: "text-xs font-semibold text-foreground", dir: "auto", children: title }) }),
+        title && /* @__PURE__ */ jsx74("div", { className: "px-3 py-2 border-b border-border bg-muted/40", children: /* @__PURE__ */ jsx74("p", { className: "text-xs font-semibold text-foreground", dir: "auto", children: title }) }),
         /* @__PURE__ */ jsxs63("div", { className: "divide-y divide-border", children: [
           /* @__PURE__ */ jsxs63("div", { className: "grid grid-cols-[1fr_1fr_1fr] gap-2 px-3 py-1.5 bg-muted/20 text-[10px] font-semibold text-muted-foreground uppercase tracking-wide", children: [
-            /* @__PURE__ */ jsx76("span", { children: language === "ar" ? "\u0627\u0644\u062D\u0642\u0644" : "Field" }),
-            /* @__PURE__ */ jsx76("span", { children: oldColLabel }),
-            /* @__PURE__ */ jsx76("span", { className: "text-success", children: newColLabel })
+            /* @__PURE__ */ jsx74("span", { children: language === "ar" ? "\u0627\u0644\u062D\u0642\u0644" : "Field" }),
+            /* @__PURE__ */ jsx74("span", { children: oldColLabel }),
+            /* @__PURE__ */ jsx74("span", { className: "text-success", children: newColLabel })
           ] }),
           data.rows.map((row) => {
             const label = language === "ar" && row.label_ar ? row.label_ar : row.label_en;
@@ -11459,8 +11283,8 @@ var ArtifactClientDiffConfirm = ({
               {
                 className: "grid grid-cols-[1fr_1fr_1fr] gap-2 items-start px-3 py-2 text-xs",
                 children: [
-                  /* @__PURE__ */ jsx76("span", { className: "text-muted-foreground font-medium leading-snug", children: label }),
-                  /* @__PURE__ */ jsx76(
+                  /* @__PURE__ */ jsx74("span", { className: "text-muted-foreground font-medium leading-snug", children: label }),
+                  /* @__PURE__ */ jsx74(
                     "span",
                     {
                       className: "text-foreground/50 line-through truncate leading-snug",
@@ -11468,7 +11292,7 @@ var ArtifactClientDiffConfirm = ({
                       children: row.old !== void 0 && row.old !== "" ? row.old : "\u2014"
                     }
                   ),
-                  /* @__PURE__ */ jsx76(
+                  /* @__PURE__ */ jsx74(
                     "span",
                     {
                       className: "text-success font-medium truncate leading-snug",
@@ -11488,7 +11312,7 @@ var ArtifactClientDiffConfirm = ({
             className: "px-3 py-2.5 border-t border-border bg-muted/20 flex items-center gap-2 justify-end",
             dir: resolvedDir,
             children: [
-              /* @__PURE__ */ jsx76(
+              /* @__PURE__ */ jsx74(
                 "button",
                 {
                   type: "button",
@@ -11497,7 +11321,7 @@ var ArtifactClientDiffConfirm = ({
                   children: cancelLabel
                 }
               ),
-              /* @__PURE__ */ jsx76(
+              /* @__PURE__ */ jsx74(
                 "button",
                 {
                   type: "button",
@@ -11516,7 +11340,7 @@ var ArtifactClientDiffConfirm = ({
 ArtifactClientDiffConfirm.displayName = "ArtifactClientDiffConfirm";
 
 // src/components/copilot/artifacts/ArtifactPersonaStarters.tsx
-import { jsx as jsx77 } from "react/jsx-runtime";
+import { jsx as jsx75 } from "react/jsx-runtime";
 var ArtifactPersonaStarters = ({
   data,
   onInteract,
@@ -11528,7 +11352,7 @@ var ArtifactPersonaStarters = ({
   const handleClick = (prompt) => {
     onInteract?.({ kind: "persona_start", payload: { prompt } });
   };
-  return /* @__PURE__ */ jsx77(
+  return /* @__PURE__ */ jsx75(
     "div",
     {
       className: "flex flex-wrap gap-2",
@@ -11537,7 +11361,7 @@ var ArtifactPersonaStarters = ({
       "aria-label": language === "ar" ? "\u0623\u0633\u0626\u0644\u0629 \u0627\u0641\u062A\u062A\u0627\u062D\u064A\u0629 \u0645\u0642\u062A\u0631\u062D\u0629" : "Suggested opening questions",
       children: data.starters.map((starter, idx) => {
         const label = language === "ar" && starter.label_ar ? starter.label_ar : starter.label_en;
-        return /* @__PURE__ */ jsx77(
+        return /* @__PURE__ */ jsx75(
           "button",
           {
             type: "button",
@@ -11555,10 +11379,10 @@ var ArtifactPersonaStarters = ({
 ArtifactPersonaStarters.displayName = "ArtifactPersonaStarters";
 
 // src/components/copilot/artifacts/ArtifactRenderer.tsx
-import { jsx as jsx78, jsxs as jsxs64 } from "react/jsx-runtime";
+import { jsx as jsx76, jsxs as jsxs64 } from "react/jsx-runtime";
 var UnknownArtifact = ({ artifact, language }) => /* @__PURE__ */ jsxs64("details", { className: "rounded-md border border-dashed border-border bg-muted/30 p-3 text-xs", children: [
-  /* @__PURE__ */ jsx78("summary", { className: "cursor-pointer text-muted-foreground font-medium select-none", children: language === "ar" ? `\u0639\u0646\u0635\u0631 \u063A\u064A\u0631 \u0645\u0639\u0631\u0648\u0641: ${artifact.kind}` : `Unknown artifact kind: ${artifact.kind}` }),
-  /* @__PURE__ */ jsx78("pre", { className: "mt-2 text-foreground/70 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(artifact.data, null, 2) })
+  /* @__PURE__ */ jsx76("summary", { className: "cursor-pointer text-muted-foreground font-medium select-none", children: language === "ar" ? `\u0639\u0646\u0635\u0631 \u063A\u064A\u0631 \u0645\u0639\u0631\u0648\u0641: ${artifact.kind}` : `Unknown artifact kind: ${artifact.kind}` }),
+  /* @__PURE__ */ jsx76("pre", { className: "mt-2 text-foreground/70 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(artifact.data, null, 2) })
 ] });
 UnknownArtifact.displayName = "UnknownArtifact";
 var ArtifactRenderer = ({
@@ -11573,7 +11397,7 @@ var ArtifactRenderer = ({
   const renderBody = () => {
     switch (artifact.kind) {
       case "table":
-        return /* @__PURE__ */ jsx78(
+        return /* @__PURE__ */ jsx76(
           ArtifactTable,
           {
             data: artifact.data,
@@ -11582,7 +11406,7 @@ var ArtifactRenderer = ({
           }
         );
       case "chart":
-        return /* @__PURE__ */ jsx78(
+        return /* @__PURE__ */ jsx76(
           ArtifactChart,
           {
             data: artifact.data,
@@ -11591,7 +11415,7 @@ var ArtifactRenderer = ({
           }
         );
       case "card":
-        return /* @__PURE__ */ jsx78(
+        return /* @__PURE__ */ jsx76(
           ArtifactCard,
           {
             data: artifact.data,
@@ -11601,7 +11425,7 @@ var ArtifactRenderer = ({
           }
         );
       case "actions":
-        return /* @__PURE__ */ jsx78(
+        return /* @__PURE__ */ jsx76(
           ArtifactActions,
           {
             data: artifact.data,
@@ -11611,7 +11435,7 @@ var ArtifactRenderer = ({
           }
         );
       case "markdown":
-        return /* @__PURE__ */ jsx78(
+        return /* @__PURE__ */ jsx76(
           ArtifactMarkdown,
           {
             data: artifact.data,
@@ -11620,7 +11444,7 @@ var ArtifactRenderer = ({
           }
         );
       case "client_candidates":
-        return /* @__PURE__ */ jsx78(
+        return /* @__PURE__ */ jsx76(
           ArtifactClientCandidates,
           {
             data: artifact.data,
@@ -11630,7 +11454,7 @@ var ArtifactRenderer = ({
           }
         );
       case "client_field_picker":
-        return /* @__PURE__ */ jsx78(
+        return /* @__PURE__ */ jsx76(
           ArtifactClientFieldPicker,
           {
             data: artifact.data,
@@ -11640,7 +11464,7 @@ var ArtifactRenderer = ({
           }
         );
       case "client_diff_confirm":
-        return /* @__PURE__ */ jsx78(
+        return /* @__PURE__ */ jsx76(
           ArtifactClientDiffConfirm,
           {
             data: artifact.data,
@@ -11650,7 +11474,7 @@ var ArtifactRenderer = ({
           }
         );
       case "persona_starters":
-        return /* @__PURE__ */ jsx78(
+        return /* @__PURE__ */ jsx76(
           ArtifactPersonaStarters,
           {
             data: artifact.data,
@@ -11660,7 +11484,7 @@ var ArtifactRenderer = ({
           }
         );
       default:
-        return /* @__PURE__ */ jsx78(UnknownArtifact, { artifact, language });
+        return /* @__PURE__ */ jsx76(UnknownArtifact, { artifact, language });
     }
   };
   return /* @__PURE__ */ jsxs64(
@@ -11671,7 +11495,7 @@ var ArtifactRenderer = ({
       "data-artifact-kind": artifact.kind,
       "data-artifact-version": artifact.version,
       children: [
-        titleText && artifact.kind !== "card" && /* @__PURE__ */ jsx78("p", { className: "text-xs font-semibold text-foreground/70 leading-none px-0.5", children: titleText }),
+        titleText && artifact.kind !== "card" && /* @__PURE__ */ jsx76("p", { className: "text-xs font-semibold text-foreground/70 leading-none px-0.5", children: titleText }),
         renderBody()
       ]
     }
@@ -11680,10 +11504,10 @@ var ArtifactRenderer = ({
 ArtifactRenderer.displayName = "ArtifactRenderer";
 
 // src/components/feedback/FeedbackButton.tsx
-import * as React19 from "react";
+import * as React18 from "react";
 import { MessageSquarePlus } from "lucide-react";
 import { cva as cva3 } from "class-variance-authority";
-import { jsx as jsx79, jsxs as jsxs65 } from "react/jsx-runtime";
+import { jsx as jsx77, jsxs as jsxs65 } from "react/jsx-runtime";
 var feedbackButtonVariants = cva3(
   "inline-flex items-center gap-1.5 font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ring-offset-background",
   {
@@ -11696,7 +11520,7 @@ var feedbackButtonVariants = cva3(
     defaultVariants: { variant: "floating" }
   }
 );
-var FeedbackButton = React19.forwardRef(
+var FeedbackButton = React18.forwardRef(
   ({ variant, language = "en", count, label, onOpen, onClick, className, ...props }, ref) => {
     const ar = language === "ar";
     const text = label ?? (ar ? "\u0645\u0644\u0627\u062D\u0638\u0627\u062A" : "Feedback");
@@ -11714,9 +11538,9 @@ var FeedbackButton = React19.forwardRef(
         className: cn(feedbackButtonVariants({ variant }), "relative", className),
         ...props,
         children: [
-          /* @__PURE__ */ jsx79(MessageSquarePlus, { size: variant === "inline" ? 15 : 18 }),
-          /* @__PURE__ */ jsx79("span", { className: cn(variant === "inline" && "hidden sm:inline"), children: text }),
-          count && count > 0 ? /* @__PURE__ */ jsx79("span", { className: "ms-1 inline-flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground", children: count > 99 ? "99+" : count }) : null
+          /* @__PURE__ */ jsx77(MessageSquarePlus, { size: variant === "inline" ? 15 : 18 }),
+          /* @__PURE__ */ jsx77("span", { className: cn(variant === "inline" && "hidden sm:inline"), children: text }),
+          count && count > 0 ? /* @__PURE__ */ jsx77("span", { className: "ms-1 inline-flex min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-semibold text-destructive-foreground", children: count > 99 ? "99+" : count }) : null
         ]
       }
     );
@@ -11763,7 +11587,7 @@ var formatTimestamp = (iso, lang) => new Date(iso).toLocaleString(lang === "ar" 
 });
 
 // src/components/feedback/FeedbackHub.tsx
-import { Fragment as Fragment19, jsx as jsx80, jsxs as jsxs66 } from "react/jsx-runtime";
+import { Fragment as Fragment19, jsx as jsx78, jsxs as jsxs66 } from "react/jsx-runtime";
 var FeedbackHub = ({
   open,
   onOpenChange,
@@ -11779,23 +11603,23 @@ var FeedbackHub = ({
   const heading = title ?? (ar ? "\u0645\u0644\u0627\u062D\u0638\u0627\u062A" : "Feedback");
   const onThisPage = route ? issues.filter((i) => i.route === route) : [];
   const elsewhere = route ? issues.filter((i) => i.route !== route) : issues;
-  return /* @__PURE__ */ jsx80(Sheet, { open, onOpenChange, children: /* @__PURE__ */ jsxs66(SheetContent, { side: "right", className: "flex w-full max-w-md flex-col gap-0 p-0 sm:max-w-md", children: [
-    /* @__PURE__ */ jsx80(SheetHeader, { className: "border-b border-border/50 px-5 py-3 text-start", children: /* @__PURE__ */ jsx80(SheetTitle, { className: "text-sm font-semibold", children: heading }) }),
+  return /* @__PURE__ */ jsx78(Sheet, { open, onOpenChange, children: /* @__PURE__ */ jsxs66(SheetContent, { side: "right", className: "flex w-full max-w-md flex-col gap-0 p-0 sm:max-w-md", children: [
+    /* @__PURE__ */ jsx78(SheetHeader, { className: "border-b border-border/50 px-5 py-3 text-start", children: /* @__PURE__ */ jsx78(SheetTitle, { className: "text-sm font-semibold", children: heading }) }),
     /* @__PURE__ */ jsxs66("div", { className: "flex-1 space-y-4 overflow-y-auto p-4", children: [
       /* @__PURE__ */ jsxs66(Button, { size: "sm", className: "w-full", onClick: onNewIssue, children: [
-        /* @__PURE__ */ jsx80(Plus2, { size: 14 }),
+        /* @__PURE__ */ jsx78(Plus2, { size: 14 }),
         " ",
         ar ? "\u0623\u0628\u0644\u063A \u0639\u0646 \u0634\u064A\u0621 \u062C\u062F\u064A\u062F" : "Report something new"
       ] }),
-      loading ? /* @__PURE__ */ jsx80("div", { className: "space-y-2", children: [0, 1, 2].map((k) => /* @__PURE__ */ jsx80("div", { className: "h-16 animate-pulse rounded-lg bg-secondary" }, k)) }) : issues.length === 0 ? /* @__PURE__ */ jsx80(
+      loading ? /* @__PURE__ */ jsx78("div", { className: "space-y-2", children: [0, 1, 2].map((k) => /* @__PURE__ */ jsx78("div", { className: "h-16 animate-pulse rounded-lg bg-secondary" }, k)) }) : issues.length === 0 ? /* @__PURE__ */ jsx78(
         EmptyState,
         {
-          icon: /* @__PURE__ */ jsx80(MessageSquarePlus2, {}),
+          icon: /* @__PURE__ */ jsx78(MessageSquarePlus2, {}),
           title: ar ? "\u0644\u0627 \u062A\u0648\u062C\u062F \u0645\u0644\u0627\u062D\u0638\u0627\u062A \u0628\u0639\u062F" : "No feedback yet",
           description: ar ? "\u0644\u0645 \u062A\u064F\u0628\u0644\u0650\u0651\u063A \u0639\u0646 \u0623\u064A \u0634\u064A\u0621 \u062D\u062A\u0649 \u0627\u0644\u0622\u0646. \u0627\u0628\u062F\u0623 \u0628\u0627\u0644\u0632\u0631 \u0623\u0639\u0644\u0627\u0647." : "You haven't reported anything yet. Start with the button above."
         }
       ) : /* @__PURE__ */ jsxs66(Fragment19, { children: [
-        route && onThisPage.length > 0 ? /* @__PURE__ */ jsx80(
+        route && onThisPage.length > 0 ? /* @__PURE__ */ jsx78(
           FeedbackGroup,
           {
             label: ar ? "\u0641\u064A \u0647\u0630\u0647 \u0627\u0644\u0635\u0641\u062D\u0629" : "On this page",
@@ -11804,7 +11628,7 @@ var FeedbackHub = ({
             onSelect: onSelectIssue
           }
         ) : null,
-        elsewhere.length > 0 ? /* @__PURE__ */ jsx80(
+        elsewhere.length > 0 ? /* @__PURE__ */ jsx78(
           FeedbackGroup,
           {
             label: route ? ar ? "\u0641\u064A \u0623\u0645\u0627\u0643\u0646 \u0623\u062E\u0631\u0649" : "Elsewhere" : ar ? "\u0645\u0644\u0627\u062D\u0638\u0627\u062A\u0643" : "Your reports",
@@ -11824,8 +11648,8 @@ var FeedbackGroup = ({
   language,
   onSelect
 }) => /* @__PURE__ */ jsxs66("div", { children: [
-  /* @__PURE__ */ jsx80("p", { className: "mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground", children: label }),
-  /* @__PURE__ */ jsx80("ul", { className: "space-y-2", children: items.map((issue) => /* @__PURE__ */ jsx80("li", { children: /* @__PURE__ */ jsxs66(
+  /* @__PURE__ */ jsx78("p", { className: "mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground", children: label }),
+  /* @__PURE__ */ jsx78("ul", { className: "space-y-2", children: items.map((issue) => /* @__PURE__ */ jsx78("li", { children: /* @__PURE__ */ jsxs66(
     "button",
     {
       type: "button",
@@ -11840,11 +11664,11 @@ var FeedbackGroup = ({
             "#",
             issue.number
           ] }),
-          /* @__PURE__ */ jsx80(StatusBadge, { tone: STATUS_TONE[issue.status], className: "text-[10px]", children: statusLabel(issue.status, language) }),
-          /* @__PURE__ */ jsx80("span", { className: "ms-auto text-[10px] uppercase tracking-wider text-muted-foreground", children: typeLabel(issue.type, language) })
+          /* @__PURE__ */ jsx78(StatusBadge, { tone: STATUS_TONE[issue.status], className: "text-[10px]", children: statusLabel(issue.status, language) }),
+          /* @__PURE__ */ jsx78("span", { className: "ms-auto text-[10px] uppercase tracking-wider text-muted-foreground", children: typeLabel(issue.type, language) })
         ] }),
-        /* @__PURE__ */ jsx80("p", { className: "line-clamp-2 text-sm font-medium text-foreground", children: issue.title }),
-        /* @__PURE__ */ jsx80("p", { className: "mt-1 text-[11px] text-muted-foreground", children: formatTimestamp(issue.createdAt, language) })
+        /* @__PURE__ */ jsx78("p", { className: "line-clamp-2 text-sm font-medium text-foreground", children: issue.title }),
+        /* @__PURE__ */ jsx78("p", { className: "mt-1 text-[11px] text-muted-foreground", children: formatTimestamp(issue.createdAt, language) })
       ]
     }
   ) }, issue.id)) })
@@ -11852,9 +11676,9 @@ var FeedbackGroup = ({
 FeedbackGroup.displayName = "FeedbackHubGroup";
 
 // src/components/feedback/MotorFeedbackLauncher.tsx
-import * as React20 from "react";
+import * as React19 from "react";
 import { MessageSquarePlus as MessageSquarePlus3 } from "lucide-react";
-import { jsx as jsx81, jsxs as jsxs67 } from "react/jsx-runtime";
+import { jsx as jsx79, jsxs as jsxs67 } from "react/jsx-runtime";
 var FAB_W = 132;
 var FAB_H = 48;
 var DRAG_THRESHOLD = 5;
@@ -11882,10 +11706,10 @@ var MotorFeedbackLauncher = ({
   const ar = language === "ar";
   const text = label ?? (ar ? "\u0645\u0644\u0627\u062D\u0638\u0627\u062A" : "Feedback");
   const storageKey = `motor-feedback-fab:${project}`;
-  const triggerRef = React20.useRef(null);
-  const handleRef = React20.useRef(null);
-  const [pos, setPos] = React20.useState(null);
-  const drag = React20.useRef({
+  const triggerRef = React19.useRef(null);
+  const handleRef = React19.useRef(null);
+  const [pos, setPos] = React19.useState(null);
+  const drag = React19.useRef({
     active: false,
     moved: false,
     startX: 0,
@@ -11894,7 +11718,7 @@ var MotorFeedbackLauncher = ({
     dy: 0
   });
   const active = Boolean(project && publishableKey && apiBase);
-  React20.useEffect(() => {
+  React19.useEffect(() => {
     if (!active || typeof window === "undefined") return;
     try {
       const raw = window.localStorage.getItem(storageKey);
@@ -11907,7 +11731,7 @@ var MotorFeedbackLauncher = ({
     } catch {
     }
   }, [active, storageKey]);
-  React20.useEffect(() => {
+  React19.useEffect(() => {
     if (!active) return;
     let cancelled = false;
     const mount = () => {
@@ -12019,8 +11843,8 @@ var MotorFeedbackLauncher = ({
         !positioned && "bottom-5 end-5"
       ),
       children: [
-        /* @__PURE__ */ jsx81(MessageSquarePlus3, { size: 18 }),
-        /* @__PURE__ */ jsx81("span", { children: text })
+        /* @__PURE__ */ jsx79(MessageSquarePlus3, { size: 18 }),
+        /* @__PURE__ */ jsx79("span", { children: text })
       ]
     }
   );
@@ -12028,9 +11852,9 @@ var MotorFeedbackLauncher = ({
 MotorFeedbackLauncher.displayName = "MotorFeedbackLauncher";
 
 // src/components/feedback/FeedbackWidget.tsx
-import * as React21 from "react";
+import * as React20 from "react";
 import { MessageSquarePlus as MessageSquarePlus4, X as X3, MapPin as MapPin2, Paperclip, Camera as Camera2, ChevronLeft as ChevronLeft2, ChevronRight as ChevronRight7 } from "lucide-react";
-import { Fragment as Fragment20, jsx as jsx82, jsxs as jsxs68 } from "react/jsx-runtime";
+import { Fragment as Fragment20, jsx as jsx80, jsxs as jsxs68 } from "react/jsx-runtime";
 var KINDS = [
   { key: "bug", en: "Bug", ar: "\u062E\u0637\u0623", cls: "text-red-500", sel: "border-red-500 bg-red-500/10 text-red-500" },
   { key: "feature", en: "Feature", ar: "\u0645\u064A\u0632\u0629", cls: "text-blue-500", sel: "border-blue-500 bg-blue-500/10 text-blue-500" },
@@ -12117,25 +11941,25 @@ function FeedbackWidget({
 }) {
   const t2 = T2[language];
   const isRTL = language === "ar";
-  const [internalOpen, setInternalOpen] = React21.useState(false);
+  const [internalOpen, setInternalOpen] = React20.useState(false);
   const open = openProp ?? internalOpen;
   const setOpen = (v) => {
     setInternalOpen(v);
     onOpenChange?.(v);
   };
-  const [reporting, setReporting] = React21.useState(false);
-  const [kind, setKind] = React21.useState("bug");
-  const [title, setTitle] = React21.useState("");
-  const [details, setDetails] = React21.useState("");
-  const [location, setLocation] = React21.useState(null);
-  const [attachments, setAttachments] = React21.useState([]);
-  const [selectedId, setSelectedId] = React21.useState(items[0]?.id ?? null);
-  const [page, setPage] = React21.useState(0);
-  const [picking, setPicking] = React21.useState(false);
-  const [hl, setHl] = React21.useState(null);
-  const fileRef = React21.useRef(null);
+  const [reporting, setReporting] = React20.useState(false);
+  const [kind, setKind] = React20.useState("bug");
+  const [title, setTitle] = React20.useState("");
+  const [details, setDetails] = React20.useState("");
+  const [location, setLocation] = React20.useState(null);
+  const [attachments, setAttachments] = React20.useState([]);
+  const [selectedId, setSelectedId] = React20.useState(items[0]?.id ?? null);
+  const [page, setPage] = React20.useState(0);
+  const [picking, setPicking] = React20.useState(false);
+  const [hl, setHl] = React20.useState(null);
+  const fileRef = React20.useRef(null);
   const url = pageUrl ?? (typeof window !== "undefined" ? window.location.href : "");
-  React21.useEffect(() => {
+  React20.useEffect(() => {
     if (!picking) return;
     const ignore = (el) => !el || el.closest("[data-feedback-ui]");
     const move = (e) => {
@@ -12199,44 +12023,44 @@ function FeedbackWidget({
   return /* @__PURE__ */ jsxs68("div", { "data-feedback-ui": true, dir: isRTL ? "rtl" : "ltr", className, children: [
     picking && /* @__PURE__ */ jsxs68(Fragment20, { children: [
       /* @__PURE__ */ jsxs68("div", { className: "fixed inset-x-0 top-0 z-[10001] bg-primary px-4 py-2 text-center text-sm font-medium text-primary-foreground", children: [
-        /* @__PURE__ */ jsx82(MapPin2, { className: "me-2 inline h-4 w-4" }),
+        /* @__PURE__ */ jsx80(MapPin2, { className: "me-2 inline h-4 w-4" }),
         t2.picking
       ] }),
-      hl && /* @__PURE__ */ jsx82("div", { className: "pointer-events-none fixed z-[10000] rounded border-2 border-primary bg-primary/10", style: { top: hl.top, left: hl.left, width: hl.width, height: hl.height } })
+      hl && /* @__PURE__ */ jsx80("div", { className: "pointer-events-none fixed z-[10000] rounded border-2 border-primary bg-primary/10", style: { top: hl.top, left: hl.left, width: hl.width, height: hl.height } })
     ] }),
-    openProp === void 0 && !open && !picking && /* @__PURE__ */ jsx82(
+    openProp === void 0 && !open && !picking && /* @__PURE__ */ jsx80(
       "button",
       {
         onClick: () => setOpen(true),
         "aria-label": t2.title,
         className: "fixed bottom-5 end-5 z-[9990] flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition hover:opacity-90",
-        children: /* @__PURE__ */ jsx82(MessageSquarePlus4, { className: "h-5 w-5" })
+        children: /* @__PURE__ */ jsx80(MessageSquarePlus4, { className: "h-5 w-5" })
       }
     ),
     open && !picking && /* @__PURE__ */ jsxs68(Fragment20, { children: [
-      /* @__PURE__ */ jsx82("div", { className: "fixed inset-0 z-[9991] bg-black/40", onClick: () => setOpen(false) }),
+      /* @__PURE__ */ jsx80("div", { className: "fixed inset-0 z-[9991] bg-black/40", onClick: () => setOpen(false) }),
       /* @__PURE__ */ jsxs68("aside", { className: "fixed inset-y-0 end-0 z-[9992] flex w-[380px] max-w-[90vw] flex-col border-s border-border bg-card text-card-foreground shadow-2xl", children: [
         /* @__PURE__ */ jsxs68("div", { className: "flex items-center justify-between border-b border-border px-5 py-3.5", children: [
-          /* @__PURE__ */ jsx82("span", { className: "text-lg font-semibold", children: t2.title }),
-          /* @__PURE__ */ jsx82("button", { onClick: () => setOpen(false), className: "rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground", children: /* @__PURE__ */ jsx82(X3, { className: "h-4 w-4" }) })
+          /* @__PURE__ */ jsx80("span", { className: "text-lg font-semibold", children: t2.title }),
+          /* @__PURE__ */ jsx80("button", { onClick: () => setOpen(false), className: "rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground", children: /* @__PURE__ */ jsx80(X3, { className: "h-4 w-4" }) })
         ] }),
         /* @__PURE__ */ jsxs68("div", { className: "flex-1 overflow-y-auto p-5", children: [
-          /* @__PURE__ */ jsx82("p", { className: "mb-4 text-sm text-muted-foreground", children: t2.intro }),
-          /* @__PURE__ */ jsx82(Button, { className: "w-full", onClick: () => setReporting(true), children: t2.report }),
-          /* @__PURE__ */ jsx82("p", { className: "mb-2 mt-6 text-xs font-medium uppercase tracking-wide text-muted-foreground", children: t2.onPage }),
+          /* @__PURE__ */ jsx80("p", { className: "mb-4 text-sm text-muted-foreground", children: t2.intro }),
+          /* @__PURE__ */ jsx80(Button, { className: "w-full", onClick: () => setReporting(true), children: t2.report }),
+          /* @__PURE__ */ jsx80("p", { className: "mb-2 mt-6 text-xs font-medium uppercase tracking-wide text-muted-foreground", children: t2.onPage }),
           /* @__PURE__ */ jsxs68("div", { className: "mb-2 flex items-center justify-between", children: [
-            /* @__PURE__ */ jsx82("span", { className: "text-sm text-muted-foreground", children: t2.issues(items.length) }),
+            /* @__PURE__ */ jsx80("span", { className: "text-sm text-muted-foreground", children: t2.issues(items.length) }),
             pages > 1 && /* @__PURE__ */ jsxs68("span", { className: "flex items-center gap-1", children: [
-              /* @__PURE__ */ jsx82(Button, { size: "sm", variant: "outline", className: "h-6 w-6 p-0", disabled: page === 0, onClick: () => setPage((p) => p - 1), children: /* @__PURE__ */ jsx82(ChevronLeft2, { className: "h-3.5 w-3.5 rtl:rotate-180" }) }),
+              /* @__PURE__ */ jsx80(Button, { size: "sm", variant: "outline", className: "h-6 w-6 p-0", disabled: page === 0, onClick: () => setPage((p) => p - 1), children: /* @__PURE__ */ jsx80(ChevronLeft2, { className: "h-3.5 w-3.5 rtl:rotate-180" }) }),
               /* @__PURE__ */ jsxs68("span", { className: "text-xs text-muted-foreground", children: [
                 page + 1,
                 "/",
                 pages
               ] }),
-              /* @__PURE__ */ jsx82(Button, { size: "sm", variant: "outline", className: "h-6 w-6 p-0", disabled: page >= pages - 1, onClick: () => setPage((p) => p + 1), children: /* @__PURE__ */ jsx82(ChevronRight7, { className: "h-3.5 w-3.5 rtl:rotate-180" }) })
+              /* @__PURE__ */ jsx80(Button, { size: "sm", variant: "outline", className: "h-6 w-6 p-0", disabled: page >= pages - 1, onClick: () => setPage((p) => p + 1), children: /* @__PURE__ */ jsx80(ChevronRight7, { className: "h-3.5 w-3.5 rtl:rotate-180" }) })
             ] })
           ] }),
-          /* @__PURE__ */ jsx82("div", { className: "space-y-1.5", children: shown.length === 0 ? /* @__PURE__ */ jsx82("p", { className: "py-6 text-center text-sm text-muted-foreground", children: t2.empty }) : shown.map((it) => {
+          /* @__PURE__ */ jsx80("div", { className: "space-y-1.5", children: shown.length === 0 ? /* @__PURE__ */ jsx80("p", { className: "py-6 text-center text-sm text-muted-foreground", children: t2.empty }) : shown.map((it) => {
             const k = kindOf(it.kind);
             return /* @__PURE__ */ jsxs68(
               "button",
@@ -12254,8 +12078,8 @@ function FeedbackWidget({
                     "#",
                     it.id
                   ] }),
-                  /* @__PURE__ */ jsx82("span", { className: cn("rounded px-1.5 py-0.5 text-[10px] font-semibold", k.cls, "bg-current/10"), style: { backgroundColor: "transparent" }, children: /* @__PURE__ */ jsx82("span", { className: k.cls, children: isRTL ? k.ar : k.en }) }),
-                  /* @__PURE__ */ jsx82("span", { className: "min-w-0 flex-1 truncate text-sm", children: it.title })
+                  /* @__PURE__ */ jsx80("span", { className: cn("rounded px-1.5 py-0.5 text-[10px] font-semibold", k.cls, "bg-current/10"), style: { backgroundColor: "transparent" }, children: /* @__PURE__ */ jsx80("span", { className: k.cls, children: isRTL ? k.ar : k.en }) }),
+                  /* @__PURE__ */ jsx80("span", { className: "min-w-0 flex-1 truncate text-sm", children: it.title })
                 ]
               },
               it.id
@@ -12265,16 +12089,16 @@ function FeedbackWidget({
       ] })
     ] }),
     reporting && !picking && /* @__PURE__ */ jsxs68("div", { className: "fixed inset-0 z-[9995] flex items-center justify-center p-4", onClick: () => setReporting(false), children: [
-      /* @__PURE__ */ jsx82("div", { className: "absolute inset-0 bg-black/60" }),
+      /* @__PURE__ */ jsx80("div", { className: "absolute inset-0 bg-black/60" }),
       /* @__PURE__ */ jsxs68("div", { className: "relative flex max-h-[90vh] w-full max-w-md flex-col overflow-hidden rounded-2xl border border-border bg-card text-card-foreground shadow-2xl", onClick: (e) => e.stopPropagation(), children: [
         /* @__PURE__ */ jsxs68("div", { className: "flex items-center justify-between border-b border-border px-5 py-3.5", children: [
-          /* @__PURE__ */ jsx82("span", { className: "text-lg font-semibold", children: t2.report }),
-          /* @__PURE__ */ jsx82("button", { onClick: () => setReporting(false), className: "rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground", children: /* @__PURE__ */ jsx82(X3, { className: "h-4 w-4" }) })
+          /* @__PURE__ */ jsx80("span", { className: "text-lg font-semibold", children: t2.report }),
+          /* @__PURE__ */ jsx80("button", { onClick: () => setReporting(false), className: "rounded p-1 text-muted-foreground hover:bg-accent hover:text-foreground", children: /* @__PURE__ */ jsx80(X3, { className: "h-4 w-4" }) })
         ] }),
         /* @__PURE__ */ jsxs68("div", { className: "space-y-4 overflow-y-auto px-5 py-4", children: [
           /* @__PURE__ */ jsxs68("div", { children: [
-            /* @__PURE__ */ jsx82(Label, { className: "mb-1.5 block text-xs uppercase tracking-wide text-muted-foreground", children: t2.type }),
-            /* @__PURE__ */ jsx82("div", { className: "flex flex-wrap gap-2", children: KINDS.map((k) => /* @__PURE__ */ jsx82(
+            /* @__PURE__ */ jsx80(Label, { className: "mb-1.5 block text-xs uppercase tracking-wide text-muted-foreground", children: t2.type }),
+            /* @__PURE__ */ jsx80("div", { className: "flex flex-wrap gap-2", children: KINDS.map((k) => /* @__PURE__ */ jsx80(
               "button",
               {
                 onClick: () => setKind(k.key),
@@ -12289,80 +12113,80 @@ function FeedbackWidget({
               t2.titleL,
               " *"
             ] }),
-            /* @__PURE__ */ jsx82(Input, { id: "fb-title", value: title, onChange: (e) => setTitle(e.target.value), placeholder: t2.brief })
+            /* @__PURE__ */ jsx80(Input, { id: "fb-title", value: title, onChange: (e) => setTitle(e.target.value), placeholder: t2.brief })
           ] }),
           /* @__PURE__ */ jsxs68("div", { children: [
-            /* @__PURE__ */ jsx82(Label, { htmlFor: "fb-details", className: "mb-1.5 block text-xs uppercase tracking-wide text-muted-foreground", children: t2.details }),
-            /* @__PURE__ */ jsx82(Textarea, { id: "fb-details", rows: 4, value: details, onChange: (e) => setDetails(e.target.value), placeholder: t2.detailsPh })
+            /* @__PURE__ */ jsx80(Label, { htmlFor: "fb-details", className: "mb-1.5 block text-xs uppercase tracking-wide text-muted-foreground", children: t2.details }),
+            /* @__PURE__ */ jsx80(Textarea, { id: "fb-details", rows: 4, value: details, onChange: (e) => setDetails(e.target.value), placeholder: t2.detailsPh })
           ] }),
           /* @__PURE__ */ jsxs68("div", { children: [
-            /* @__PURE__ */ jsx82(Label, { className: "mb-1.5 block text-xs uppercase tracking-wide text-muted-foreground", children: t2.url }),
-            /* @__PURE__ */ jsx82(Input, { value: url, readOnly: true, className: "font-mono text-xs text-muted-foreground" })
+            /* @__PURE__ */ jsx80(Label, { className: "mb-1.5 block text-xs uppercase tracking-wide text-muted-foreground", children: t2.url }),
+            /* @__PURE__ */ jsx80(Input, { value: url, readOnly: true, className: "font-mono text-xs text-muted-foreground" })
           ] }),
           /* @__PURE__ */ jsxs68("div", { children: [
-            /* @__PURE__ */ jsx82(Label, { className: "mb-1.5 block text-xs uppercase tracking-wide text-muted-foreground", children: t2.location }),
+            /* @__PURE__ */ jsx80(Label, { className: "mb-1.5 block text-xs uppercase tracking-wide text-muted-foreground", children: t2.location }),
             location ? /* @__PURE__ */ jsxs68("div", { className: "flex items-center gap-2 rounded-lg border border-border bg-muted/40 p-2", children: [
-              /* @__PURE__ */ jsx82("span", { className: "flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary", children: /* @__PURE__ */ jsx82(MapPin2, { className: "h-4 w-4" }) }),
+              /* @__PURE__ */ jsx80("span", { className: "flex h-7 w-7 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary", children: /* @__PURE__ */ jsx80(MapPin2, { className: "h-4 w-4" }) }),
               /* @__PURE__ */ jsxs68("span", { className: "min-w-0 flex-1", children: [
-                /* @__PURE__ */ jsx82("span", { className: "block truncate text-sm font-medium", children: location.label || `<${location.tag}>` }),
+                /* @__PURE__ */ jsx80("span", { className: "block truncate text-sm font-medium", children: location.label || `<${location.tag}>` }),
                 /* @__PURE__ */ jsxs68("span", { className: "block truncate font-mono text-[10px] text-muted-foreground", children: [
                   location.tag,
                   " \xB7 ",
                   location.selector
                 ] })
               ] }),
-              /* @__PURE__ */ jsx82(Button, { variant: "ghost", size: "sm", className: "h-7 shrink-0 px-2 text-xs", onClick: startPin, children: t2.repin }),
-              /* @__PURE__ */ jsx82(
+              /* @__PURE__ */ jsx80(Button, { variant: "ghost", size: "sm", className: "h-7 shrink-0 px-2 text-xs", onClick: startPin, children: t2.repin }),
+              /* @__PURE__ */ jsx80(
                 "button",
                 {
                   onClick: () => setLocation(null),
                   "aria-label": t2.clear,
                   className: "shrink-0 rounded p-1 text-muted-foreground hover:bg-accent hover:text-destructive",
-                  children: /* @__PURE__ */ jsx82(X3, { className: "h-4 w-4" })
+                  children: /* @__PURE__ */ jsx80(X3, { className: "h-4 w-4" })
                 }
               )
             ] }) : /* @__PURE__ */ jsxs68(Button, { variant: "outline", size: "sm", className: "gap-1.5", onClick: startPin, children: [
-              /* @__PURE__ */ jsx82(MapPin2, { className: "h-3.5 w-3.5" }),
+              /* @__PURE__ */ jsx80(MapPin2, { className: "h-3.5 w-3.5" }),
               t2.pin
             ] })
           ] }),
           /* @__PURE__ */ jsxs68("div", { children: [
-            /* @__PURE__ */ jsx82(Label, { className: "mb-1.5 block text-xs uppercase tracking-wide text-muted-foreground", children: t2.attach }),
+            /* @__PURE__ */ jsx80(Label, { className: "mb-1.5 block text-xs uppercase tracking-wide text-muted-foreground", children: t2.attach }),
             /* @__PURE__ */ jsxs68("div", { className: "flex flex-wrap items-center gap-2", children: [
-              /* @__PURE__ */ jsx82("input", { ref: fileRef, type: "file", multiple: true, className: "hidden", onChange: onFiles }),
+              /* @__PURE__ */ jsx80("input", { ref: fileRef, type: "file", multiple: true, className: "hidden", onChange: onFiles }),
               /* @__PURE__ */ jsxs68(Button, { variant: "outline", size: "sm", className: "gap-1.5", onClick: () => fileRef.current?.click(), children: [
-                /* @__PURE__ */ jsx82(Paperclip, { className: "h-3.5 w-3.5" }),
+                /* @__PURE__ */ jsx80(Paperclip, { className: "h-3.5 w-3.5" }),
                 t2.addFile
               ] }),
               /* @__PURE__ */ jsxs68(Button, { variant: "outline", size: "sm", className: "gap-1.5", onClick: takeScreenshot, children: [
-                /* @__PURE__ */ jsx82(Camera2, { className: "h-3.5 w-3.5" }),
+                /* @__PURE__ */ jsx80(Camera2, { className: "h-3.5 w-3.5" }),
                 t2.screenshot
               ] }),
-              attachments.map((a, i) => /* @__PURE__ */ jsx82("span", { className: "rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground", children: a.name }, i))
+              attachments.map((a, i) => /* @__PURE__ */ jsx80("span", { className: "rounded bg-muted px-2 py-0.5 text-xs text-muted-foreground", children: a.name }, i))
             ] })
           ] })
         ] }),
-        /* @__PURE__ */ jsx82("div", { className: "border-t border-border p-4", children: /* @__PURE__ */ jsx82(Button, { className: "w-full", disabled: !title.trim(), onClick: submit, children: t2.submit }) })
+        /* @__PURE__ */ jsx80("div", { className: "border-t border-border p-4", children: /* @__PURE__ */ jsx80(Button, { className: "w-full", disabled: !title.trim(), onClick: submit, children: t2.submit }) })
       ] })
     ] })
   ] });
 }
 
 // src/components/brand/Wordmark.tsx
-import { jsx as jsx83, jsxs as jsxs69 } from "react/jsx-runtime";
+import { jsx as jsx81, jsxs as jsxs69 } from "react/jsx-runtime";
 function Wordmark({ size = 24, withMark = false, markVariant = "mono", className, style, ...props }) {
   return /* @__PURE__ */ jsxs69("span", { className: cn("inline-flex items-center gap-2 font-display font-extrabold tracking-tight", className), style, ...props, children: [
-    withMark && /* @__PURE__ */ jsx83(Logo, { variant: markVariant, tone: "brand", size: Math.round(size * 1.15) }),
+    withMark && /* @__PURE__ */ jsx81(Logo, { variant: markVariant, tone: "brand", size: Math.round(size * 1.15) }),
     /* @__PURE__ */ jsxs69("span", { style: { fontSize: size, lineHeight: 1 }, "aria-label": "ToGO", children: [
-      /* @__PURE__ */ jsx83("span", { style: { color: "var(--togo-cyan-500)" }, children: "To" }),
-      /* @__PURE__ */ jsx83("span", { style: { color: "var(--togo-cobalt-500)" }, children: "GO" })
+      /* @__PURE__ */ jsx81("span", { style: { color: "var(--togo-cyan-500)" }, children: "To" }),
+      /* @__PURE__ */ jsx81("span", { style: { color: "var(--togo-cobalt-500)" }, children: "GO" })
     ] })
   ] });
 }
 Wordmark.displayName = "Wordmark";
 
 // src/components/sections/SectionBoard.tsx
-import * as React22 from "react";
+import * as React21 from "react";
 import {
   DndContext as DndContext3,
   DragOverlay as DragOverlay2,
@@ -12381,7 +12205,7 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS as CSS3 } from "@dnd-kit/utilities";
 import { GripVertical as GripVertical3, Settings2 as Settings23, Trash2 as Trash24, Plus as Plus3 } from "lucide-react";
-import { Fragment as Fragment21, jsx as jsx84, jsxs as jsxs70 } from "react/jsx-runtime";
+import { Fragment as Fragment21, jsx as jsx82, jsxs as jsxs70 } from "react/jsx-runtime";
 var T3 = {
   en: {
     edit: "Edit section",
@@ -12421,8 +12245,8 @@ function SectionEditor({
   onSave
 }) {
   const t2 = T3[language];
-  const [draft, setDraft] = React22.useState(section);
-  React22.useEffect(() => {
+  const [draft, setDraft] = React21.useState(section);
+  React21.useEffect(() => {
     if (open) setDraft(section);
   }, [open, section]);
   const settings = Object.entries(draft.settings ?? {});
@@ -12432,12 +12256,12 @@ function SectionEditor({
     setDraft({ ...draft, settings: Object.fromEntries(next.filter(([k]) => k)) });
   };
   const addSetting = () => setDraft({ ...draft, settings: { ...draft.settings ?? {}, "": "" } });
-  return /* @__PURE__ */ jsx84(Dialog, { open, onOpenChange: (o) => !o && onClose(), children: /* @__PURE__ */ jsxs70(DialogContent, { children: [
-    /* @__PURE__ */ jsx84(DialogHeader, { children: /* @__PURE__ */ jsx84(DialogTitle, { children: draft.title || t2.edit }) }),
+  return /* @__PURE__ */ jsx82(Dialog, { open, onOpenChange: (o) => !o && onClose(), children: /* @__PURE__ */ jsxs70(DialogContent, { children: [
+    /* @__PURE__ */ jsx82(DialogHeader, { children: /* @__PURE__ */ jsx82(DialogTitle, { children: draft.title || t2.edit }) }),
     /* @__PURE__ */ jsxs70("div", { className: "space-y-4", children: [
       /* @__PURE__ */ jsxs70("div", { className: "space-y-1.5", children: [
-        /* @__PURE__ */ jsx84(Label, { htmlFor: "sec-prompt", children: t2.prompt }),
-        /* @__PURE__ */ jsx84(
+        /* @__PURE__ */ jsx82(Label, { htmlFor: "sec-prompt", children: t2.prompt }),
+        /* @__PURE__ */ jsx82(
           Textarea,
           {
             id: "sec-prompt",
@@ -12448,21 +12272,21 @@ function SectionEditor({
         )
       ] }),
       /* @__PURE__ */ jsxs70("div", { className: "space-y-1.5", children: [
-        /* @__PURE__ */ jsx84(Label, { children: t2.model }),
+        /* @__PURE__ */ jsx82(Label, { children: t2.model }),
         /* @__PURE__ */ jsxs70(Select, { value: draft.model ?? "", onValueChange: (v) => setDraft({ ...draft, model: v }), children: [
-          /* @__PURE__ */ jsx84(SelectTrigger, { children: /* @__PURE__ */ jsx84(SelectValue, { placeholder: t2.noModel }) }),
-          /* @__PURE__ */ jsx84(SelectContent, { children: models.map((m) => /* @__PURE__ */ jsx84(SelectItem, { value: m.value, children: m.label ?? m.value }, m.value)) })
+          /* @__PURE__ */ jsx82(SelectTrigger, { children: /* @__PURE__ */ jsx82(SelectValue, { placeholder: t2.noModel }) }),
+          /* @__PURE__ */ jsx82(SelectContent, { children: models.map((m) => /* @__PURE__ */ jsx82(SelectItem, { value: m.value, children: m.label ?? m.value }, m.value)) })
         ] })
       ] }),
       /* @__PURE__ */ jsxs70("div", { className: "space-y-1.5", children: [
-        /* @__PURE__ */ jsx84(Label, { children: t2.settings }),
+        /* @__PURE__ */ jsx82(Label, { children: t2.settings }),
         /* @__PURE__ */ jsxs70("div", { className: "space-y-2", children: [
           settings.map(([k, v], i) => /* @__PURE__ */ jsxs70("div", { className: "flex gap-2", children: [
-            /* @__PURE__ */ jsx84(Input, { placeholder: t2.key, value: k, onChange: (e) => setSetting(i, e.target.value, v) }),
-            /* @__PURE__ */ jsx84(Input, { placeholder: t2.value, value: v, onChange: (e) => setSetting(i, k, e.target.value) })
+            /* @__PURE__ */ jsx82(Input, { placeholder: t2.key, value: k, onChange: (e) => setSetting(i, e.target.value, v) }),
+            /* @__PURE__ */ jsx82(Input, { placeholder: t2.value, value: v, onChange: (e) => setSetting(i, k, e.target.value) })
           ] }, i)),
           /* @__PURE__ */ jsxs70(Button, { type: "button", variant: "ghost", size: "sm", onClick: addSetting, children: [
-            /* @__PURE__ */ jsx84(Plus3, { className: "h-3.5 w-3.5" }),
+            /* @__PURE__ */ jsx82(Plus3, { className: "h-3.5 w-3.5" }),
             " ",
             t2.addSetting
           ] })
@@ -12470,8 +12294,8 @@ function SectionEditor({
       ] })
     ] }),
     /* @__PURE__ */ jsxs70(DialogFooter, { children: [
-      /* @__PURE__ */ jsx84(Button, { variant: "secondary", onClick: onClose, children: t2.cancel }),
-      /* @__PURE__ */ jsx84(Button, { onClick: () => onSave(draft), children: t2.save })
+      /* @__PURE__ */ jsx82(Button, { variant: "secondary", onClick: onClose, children: t2.cancel }),
+      /* @__PURE__ */ jsx82(Button, { onClick: () => onSave(draft), children: t2.save })
     ] })
   ] }) });
 }
@@ -12486,32 +12310,32 @@ function DynamicSection({
   className
 }) {
   const t2 = T3[language];
-  const [editing, setEditing] = React22.useState(false);
+  const [editing, setEditing] = React21.useState(false);
   return /* @__PURE__ */ jsxs70(Card, { className: cn("space-y-3 p-4", className), children: [
     /* @__PURE__ */ jsxs70("div", { className: "flex items-center gap-2", children: [
-      editMode && /* @__PURE__ */ jsx84(
+      editMode && /* @__PURE__ */ jsx82(
         "button",
         {
           type: "button",
           "aria-label": "Drag to reorder",
           className: "shrink-0 cursor-grab text-muted-foreground hover:text-foreground",
           ...handleProps,
-          children: /* @__PURE__ */ jsx84(GripVertical3, { className: "h-4 w-4" })
+          children: /* @__PURE__ */ jsx82(GripVertical3, { className: "h-4 w-4" })
         }
       ),
-      /* @__PURE__ */ jsx84("h3", { className: "min-w-0 flex-1 truncate text-sm font-semibold", children: section.title }),
-      section.badge && /* @__PURE__ */ jsx84(Badge, { children: section.badge }),
+      /* @__PURE__ */ jsx82("h3", { className: "min-w-0 flex-1 truncate text-sm font-semibold", children: section.title }),
+      section.badge && /* @__PURE__ */ jsx82(Badge, { children: section.badge }),
       editMode && /* @__PURE__ */ jsxs70(Fragment21, { children: [
-        /* @__PURE__ */ jsx84(Button, { variant: "ghost", size: "sm", className: "h-7 w-7 p-0", "aria-label": t2.edit, onClick: () => setEditing(true), children: /* @__PURE__ */ jsx84(Settings23, { className: "h-4 w-4" }) }),
-        onRemove && /* @__PURE__ */ jsx84(Button, { variant: "ghost", size: "sm", className: "h-7 w-7 p-0 text-destructive", "aria-label": "Remove", onClick: onRemove, children: /* @__PURE__ */ jsx84(Trash24, { className: "h-4 w-4" }) })
+        /* @__PURE__ */ jsx82(Button, { variant: "ghost", size: "sm", className: "h-7 w-7 p-0", "aria-label": t2.edit, onClick: () => setEditing(true), children: /* @__PURE__ */ jsx82(Settings23, { className: "h-4 w-4" }) }),
+        onRemove && /* @__PURE__ */ jsx82(Button, { variant: "ghost", size: "sm", className: "h-7 w-7 p-0 text-destructive", "aria-label": "Remove", onClick: onRemove, children: /* @__PURE__ */ jsx82(Trash24, { className: "h-4 w-4" }) })
       ] })
     ] }),
-    /* @__PURE__ */ jsx84("div", { className: "text-sm text-muted-foreground", children: section.content ?? /* @__PURE__ */ jsx84("span", { className: "italic opacity-70", children: t2.empty }) }),
+    /* @__PURE__ */ jsx82("div", { className: "text-sm text-muted-foreground", children: section.content ?? /* @__PURE__ */ jsx82("span", { className: "italic opacity-70", children: t2.empty }) }),
     editMode && (section.model || section.prompt) && /* @__PURE__ */ jsxs70("div", { className: "flex flex-wrap items-center gap-2 border-t border-border pt-2 text-[11px] text-muted-foreground", children: [
-      section.model && /* @__PURE__ */ jsx84(Badge, { variant: "outline", children: section.model }),
-      section.prompt && /* @__PURE__ */ jsx84("span", { className: "line-clamp-1 flex-1 font-mono opacity-70", children: section.prompt })
+      section.model && /* @__PURE__ */ jsx82(Badge, { variant: "outline", children: section.model }),
+      section.prompt && /* @__PURE__ */ jsx82("span", { className: "line-clamp-1 flex-1 font-mono opacity-70", children: section.prompt })
     ] }),
-    /* @__PURE__ */ jsx84(
+    /* @__PURE__ */ jsx82(
       SectionEditor,
       {
         open: editing,
@@ -12530,7 +12354,7 @@ function DynamicSection({
 function SortableSection(props) {
   const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable3({ id: props.id });
   const style = { transform: CSS3.Transform.toString(transform), transition, opacity: isDragging ? 0.5 : 1 };
-  return /* @__PURE__ */ jsx84("div", { ref: setNodeRef, style, children: /* @__PURE__ */ jsx84(DynamicSection, { ...props, handleProps: { ...attributes, ...listeners } }) });
+  return /* @__PURE__ */ jsx82("div", { ref: setNodeRef, style, children: /* @__PURE__ */ jsx82(DynamicSection, { ...props, handleProps: { ...attributes, ...listeners } }) });
 }
 function SectionBoard({
   sections,
@@ -12544,7 +12368,7 @@ function SectionBoard({
 }) {
   const t2 = T3[language];
   const isRTL = language === "ar";
-  const [activeId, setActiveId] = React22.useState(null);
+  const [activeId, setActiveId] = React21.useState(null);
   const sensors = useSensors3(
     useSensor3(PointerSensor3, { activationConstraint: { distance: 4 } }),
     useSensor3(KeyboardSensor3, { coordinateGetter: sortableKeyboardCoordinates3 })
@@ -12563,7 +12387,7 @@ function SectionBoard({
   const grid = cn("grid gap-3", columns === 2 ? "sm:grid-cols-2" : "grid-cols-1");
   const active = sections.find((s) => s.id === activeId);
   if (!editMode) {
-    return /* @__PURE__ */ jsx84("div", { dir: isRTL ? "rtl" : "ltr", className: cn(grid, className), children: sections.map((s) => /* @__PURE__ */ jsx84(DynamicSection, { section: s, language, models }, s.id)) });
+    return /* @__PURE__ */ jsx82("div", { dir: isRTL ? "rtl" : "ltr", className: cn(grid, className), children: sections.map((s) => /* @__PURE__ */ jsx82(DynamicSection, { section: s, language, models }, s.id)) });
   }
   return /* @__PURE__ */ jsxs70("div", { dir: isRTL ? "rtl" : "ltr", className: cn("space-y-3", className), children: [
     /* @__PURE__ */ jsxs70(
@@ -12575,7 +12399,7 @@ function SectionBoard({
         onDragEnd,
         onDragCancel: () => setActiveId(null),
         children: [
-          /* @__PURE__ */ jsx84(SortableContext3, { items: sections.map((s) => s.id), strategy: verticalListSortingStrategy3, children: /* @__PURE__ */ jsx84("div", { className: grid, children: sections.map((s) => /* @__PURE__ */ jsx84(
+          /* @__PURE__ */ jsx82(SortableContext3, { items: sections.map((s) => s.id), strategy: verticalListSortingStrategy3, children: /* @__PURE__ */ jsx82("div", { className: grid, children: sections.map((s) => /* @__PURE__ */ jsx82(
             SortableSection,
             {
               id: s.id,
@@ -12588,12 +12412,12 @@ function SectionBoard({
             },
             s.id
           )) }) }),
-          /* @__PURE__ */ jsx84(DragOverlay2, { children: active ? /* @__PURE__ */ jsx84(DynamicSection, { section: active, editMode: true, models, language, className: "shadow-lg" }) : null })
+          /* @__PURE__ */ jsx82(DragOverlay2, { children: active ? /* @__PURE__ */ jsx82(DynamicSection, { section: active, editMode: true, models, language, className: "shadow-lg" }) : null })
         ]
       }
     ),
     onAddSection && /* @__PURE__ */ jsxs70(Button, { variant: "outline", className: "w-full border-dashed", onClick: onAddSection, children: [
-      /* @__PURE__ */ jsx84(Plus3, { className: "h-4 w-4" }),
+      /* @__PURE__ */ jsx82(Plus3, { className: "h-4 w-4" }),
       " ",
       t2.addSection
     ] })
@@ -12601,9 +12425,9 @@ function SectionBoard({
 }
 
 // src/components/markdown/MarkdownEditor.tsx
-import * as React23 from "react";
+import * as React22 from "react";
 import { Bold, Italic, Heading1, Heading2, Heading3, List, ListOrdered, Link2, Code as Code3, Code2 as Code22, Quote, Eye as Eye3, Pencil as Pencil3, Columns2 } from "lucide-react";
-import { jsx as jsx85, jsxs as jsxs71 } from "react/jsx-runtime";
+import { jsx as jsx83, jsxs as jsxs71 } from "react/jsx-runtime";
 var TOOLBAR = [
   { icon: Bold, title: { en: "Bold", ar: "\u063A\u0627\u0645\u0642" }, act: { wrap: "**" } },
   { icon: Italic, title: { en: "Italic", ar: "\u0645\u0627\u0626\u0644" }, act: { wrap: "_" } },
@@ -12635,14 +12459,14 @@ function MarkdownEditor({
   className
 }) {
   const isRTL = language === "ar";
-  const ref = React23.useRef(null);
-  const [internal, setInternal] = React23.useState(defaultValue);
+  const ref = React22.useRef(null);
+  const [internal, setInternal] = React22.useState(defaultValue);
   const text = value ?? internal;
   const setText = (v) => {
     setInternal(v);
     onChange?.(v);
   };
-  const [internalView, setInternalView] = React23.useState(defaultView);
+  const [internalView, setInternalView] = React22.useState(defaultView);
   const activeView = view ?? internalView;
   const setView = (v) => {
     setInternalView(v);
@@ -12675,7 +12499,7 @@ function MarkdownEditor({
   const t2 = (en, ar) => isRTL ? ar : en;
   return /* @__PURE__ */ jsxs71("div", { dir: isRTL ? "rtl" : "ltr", className: cn("flex flex-col overflow-hidden rounded-xl border border-border bg-card", className), children: [
     /* @__PURE__ */ jsxs71("div", { className: "flex flex-wrap items-center gap-0.5 border-b border-border p-1.5", children: [
-      TOOLBAR.map(({ icon: Icon, title, act }, i) => /* @__PURE__ */ jsx85(
+      TOOLBAR.map(({ icon: Icon, title, act }, i) => /* @__PURE__ */ jsx83(
         Button,
         {
           type: "button",
@@ -12686,11 +12510,11 @@ function MarkdownEditor({
           "aria-label": t2(title.en, title.ar),
           disabled: activeView === "preview",
           onClick: () => apply(act),
-          children: /* @__PURE__ */ jsx85(Icon, { className: "h-4 w-4" })
+          children: /* @__PURE__ */ jsx83(Icon, { className: "h-4 w-4" })
         },
         i
       )),
-      /* @__PURE__ */ jsx85("div", { className: "ms-auto flex items-center gap-0.5", children: VIEWS2.map(({ key, icon: Icon, en, ar }) => /* @__PURE__ */ jsxs71(
+      /* @__PURE__ */ jsx83("div", { className: "ms-auto flex items-center gap-0.5", children: VIEWS2.map(({ key, icon: Icon, en, ar }) => /* @__PURE__ */ jsxs71(
         Button,
         {
           type: "button",
@@ -12699,7 +12523,7 @@ function MarkdownEditor({
           className: "h-7 gap-1.5 px-2",
           onClick: () => setView(key),
           children: [
-            /* @__PURE__ */ jsx85(Icon, { className: "h-3.5 w-3.5" }),
+            /* @__PURE__ */ jsx83(Icon, { className: "h-3.5 w-3.5" }),
             t2(en, ar)
           ]
         },
@@ -12707,7 +12531,7 @@ function MarkdownEditor({
       )) })
     ] }),
     /* @__PURE__ */ jsxs71("div", { className: cn("min-h-0 flex-1", activeView === "split" && "grid grid-cols-1 divide-y divide-border md:grid-cols-2 md:divide-x md:divide-y-0 rtl:md:divide-x-reverse"), children: [
-      activeView !== "preview" && /* @__PURE__ */ jsx85(
+      activeView !== "preview" && /* @__PURE__ */ jsx83(
         Textarea,
         {
           ref,
@@ -12719,23 +12543,23 @@ function MarkdownEditor({
           className: "min-h-[12rem] resize-y rounded-none border-0 font-mono text-sm focus-visible:ring-0"
         }
       ),
-      activeView !== "write" && /* @__PURE__ */ jsx85("div", { className: "min-h-[12rem] overflow-auto p-4", children: text.trim() ? /* @__PURE__ */ jsx85(MarkdownRenderer, { content: text, language }) : /* @__PURE__ */ jsx85("p", { className: "text-sm text-muted-foreground", children: t2("Nothing to preview yet.", "\u0644\u0627 \u0634\u064A\u0621 \u0644\u0644\u0645\u0639\u0627\u064A\u0646\u0629 \u0628\u0639\u062F.") }) })
+      activeView !== "write" && /* @__PURE__ */ jsx83("div", { className: "min-h-[12rem] overflow-auto p-4", children: text.trim() ? /* @__PURE__ */ jsx83(MarkdownRenderer, { content: text, language }) : /* @__PURE__ */ jsx83("p", { className: "text-sm text-muted-foreground", children: t2("Nothing to preview yet.", "\u0644\u0627 \u0634\u064A\u0621 \u0644\u0644\u0645\u0639\u0627\u064A\u0646\u0629 \u0628\u0639\u062F.") }) })
     ] })
   ] });
 }
 
 // src/components/copilot/CopilotProvider.tsx
 import {
-  createContext as createContext4,
-  useCallback as useCallback16,
-  useContext as useContext4,
-  useEffect as useEffect28,
-  useRef as useRef19,
-  useState as useState46
+  createContext as createContext2,
+  useCallback as useCallback15,
+  useContext as useContext2,
+  useEffect as useEffect26,
+  useRef as useRef18,
+  useState as useState45
 } from "react";
 
 // src/components/copilot/UnifiedCopilotDock.tsx
-import { useState as useState45, useRef as useRef18, useEffect as useEffect27, useCallback as useCallback15, useMemo as useMemo13 } from "react";
+import { useState as useState44, useRef as useRef17, useEffect as useEffect25, useCallback as useCallback14, useMemo as useMemo12 } from "react";
 
 // src/components/copilot/copilotStrings.ts
 var EN = en_default;
@@ -12790,7 +12614,7 @@ import {
 } from "lucide-react";
 
 // src/components/copilot/AgentSteps.tsx
-import { useState as useState41, useMemo as useMemo12 } from "react";
+import { useState as useState40, useMemo as useMemo11 } from "react";
 import {
   Search as Search7,
   Database as Database4,
@@ -12807,7 +12631,7 @@ import {
   X as XIcon,
   CircleDot as CircleDot3
 } from "lucide-react";
-import { jsx as jsx86, jsxs as jsxs72 } from "react/jsx-runtime";
+import { jsx as jsx84, jsxs as jsxs72 } from "react/jsx-runtime";
 var STEP_MSG_AR = {
   "Searching internal knowledge...": "\u0627\u0644\u0628\u062D\u062B \u0641\u064A \u0642\u0627\u0639\u062F\u0629 \u0627\u0644\u0645\u0639\u0631\u0641\u0629 \u0627\u0644\u062F\u0627\u062E\u0644\u064A\u0629...",
   "No internal matches found": "\u0644\u0627 \u062A\u0648\u062C\u062F \u0646\u062A\u0627\u0626\u062C \u062F\u0627\u062E\u0644\u064A\u0629",
@@ -12931,14 +12755,14 @@ function getStepState(step, allSteps, isStreaming) {
 }
 function StepIndicator({ state, step }) {
   const icons = STEP_ICONS2[step] || { active: Sparkles7, complete: Sparkles7 };
-  if (state === "error") return /* @__PURE__ */ jsx86(XIcon, { className: "w-3 h-3 text-destructive" });
+  if (state === "error") return /* @__PURE__ */ jsx84(XIcon, { className: "w-3 h-3 text-destructive" });
   if (state === "complete") {
-    return /* @__PURE__ */ jsx86(Check6, { className: "w-3 h-3 text-emerald-400" });
+    return /* @__PURE__ */ jsx84(Check6, { className: "w-3 h-3 text-emerald-400" });
   }
   const Icon = icons.active;
   return /* @__PURE__ */ jsxs72("span", { className: "relative flex h-3 w-3 items-center justify-center", children: [
-    /* @__PURE__ */ jsx86("span", { className: "absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/40" }),
-    /* @__PURE__ */ jsx86(Icon, { className: "relative w-2.5 h-2.5 text-emerald-400" })
+    /* @__PURE__ */ jsx84("span", { className: "absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/40" }),
+    /* @__PURE__ */ jsx84(Icon, { className: "relative w-2.5 h-2.5 text-emerald-400" })
   ] });
 }
 function TimingBadge({ ms }) {
@@ -12952,11 +12776,11 @@ function TimingBadge({ ms }) {
 }
 function SourcePills({ sources, language }) {
   if (!sources || sources.length === 0) return null;
-  return /* @__PURE__ */ jsx86("div", { className: "flex flex-wrap gap-1 mt-1", children: sources.slice(0, 4).map((s, i) => /* @__PURE__ */ jsx86("span", { className: "inline-flex items-center px-1.5 py-0.5 bg-muted/50 rounded text-[10px] text-muted-foreground leading-tight", children: translateSource(s, language) }, i)) });
+  return /* @__PURE__ */ jsx84("div", { className: "flex flex-wrap gap-1 mt-1", children: sources.slice(0, 4).map((s, i) => /* @__PURE__ */ jsx84("span", { className: "inline-flex items-center px-1.5 py-0.5 bg-muted/50 rounded text-[10px] text-muted-foreground leading-tight", children: translateSource(s, language) }, i)) });
 }
 function DomainPills({ domains, citations }) {
   if (!domains || domains.length === 0) return null;
-  return /* @__PURE__ */ jsx86("div", { className: "flex flex-wrap gap-1 mt-1", children: domains.slice(0, 4).map((domain, i) => {
+  return /* @__PURE__ */ jsx84("div", { className: "flex flex-wrap gap-1 mt-1", children: domains.slice(0, 4).map((domain, i) => {
     const url = citations?.[i];
     return /* @__PURE__ */ jsxs72(
       "a",
@@ -12966,7 +12790,7 @@ function DomainPills({ domains, citations }) {
         rel: "noopener noreferrer",
         className: "inline-flex items-center gap-0.5 px-1.5 py-0.5 bg-muted/50 rounded text-[10px] text-muted-foreground hover:text-foreground transition-colors duration-fast ease-standard leading-tight",
         children: [
-          /* @__PURE__ */ jsx86(ExternalLink4, { className: "w-2 h-2" }),
+          /* @__PURE__ */ jsx84(ExternalLink4, { className: "w-2 h-2" }),
           domain
         ]
       },
@@ -12976,7 +12800,7 @@ function DomainPills({ domains, citations }) {
 }
 function HandlePills({ handles }) {
   if (!handles || handles.length === 0) return null;
-  return /* @__PURE__ */ jsx86("div", { className: "flex flex-wrap gap-1 mt-1", children: handles.slice(0, 4).map((h, i) => /* @__PURE__ */ jsxs72(
+  return /* @__PURE__ */ jsx84("div", { className: "flex flex-wrap gap-1 mt-1", children: handles.slice(0, 4).map((h, i) => /* @__PURE__ */ jsxs72(
     "a",
     {
       href: `https://x.com/${h}`,
@@ -13001,10 +12825,10 @@ function StepLine({
   const state = getStepState(step, allSteps, isStreaming);
   const isComplete = state === "complete";
   return /* @__PURE__ */ jsxs72("div", { className: `flex items-start gap-2 text-xs transition-opacity duration-300 ${isComplete ? "text-muted-foreground/70" : "text-muted-foreground"}`, children: [
-    /* @__PURE__ */ jsx86("div", { className: "mt-0.5 flex-shrink-0", children: /* @__PURE__ */ jsx86(StepIndicator, { state, step: step.step }) }),
+    /* @__PURE__ */ jsx84("div", { className: "mt-0.5 flex-shrink-0", children: /* @__PURE__ */ jsx84(StepIndicator, { state, step: step.step }) }),
     /* @__PURE__ */ jsxs72("div", { className: `flex-1 min-w-0 text-start`, children: [
-      /* @__PURE__ */ jsx86("span", { children: translateStepMessage(step.message, language) }),
-      /* @__PURE__ */ jsx86(TimingBadge, { ms: step.duration_ms }),
+      /* @__PURE__ */ jsx84("span", { children: translateStepMessage(step.message, language) }),
+      /* @__PURE__ */ jsx84(TimingBadge, { ms: step.duration_ms }),
       step.query && /* @__PURE__ */ jsxs72("span", { className: `ms-1 text-foreground/50 font-mono text-[10px]`, children: [
         '"',
         step.query,
@@ -13015,17 +12839,17 @@ function StepLine({
         step.subQuery,
         '"'
       ] }),
-      /* @__PURE__ */ jsx86(SourcePills, { sources: step.sources, language }),
-      /* @__PURE__ */ jsx86(DomainPills, { domains: step.domains, citations: step.citations }),
-      /* @__PURE__ */ jsx86(HandlePills, { handles: step.handles })
+      /* @__PURE__ */ jsx84(SourcePills, { sources: step.sources, language }),
+      /* @__PURE__ */ jsx84(DomainPills, { domains: step.domains, citations: step.citations }),
+      /* @__PURE__ */ jsx84(HandlePills, { handles: step.handles })
     ] })
   ] });
 }
 var AgentSteps = ({ steps, isStreaming, language = "en", dir }) => {
-  const [isExpanded, setIsExpanded] = useState41(true);
+  const [isExpanded, setIsExpanded] = useState40(true);
   const isAr = language === "ar";
   const isRTL = dir === "rtl" || dir === void 0 && isAr;
-  const displaySteps = useMemo12(() => {
+  const displaySteps = useMemo11(() => {
     const resultTypes = new Set(steps.filter((s) => s.step.endsWith("_results")).map((s) => s.step.replace("_results", "_search")));
     const hasDeepResults = steps.some((s) => s.step === "deep_research_results");
     return steps.filter((s) => {
@@ -13046,9 +12870,9 @@ var AgentSteps = ({ steps, isStreaming, language = "en", dir }) => {
   const totalDuration = [ragResult, webResult, socialResult].reduce((sum, s) => sum + (s?.duration_ms || 0), 0);
   const allDone = !isStreaming || steps.some((s) => s.step === "composing" || s.step === "twin_composing");
   const summary = summaryParts.length > 0 ? isAr ? `\u062A\u0645 \u062A\u062D\u0644\u064A\u0644 ${summaryParts.join("\u060C ")} \u0645\u0635\u0627\u062F\u0631${totalDuration ? ` (${(totalDuration / 1e3).toFixed(1)}\u062B)` : ""}` : `Analyzed ${summaryParts.join(", ")} sources${totalDuration ? ` (${(totalDuration / 1e3).toFixed(1)}s)` : ""}` : allDone ? isAr ? "\u0627\u0643\u062A\u0645\u0644 \u0627\u0644\u062A\u062D\u0644\u064A\u0644" : "Analysis complete" : isAr ? "\u062C\u0627\u0631\u064D \u0627\u0644\u0628\u062D\u062B..." : "Searching...";
-  const triggerIcon = !isStreaming || allDone ? /* @__PURE__ */ jsx86(Check6, { className: "w-3 h-3 text-emerald-400" }) : /* @__PURE__ */ jsxs72("span", { className: "relative flex h-3 w-3 items-center justify-center", children: [
-    /* @__PURE__ */ jsx86("span", { className: "absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/40" }),
-    /* @__PURE__ */ jsx86(Search7, { className: "relative w-2.5 h-2.5 text-emerald-400" })
+  const triggerIcon = !isStreaming || allDone ? /* @__PURE__ */ jsx84(Check6, { className: "w-3 h-3 text-emerald-400" }) : /* @__PURE__ */ jsxs72("span", { className: "relative flex h-3 w-3 items-center justify-center", children: [
+    /* @__PURE__ */ jsx84("span", { className: "absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400/40" }),
+    /* @__PURE__ */ jsx84(Search7, { className: "relative w-2.5 h-2.5 text-emerald-400" })
   ] });
   return (
     // dir set locally so flex order, borders, and text alignment mirror natively
@@ -13061,12 +12885,12 @@ var AgentSteps = ({ steps, isStreaming, language = "en", dir }) => {
           className: `flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors duration-fast ease-standard cursor-pointer py-1`,
           children: [
             triggerIcon,
-            /* @__PURE__ */ jsx86("span", { children: summary }),
-            /* @__PURE__ */ jsx86(ChevronDown8, { className: `w-3 h-3 transition-transform duration-fast ease-standard ${isExpanded ? "rotate-180" : ""}` })
+            /* @__PURE__ */ jsx84("span", { children: summary }),
+            /* @__PURE__ */ jsx84(ChevronDown8, { className: `w-3 h-3 transition-transform duration-fast ease-standard ${isExpanded ? "rotate-180" : ""}` })
           ]
         }
       ),
-      /* @__PURE__ */ jsx86(CollapsibleContent, { children: /* @__PURE__ */ jsx86("div", { className: `mt-1 space-y-1.5 border-border ps-1 border-s-2 ms-1.5`, children: displaySteps.map((s, i) => /* @__PURE__ */ jsx86(
+      /* @__PURE__ */ jsx84(CollapsibleContent, { children: /* @__PURE__ */ jsx84("div", { className: `mt-1 space-y-1.5 border-border ps-1 border-s-2 ms-1.5`, children: displaySteps.map((s, i) => /* @__PURE__ */ jsx84(
         StepLine,
         {
           step: s,
@@ -13085,7 +12909,7 @@ var AgentSteps_default = AgentSteps;
 
 // src/components/copilot/StreamErrorBanner.tsx
 import { WifiOff, RefreshCw as RefreshCw2 } from "lucide-react";
-import { Fragment as Fragment22, jsx as jsx87, jsxs as jsxs73 } from "react/jsx-runtime";
+import { Fragment as Fragment22, jsx as jsx85, jsxs as jsxs73 } from "react/jsx-runtime";
 var StreamErrorBanner = ({ onRetry, isRetrying = false, language = "en", dir }) => {
   const isAR = language === "ar";
   const resolvedDir = dir ?? (isAR ? "rtl" : "ltr");
@@ -13100,11 +12924,11 @@ var StreamErrorBanner = ({ onRetry, isRetrying = false, language = "en", dir }) 
       role: "alert",
       "aria-live": "polite",
       children: [
-        /* @__PURE__ */ jsx87(WifiOff, { className: "w-4 h-4 text-destructive shrink-0 mt-0.5", "aria-hidden": "true" }),
+        /* @__PURE__ */ jsx85(WifiOff, { className: "w-4 h-4 text-destructive shrink-0 mt-0.5", "aria-hidden": "true" }),
         /* @__PURE__ */ jsxs73("div", { className: "flex-1 min-w-0 space-y-2", children: [
-          /* @__PURE__ */ jsx87("p", { className: "text-destructive font-medium text-xs leading-snug", children: isAR ? "\u0627\u0646\u0642\u0637\u0639 \u0627\u0644\u0627\u062A\u0635\u0627\u0644 \u0623\u062B\u0646\u0627\u0621 \u0627\u0633\u062A\u062C\u0627\u0628\u0629 \u0627\u0644\u0645\u0633\u0627\u0639\u062F" : "Connection interrupted during response" }),
-          /* @__PURE__ */ jsx87("p", { className: "text-muted-foreground text-[11px] leading-snug", children: isAR ? "\u0627\u0646\u0642\u0637\u0639\u062A \u0627\u0644\u0628\u062B \u0628\u0633\u0628\u0628 \u0645\u0634\u0643\u0644\u0629 \u0641\u064A \u0627\u0644\u0634\u0628\u0643\u0629. \u064A\u0645\u0643\u0646\u0643 \u0625\u0639\u0627\u062F\u0629 \u0627\u0644\u0645\u062D\u0627\u0648\u0644\u0629 \u0644\u0627\u0633\u062A\u0626\u0646\u0627\u0641 \u0627\u0644\u0645\u062D\u0627\u062F\u062B\u0629." : "The stream was interrupted due to a network issue. Retry to continue the conversation." }),
-          /* @__PURE__ */ jsx87(
+          /* @__PURE__ */ jsx85("p", { className: "text-destructive font-medium text-xs leading-snug", children: isAR ? "\u0627\u0646\u0642\u0637\u0639 \u0627\u0644\u0627\u062A\u0635\u0627\u0644 \u0623\u062B\u0646\u0627\u0621 \u0627\u0633\u062A\u062C\u0627\u0628\u0629 \u0627\u0644\u0645\u0633\u0627\u0639\u062F" : "Connection interrupted during response" }),
+          /* @__PURE__ */ jsx85("p", { className: "text-muted-foreground text-[11px] leading-snug", children: isAR ? "\u0627\u0646\u0642\u0637\u0639\u062A \u0627\u0644\u0628\u062B \u0628\u0633\u0628\u0628 \u0645\u0634\u0643\u0644\u0629 \u0641\u064A \u0627\u0644\u0634\u0628\u0643\u0629. \u064A\u0645\u0643\u0646\u0643 \u0625\u0639\u0627\u062F\u0629 \u0627\u0644\u0645\u062D\u0627\u0648\u0644\u0629 \u0644\u0627\u0633\u062A\u0626\u0646\u0627\u0641 \u0627\u0644\u0645\u062D\u0627\u062F\u062B\u0629." : "The stream was interrupted due to a network issue. Retry to continue the conversation." }),
+          /* @__PURE__ */ jsx85(
             Button,
             {
               type: "button",
@@ -13114,10 +12938,10 @@ var StreamErrorBanner = ({ onRetry, isRetrying = false, language = "en", dir }) 
               onClick: handleRetry,
               disabled: isRetrying,
               children: isRetrying ? /* @__PURE__ */ jsxs73(Fragment22, { children: [
-                /* @__PURE__ */ jsx87(RefreshCw2, { className: "w-3 h-3 animate-spin me-1.5", "aria-hidden": "true" }),
+                /* @__PURE__ */ jsx85(RefreshCw2, { className: "w-3 h-3 animate-spin me-1.5", "aria-hidden": "true" }),
                 isAR ? "\u062C\u0627\u0631\u064D \u0627\u0644\u0645\u062D\u0627\u0648\u0644\u0629..." : "Retrying..."
               ] }) : /* @__PURE__ */ jsxs73(Fragment22, { children: [
-                /* @__PURE__ */ jsx87(RefreshCw2, { className: "w-3 h-3 me-1.5", "aria-hidden": "true" }),
+                /* @__PURE__ */ jsx85(RefreshCw2, { className: "w-3 h-3 me-1.5", "aria-hidden": "true" }),
                 isAR ? "\u0625\u0639\u0627\u062F\u0629 \u0627\u0644\u0645\u062D\u0627\u0648\u0644\u0629" : "Retry"
               ] })
             }
@@ -13131,12 +12955,12 @@ StreamErrorBanner.displayName = "StreamErrorBanner";
 var StreamErrorBanner_default = StreamErrorBanner;
 
 // src/components/chat/ChatToolbar.tsx
-import { useState as useState42, useRef as useRef17, useCallback as useCallback13, useEffect as useEffect25 } from "react";
+import { useState as useState41, useRef as useRef16, useCallback as useCallback12, useEffect as useEffect23 } from "react";
 import { Globe as Globe6, Newspaper as Newspaper2, Microscope as Microscope2, Paperclip as Paperclip2, ChevronDown as ChevronDown9, Brain as Brain2, Zap } from "lucide-react";
 
 // src/components/chat/FilePreviewChip.tsx
 import { X as X4, FileText as FileText3, Image, File } from "lucide-react";
-import { jsx as jsx88, jsxs as jsxs74 } from "react/jsx-runtime";
+import { jsx as jsx86, jsxs as jsxs74 } from "react/jsx-runtime";
 function getFileIcon(type) {
   if (type.startsWith("image/")) return Image;
   if (type === "application/pdf" || type.startsWith("text/")) return FileText3;
@@ -13149,16 +12973,16 @@ var FilePreviewChip = ({ attachment, onRemove, language = "en" }) => {
   return /* @__PURE__ */ jsxs74("div", { className: "inline-flex items-center gap-1.5 px-2 py-1 bg-muted border border-border rounded-lg text-xs max-w-[180px] group", children: [
     isImage ? (
       // eslint-disable-next-line @next/next/no-img-element, jsx-a11y/alt-text
-      /* @__PURE__ */ jsx88("img", { src: previewSrc, alt: attachment.name, className: "w-5 h-5 rounded object-cover shrink-0" })
-    ) : /* @__PURE__ */ jsx88(Icon, { className: "w-3.5 h-3.5 text-muted-foreground shrink-0" }),
-    /* @__PURE__ */ jsx88("span", { className: "truncate text-foreground", children: attachment.name }),
-    /* @__PURE__ */ jsx88(
+      /* @__PURE__ */ jsx86("img", { src: previewSrc, alt: attachment.name, className: "w-5 h-5 rounded object-cover shrink-0" })
+    ) : /* @__PURE__ */ jsx86(Icon, { className: "w-3.5 h-3.5 text-muted-foreground shrink-0" }),
+    /* @__PURE__ */ jsx86("span", { className: "truncate text-foreground", children: attachment.name }),
+    /* @__PURE__ */ jsx86(
       "button",
       {
         onClick: onRemove,
         className: "ms-auto shrink-0 p-0.5 rounded hover:bg-destructive/20 text-muted-foreground hover:text-destructive transition-colors duration-fast ease-standard",
         "aria-label": language === "ar" ? "\u0625\u0632\u0627\u0644\u0629" : "Remove",
-        children: /* @__PURE__ */ jsx88(X4, { className: "w-3 h-3" })
+        children: /* @__PURE__ */ jsx86(X4, { className: "w-3 h-3" })
       }
     )
   ] });
@@ -13167,9 +12991,9 @@ FilePreviewChip.displayName = "FilePreviewChip";
 var FilePreviewChip_default = FilePreviewChip;
 
 // src/components/chat/ChatToolbar.tsx
-import { jsx as jsx89, jsxs as jsxs75 } from "react/jsx-runtime";
+import { jsx as jsx87, jsxs as jsxs75 } from "react/jsx-runtime";
 function XIcon2({ className }) {
-  return /* @__PURE__ */ jsx89("svg", { viewBox: "0 0 24 24", className, fill: "currentColor", children: /* @__PURE__ */ jsx89("path", { d: "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" }) });
+  return /* @__PURE__ */ jsx87("svg", { viewBox: "0 0 24 24", className, fill: "currentColor", children: /* @__PURE__ */ jsx87("path", { d: "M18.244 2.25h3.308l-7.227 8.26 8.502 11.24H16.17l-5.214-6.817L4.99 21.75H1.68l7.73-8.835L1.254 2.25H8.08l4.713 6.231zm-1.161 17.52h1.833L7.084 4.126H5.117z" }) });
 }
 var ALLOWED_ATTACHMENT_MIMES = /* @__PURE__ */ new Set([
   "image/png",
@@ -13196,9 +13020,9 @@ var ChatToolbar = ({
   language = "en",
   onUploadReady
 }) => {
-  const fileInputRef = useRef17(null);
-  const [uploading, setUploading] = useState42(false);
-  const [uploadError, setUploadError] = useState42(null);
+  const fileInputRef = useRef16(null);
+  const [uploading, setUploading] = useState41(false);
+  const [uploadError, setUploadError] = useState41(null);
   const isAr = language === "ar";
   const isSearchActive = !!forcedTools.search;
   const isDeepResearchActive = !!forcedTools.deep_research;
@@ -13228,7 +13052,7 @@ var ChatToolbar = ({
     }
     onForcedToolsChange({ ...forcedTools, search_sources: next });
   };
-  const uploadFiles = useCallback13(async (files) => {
+  const uploadFiles = useCallback12(async (files) => {
     if (files.length === 0) return;
     setUploading(true);
     setUploadError(null);
@@ -13262,12 +13086,12 @@ var ChatToolbar = ({
     setUploading(false);
     if (fileInputRef.current) fileInputRef.current.value = "";
   }, [attachments, onAttachmentsChange, isAr]);
-  const handleFileSelect = useCallback13(async (e) => {
+  const handleFileSelect = useCallback12(async (e) => {
     const files = e.target.files;
     if (!files || files.length === 0) return;
     await uploadFiles(Array.from(files));
   }, [uploadFiles]);
-  useEffect25(() => {
+  useEffect23(() => {
     onUploadReady?.(uploadFiles);
   }, [uploadFiles, onUploadReady]);
   const removeAttachment = (index) => {
@@ -13275,8 +13099,8 @@ var ChatToolbar = ({
   };
   const activeSources = forcedTools.search_sources || ["web"];
   return /* @__PURE__ */ jsxs75("div", { className: "space-y-2", children: [
-    uploadError && /* @__PURE__ */ jsx89("p", { className: "text-xs text-destructive px-1", children: uploadError }),
-    attachments.length > 0 && /* @__PURE__ */ jsx89("div", { className: "flex flex-wrap gap-1.5", children: attachments.map((att, i) => /* @__PURE__ */ jsx89(
+    uploadError && /* @__PURE__ */ jsx87("p", { className: "text-xs text-destructive px-1", children: uploadError }),
+    attachments.length > 0 && /* @__PURE__ */ jsx87("div", { className: "flex flex-wrap gap-1.5", children: attachments.map((att, i) => /* @__PURE__ */ jsx87(
       FilePreviewChip_default,
       {
         attachment: att,
@@ -13286,7 +13110,7 @@ var ChatToolbar = ({
       i
     )) }),
     isSearchActive && /* @__PURE__ */ jsxs75("div", { className: "flex items-center gap-1.5 px-1", children: [
-      /* @__PURE__ */ jsx89("span", { className: "text-[10px] text-muted-foreground font-medium uppercase tracking-wider shrink-0", children: isAr ? "\u0645\u0635\u0627\u062F\u0631" : "Sources" }),
+      /* @__PURE__ */ jsx87("span", { className: "text-[10px] text-muted-foreground font-medium uppercase tracking-wider shrink-0", children: isAr ? "\u0645\u0635\u0627\u062F\u0631" : "Sources" }),
       SEARCH_SOURCES.map((source) => {
         const isActive = activeSources.includes(source.id);
         const Icon = source.icon;
@@ -13297,7 +13121,7 @@ var ChatToolbar = ({
             disabled,
             className: `inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-all duration-fast ease-standard border ${isActive ? "bg-primary/15 text-primary border-primary/30" : "bg-transparent text-muted-foreground border-transparent hover:bg-muted hover:border-border"}`,
             children: [
-              /* @__PURE__ */ jsx89(Icon, { className: "w-3 h-3" }),
+              /* @__PURE__ */ jsx87(Icon, { className: "w-3 h-3" }),
               isAr ? source.labelAr : source.label
             ]
           },
@@ -13314,7 +13138,7 @@ var ChatToolbar = ({
           className: `inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-fast ease-standard border ${thinkingMode ? "bg-amber-500/15 text-amber-400 border-amber-500/30" : "bg-cyan-500/15 text-cyan-400 border-cyan-500/30"}`,
           title: thinkingMode ? isAr ? "\u0648\u0636\u0639 \u0627\u0644\u062A\u0641\u0643\u064A\u0631 \u0627\u0644\u0639\u0645\u064A\u0642" : "Thinking mode \u2014 deeper analysis" : isAr ? "\u0627\u0644\u0648\u0636\u0639 \u0627\u0644\u0633\u0631\u064A\u0639" : "Fast mode \u2014 quicker responses",
           children: [
-            thinkingMode ? /* @__PURE__ */ jsx89(Brain2, { className: "w-3.5 h-3.5" }) : /* @__PURE__ */ jsx89(Zap, { className: "w-3.5 h-3.5" }),
+            thinkingMode ? /* @__PURE__ */ jsx87(Brain2, { className: "w-3.5 h-3.5" }) : /* @__PURE__ */ jsx87(Zap, { className: "w-3.5 h-3.5" }),
             thinkingMode ? isAr ? "\u062A\u0641\u0643\u064A\u0631" : "Thinking" : isAr ? "\u0633\u0631\u064A\u0639" : "Fast"
           ]
         }
@@ -13326,9 +13150,9 @@ var ChatToolbar = ({
           disabled,
           className: `inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-fast ease-standard border ${isSearchActive ? "bg-primary/15 text-primary border-primary/30" : "bg-transparent text-muted-foreground border-border hover:bg-muted hover:text-foreground"}`,
           children: [
-            /* @__PURE__ */ jsx89(Globe6, { className: "w-3.5 h-3.5" }),
+            /* @__PURE__ */ jsx87(Globe6, { className: "w-3.5 h-3.5" }),
             isAr ? "\u0628\u062D\u062B" : "Search",
-            isSearchActive && /* @__PURE__ */ jsx89(ChevronDown9, { className: "w-3 h-3 rotate-180" })
+            isSearchActive && /* @__PURE__ */ jsx87(ChevronDown9, { className: "w-3 h-3 rotate-180" })
           ]
         }
       ),
@@ -13339,7 +13163,7 @@ var ChatToolbar = ({
           disabled,
           className: `inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-fast ease-standard border ${isDeepResearchActive ? "bg-violet-500/15 text-violet-400 border-violet-500/30" : "bg-transparent text-muted-foreground border-border hover:bg-muted hover:text-foreground"}`,
           children: [
-            /* @__PURE__ */ jsx89(Microscope2, { className: "w-3.5 h-3.5" }),
+            /* @__PURE__ */ jsx87(Microscope2, { className: "w-3.5 h-3.5" }),
             isAr ? "\u0628\u062D\u062B \u0639\u0645\u064A\u0642" : "Deep Research"
           ]
         }
@@ -13351,12 +13175,12 @@ var ChatToolbar = ({
           disabled: disabled || uploading,
           className: "inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium transition-all duration-fast ease-standard border bg-transparent text-muted-foreground border-border hover:bg-muted hover:text-foreground",
           children: [
-            /* @__PURE__ */ jsx89(Paperclip2, { className: `w-3.5 h-3.5 ${uploading ? "animate-spin" : ""}` }),
+            /* @__PURE__ */ jsx87(Paperclip2, { className: `w-3.5 h-3.5 ${uploading ? "animate-spin" : ""}` }),
             attachments.length > 0 ? `${attachments.length}` : isAr ? "\u0625\u0631\u0641\u0627\u0642" : "Attach"
           ]
         }
       ),
-      /* @__PURE__ */ jsx89(
+      /* @__PURE__ */ jsx87(
         "input",
         {
           ref: fileInputRef,
@@ -13374,9 +13198,9 @@ ChatToolbar.displayName = "ChatToolbar";
 var ChatToolbar_default = ChatToolbar;
 
 // src/components/chat/CompareFactorsCard.tsx
-import { useState as useState43, useCallback as useCallback14 } from "react";
+import { useState as useState42, useCallback as useCallback13 } from "react";
 import { Scale, Plus as Plus4, X as X5, Check as Check7 } from "lucide-react";
-import { jsx as jsx90, jsxs as jsxs76 } from "react/jsx-runtime";
+import { jsx as jsx88, jsxs as jsxs76 } from "react/jsx-runtime";
 var CompareFactorsCard = ({
   data,
   onAccept,
@@ -13384,22 +13208,22 @@ var CompareFactorsCard = ({
   language = "en"
 }) => {
   const isAR = language === "ar";
-  const [factors, setFactors] = useState43(data.factors);
-  const [newFactorLabel, setNewFactorLabel] = useState43("");
-  const [showAddInput, setShowAddInput] = useState43(false);
-  const toggleFactor = useCallback14((id) => {
+  const [factors, setFactors] = useState42(data.factors);
+  const [newFactorLabel, setNewFactorLabel] = useState42("");
+  const [showAddInput, setShowAddInput] = useState42(false);
+  const toggleFactor = useCallback13((id) => {
     if (disabled) return;
     setFactors((prev) => prev.map((f) => f.id === id ? { ...f, enabled: !f.enabled } : f));
   }, [disabled]);
-  const updateWeight = useCallback14((id, weight) => {
+  const updateWeight = useCallback13((id, weight) => {
     if (disabled) return;
     setFactors((prev) => prev.map((f) => f.id === id ? { ...f, weight } : f));
   }, [disabled]);
-  const removeFactor = useCallback14((id) => {
+  const removeFactor = useCallback13((id) => {
     if (disabled) return;
     setFactors((prev) => prev.filter((f) => f.id !== id));
   }, [disabled]);
-  const addCustomFactor = useCallback14(() => {
+  const addCustomFactor = useCallback13(() => {
     if (!newFactorLabel.trim() || disabled) return;
     const id = `custom-${Date.now()}`;
     setFactors((prev) => [...prev, {
@@ -13423,21 +13247,21 @@ var CompareFactorsCard = ({
   const enabledCount = factors.filter((f) => f.enabled).length;
   return /* @__PURE__ */ jsxs76("div", { className: `mt-3 rounded-lg border border-border bg-card/80 overflow-hidden ${disabled ? "opacity-60 pointer-events-none" : ""}`, children: [
     /* @__PURE__ */ jsxs76("div", { className: "px-3 py-2.5 bg-muted/50 border-b border-border flex items-center gap-2", children: [
-      /* @__PURE__ */ jsx90(Scale, { className: "w-4 h-4 text-primary shrink-0" }),
+      /* @__PURE__ */ jsx88(Scale, { className: "w-4 h-4 text-primary shrink-0" }),
       /* @__PURE__ */ jsxs76("div", { className: "flex-1 min-w-0", children: [
         /* @__PURE__ */ jsxs76("p", { className: "text-xs font-semibold text-foreground truncate", children: [
           data.subjectA.title,
           " ",
-          /* @__PURE__ */ jsx90("span", { className: "text-muted-foreground font-normal", children: "vs" }),
+          /* @__PURE__ */ jsx88("span", { className: "text-muted-foreground font-normal", children: "vs" }),
           " ",
           data.subjectB.title
         ] }),
-        /* @__PURE__ */ jsx90("p", { className: "text-[10px] text-muted-foreground", children: isAR ? `${enabledCount} \u0639\u0627\u0645\u0644 \u0645\u062D\u062F\u062F` : `${enabledCount} factors selected` })
+        /* @__PURE__ */ jsx88("p", { className: "text-[10px] text-muted-foreground", children: isAR ? `${enabledCount} \u0639\u0627\u0645\u0644 \u0645\u062D\u062F\u062F` : `${enabledCount} factors selected` })
       ] }),
-      disabled && /* @__PURE__ */ jsx90(Check7, { className: "w-4 h-4 text-emerald-500 shrink-0" })
+      disabled && /* @__PURE__ */ jsx88(Check7, { className: "w-4 h-4 text-emerald-500 shrink-0" })
     ] }),
-    /* @__PURE__ */ jsx90("div", { className: "divide-y divide-border/50", children: factors.map((factor) => /* @__PURE__ */ jsxs76("div", { className: "px-3 py-2 flex items-center gap-2 hover:bg-muted/30 transition-colors duration-fast ease-standard", children: [
-      /* @__PURE__ */ jsx90(
+    /* @__PURE__ */ jsx88("div", { className: "divide-y divide-border/50", children: factors.map((factor) => /* @__PURE__ */ jsxs76("div", { className: "px-3 py-2 flex items-center gap-2 hover:bg-muted/30 transition-colors duration-fast ease-standard", children: [
+      /* @__PURE__ */ jsx88(
         Checkbox,
         {
           checked: factor.enabled,
@@ -13446,8 +13270,8 @@ var CompareFactorsCard = ({
         }
       ),
       /* @__PURE__ */ jsxs76("div", { className: "flex-1 min-w-0", children: [
-        /* @__PURE__ */ jsx90("p", { className: `text-xs font-medium ${factor.enabled ? "text-foreground" : "text-muted-foreground line-through"}`, children: factor.label }),
-        factor.description && factor.description !== "Custom factor" && /* @__PURE__ */ jsx90("p", { className: "text-[10px] text-muted-foreground truncate", children: factor.description })
+        /* @__PURE__ */ jsx88("p", { className: `text-xs font-medium ${factor.enabled ? "text-foreground" : "text-muted-foreground line-through"}`, children: factor.label }),
+        factor.description && factor.description !== "Custom factor" && /* @__PURE__ */ jsx88("p", { className: "text-[10px] text-muted-foreground truncate", children: factor.description })
       ] }),
       /* @__PURE__ */ jsxs76(
         Select,
@@ -13455,27 +13279,27 @@ var CompareFactorsCard = ({
           value: factor.weight,
           onValueChange: (v) => updateWeight(factor.id, v),
           children: [
-            /* @__PURE__ */ jsx90(SelectTrigger, { className: "h-6 w-[80px] text-[10px] border-border/50", children: /* @__PURE__ */ jsx90(SelectValue, {}) }),
+            /* @__PURE__ */ jsx88(SelectTrigger, { className: "h-6 w-[80px] text-[10px] border-border/50", children: /* @__PURE__ */ jsx88(SelectValue, {}) }),
             /* @__PURE__ */ jsxs76(SelectContent, { children: [
-              /* @__PURE__ */ jsx90(SelectItem, { value: "high", className: "text-xs", children: weightLabel("high") }),
-              /* @__PURE__ */ jsx90(SelectItem, { value: "medium", className: "text-xs", children: weightLabel("medium") }),
-              /* @__PURE__ */ jsx90(SelectItem, { value: "low", className: "text-xs", children: weightLabel("low") })
+              /* @__PURE__ */ jsx88(SelectItem, { value: "high", className: "text-xs", children: weightLabel("high") }),
+              /* @__PURE__ */ jsx88(SelectItem, { value: "medium", className: "text-xs", children: weightLabel("medium") }),
+              /* @__PURE__ */ jsx88(SelectItem, { value: "low", className: "text-xs", children: weightLabel("low") })
             ] })
           ]
         }
       ),
-      factor.id.startsWith("custom-") && /* @__PURE__ */ jsx90(
+      factor.id.startsWith("custom-") && /* @__PURE__ */ jsx88(
         "button",
         {
           onClick: () => removeFactor(factor.id),
           className: "text-muted-foreground hover:text-destructive transition-colors duration-fast ease-standard",
           "aria-label": isAR ? "\u0625\u0632\u0627\u0644\u0629" : "Remove",
-          children: /* @__PURE__ */ jsx90(X5, { className: "w-3 h-3" })
+          children: /* @__PURE__ */ jsx88(X5, { className: "w-3 h-3" })
         }
       )
     ] }, factor.id)) }),
-    /* @__PURE__ */ jsx90("div", { className: "px-3 py-2 border-t border-border/50", children: showAddInput ? /* @__PURE__ */ jsxs76("div", { className: "flex items-center gap-2", children: [
-      /* @__PURE__ */ jsx90(
+    /* @__PURE__ */ jsx88("div", { className: "px-3 py-2 border-t border-border/50", children: showAddInput ? /* @__PURE__ */ jsxs76("div", { className: "flex items-center gap-2", children: [
+      /* @__PURE__ */ jsx88(
         Input,
         {
           value: newFactorLabel,
@@ -13489,8 +13313,8 @@ var CompareFactorsCard = ({
           autoFocus: true
         }
       ),
-      /* @__PURE__ */ jsx90(Button, { size: "sm", variant: "ghost", className: "h-7 px-2", onClick: addCustomFactor, children: /* @__PURE__ */ jsx90(Check7, { className: "w-3 h-3" }) }),
-      /* @__PURE__ */ jsx90(
+      /* @__PURE__ */ jsx88(Button, { size: "sm", variant: "ghost", className: "h-7 px-2", onClick: addCustomFactor, children: /* @__PURE__ */ jsx88(Check7, { className: "w-3 h-3" }) }),
+      /* @__PURE__ */ jsx88(
         Button,
         {
           size: "sm",
@@ -13500,7 +13324,7 @@ var CompareFactorsCard = ({
             setShowAddInput(false);
             setNewFactorLabel("");
           },
-          children: /* @__PURE__ */ jsx90(X5, { className: "w-3 h-3" })
+          children: /* @__PURE__ */ jsx88(X5, { className: "w-3 h-3" })
         }
       )
     ] }) : /* @__PURE__ */ jsxs76(
@@ -13509,12 +13333,12 @@ var CompareFactorsCard = ({
         onClick: () => setShowAddInput(true),
         className: "flex items-center gap-1.5 text-xs text-muted-foreground hover:text-foreground transition-colors duration-fast ease-standard",
         children: [
-          /* @__PURE__ */ jsx90(Plus4, { className: "w-3 h-3" }),
+          /* @__PURE__ */ jsx88(Plus4, { className: "w-3 h-3" }),
           isAR ? "\u0625\u0636\u0627\u0641\u0629 \u0639\u0627\u0645\u0644 \u0645\u062E\u0635\u0635" : "Add custom factor"
         ]
       }
     ) }),
-    !disabled && /* @__PURE__ */ jsx90("div", { className: "px-3 py-2.5 border-t border-border bg-muted/30", children: /* @__PURE__ */ jsxs76(
+    !disabled && /* @__PURE__ */ jsx88("div", { className: "px-3 py-2.5 border-t border-border bg-muted/30", children: /* @__PURE__ */ jsxs76(
       Button,
       {
         size: "sm",
@@ -13522,7 +13346,7 @@ var CompareFactorsCard = ({
         onClick: () => onAccept(factors),
         disabled: enabledCount === 0,
         children: [
-          /* @__PURE__ */ jsx90(Scale, { className: "w-3.5 h-3.5" }),
+          /* @__PURE__ */ jsx88(Scale, { className: "w-3.5 h-3.5" }),
           isAR ? "\u0642\u0628\u0648\u0644 \u0648\u062A\u0634\u063A\u064A\u0644 \u0627\u0644\u0645\u0642\u0627\u0631\u0646\u0629" : "Accept & Run Comparison"
         ]
       }
@@ -13533,7 +13357,7 @@ CompareFactorsCard.displayName = "CompareFactorsCard";
 var CompareFactorsCard_default = CompareFactorsCard;
 
 // src/components/chat/ChatStructuredData.tsx
-import { useState as useState44, useEffect as useEffect26 } from "react";
+import { useState as useState43, useEffect as useEffect24 } from "react";
 import {
   Globe as Globe7,
   AlertTriangle as AlertTriangle3,
@@ -13548,7 +13372,7 @@ import {
   ArrowDownRight,
   ArrowRight as ArrowRight2
 } from "lucide-react";
-import { jsx as jsx91, jsxs as jsxs77 } from "react/jsx-runtime";
+import { jsx as jsx89, jsxs as jsxs77 } from "react/jsx-runtime";
 function tryParseStructured(json) {
   try {
     const obj = JSON.parse(json);
@@ -13637,9 +13461,9 @@ var EntityChip = ({
         slug && onNavigate ? "cursor-pointer hover:brightness-125" : "cursor-default opacity-70"
       ),
       children: [
-        /* @__PURE__ */ jsx91(Icon, { className: "w-3 h-3 shrink-0" }),
-        /* @__PURE__ */ jsx91("span", { className: "truncate max-w-[140px]", children: name }),
-        slug && onNavigate && /* @__PURE__ */ jsx91(ChevronRight8, { className: "w-3 h-3 shrink-0 opacity-50 rtl:rotate-180" })
+        /* @__PURE__ */ jsx89(Icon, { className: "w-3 h-3 shrink-0" }),
+        /* @__PURE__ */ jsx89("span", { className: "truncate max-w-[140px]", children: name }),
+        slug && onNavigate && /* @__PURE__ */ jsx89(ChevronRight8, { className: "w-3 h-3 shrink-0 opacity-50 rtl:rotate-180" })
       ]
     }
   );
@@ -13653,7 +13477,7 @@ var AlertCard = ({
   const title = lang === "ar" ? alert.title_ar || alert.title_en || "" : alert.title_en || alert.title_ar || "";
   const desc = lang === "ar" ? alert.description_ar || alert.description_en || "" : alert.description_en || alert.description_ar || "";
   const sev = SEVERITY_CONFIG[alert.severity || "low"] || SEVERITY_CONFIG.low;
-  return /* @__PURE__ */ jsx91(
+  return /* @__PURE__ */ jsx89(
     "button",
     {
       onClick: () => alert.slug && onNavigate?.(`/alert/${alert.slug}`),
@@ -13664,11 +13488,11 @@ var AlertCard = ({
         alert.slug && onNavigate ? "cursor-pointer hover:brightness-110" : "cursor-default"
       ),
       children: /* @__PURE__ */ jsxs77("div", { className: "flex items-start gap-2", children: [
-        /* @__PURE__ */ jsx91(AlertTriangle3, { className: cn("w-3.5 h-3.5 shrink-0 mt-0.5", sev.color) }),
+        /* @__PURE__ */ jsx89(AlertTriangle3, { className: cn("w-3.5 h-3.5 shrink-0 mt-0.5", sev.color) }),
         /* @__PURE__ */ jsxs77("div", { className: "min-w-0 flex-1", children: [
-          /* @__PURE__ */ jsx91("div", { className: "flex items-center gap-2", children: /* @__PURE__ */ jsx91("span", { className: cn("text-[10px] font-semibold uppercase tracking-wider", sev.color), children: alert.severity }) }),
-          /* @__PURE__ */ jsx91("p", { className: "text-xs font-medium text-foreground mt-0.5 line-clamp-2", children: title }),
-          desc && /* @__PURE__ */ jsx91("p", { className: "text-[11px] text-muted-foreground mt-1 line-clamp-2", children: desc })
+          /* @__PURE__ */ jsx89("div", { className: "flex items-center gap-2", children: /* @__PURE__ */ jsx89("span", { className: cn("text-[10px] font-semibold uppercase tracking-wider", sev.color), children: alert.severity }) }),
+          /* @__PURE__ */ jsx89("p", { className: "text-xs font-medium text-foreground mt-0.5 line-clamp-2", children: title }),
+          desc && /* @__PURE__ */ jsx89("p", { className: "text-[11px] text-muted-foreground mt-1 line-clamp-2", children: desc })
         ] })
       ] })
     }
@@ -13682,7 +13506,7 @@ var NarrativeCard = ({
 }) => {
   const title = lang === "ar" ? narrative.title_ar || narrative.title_en || narrative.dominant_narratives || "" : narrative.title_en || narrative.dominant_narratives || narrative.title_ar || "";
   const slug = narrative.slug;
-  return /* @__PURE__ */ jsx91(
+  return /* @__PURE__ */ jsx89(
     "button",
     {
       onClick: () => slug && onNavigate?.(`/narrative/${slug}`),
@@ -13691,9 +13515,9 @@ var NarrativeCard = ({
         "cursor-pointer hover:bg-amber-500/10"
       ),
       children: /* @__PURE__ */ jsxs77("div", { className: "flex items-start gap-2", children: [
-        /* @__PURE__ */ jsx91(BookOpen, { className: "w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" }),
-        /* @__PURE__ */ jsx91("div", { className: "min-w-0 flex-1", children: /* @__PURE__ */ jsx91("p", { className: "text-xs font-medium text-foreground line-clamp-2", children: title }) }),
-        /* @__PURE__ */ jsx91(ChevronRight8, { className: "w-3.5 h-3.5 text-amber-400/50 shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-fast ease-standard rtl:rotate-180" })
+        /* @__PURE__ */ jsx89(BookOpen, { className: "w-3.5 h-3.5 text-amber-400 shrink-0 mt-0.5" }),
+        /* @__PURE__ */ jsx89("div", { className: "min-w-0 flex-1", children: /* @__PURE__ */ jsx89("p", { className: "text-xs font-medium text-foreground line-clamp-2", children: title }) }),
+        /* @__PURE__ */ jsx89(ChevronRight8, { className: "w-3.5 h-3.5 text-amber-400/50 shrink-0 mt-0.5 opacity-0 group-hover:opacity-100 transition-opacity duration-fast ease-standard rtl:rotate-180" })
       ] })
     }
   );
@@ -13716,9 +13540,9 @@ var EventChip = ({
         slug && onNavigate ? "cursor-pointer hover:brightness-125" : "cursor-default"
       ),
       children: [
-        /* @__PURE__ */ jsx91(Calendar2, { className: "w-3 h-3 shrink-0" }),
-        /* @__PURE__ */ jsx91("span", { className: "truncate max-w-[200px]", children: title }),
-        slug && onNavigate && /* @__PURE__ */ jsx91(ChevronRight8, { className: "w-3 h-3 shrink-0 opacity-50 rtl:rotate-180" })
+        /* @__PURE__ */ jsx89(Calendar2, { className: "w-3 h-3 shrink-0" }),
+        /* @__PURE__ */ jsx89("span", { className: "truncate max-w-[200px]", children: title }),
+        slug && onNavigate && /* @__PURE__ */ jsx89(ChevronRight8, { className: "w-3 h-3 shrink-0 opacity-50 rtl:rotate-180" })
       ]
     }
   );
@@ -13729,14 +13553,14 @@ var ThemeChip = ({ theme, lang }) => {
   const trendConf = TREND_ICON[theme.trend || "stable"] || TREND_ICON.stable;
   const TrendIcon = trendConf.icon;
   return /* @__PURE__ */ jsxs77("span", { className: "inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg border border-border bg-muted/50 text-xs font-medium text-foreground", children: [
-    /* @__PURE__ */ jsx91(TrendIcon, { className: cn("w-3 h-3 shrink-0", trendConf.color) }),
-    /* @__PURE__ */ jsx91("span", { className: "truncate max-w-[180px]", children: name })
+    /* @__PURE__ */ jsx89(TrendIcon, { className: cn("w-3 h-3 shrink-0", trendConf.color) }),
+    /* @__PURE__ */ jsx89("span", { className: "truncate max-w-[180px]", children: name })
   ] });
 };
 ThemeChip.displayName = "ThemeChip";
 function useExistingSlugs(data, onCheckSlugs) {
-  const [existing, setExisting] = useState44(/* @__PURE__ */ new Set());
-  useEffect26(() => {
+  const [existing, setExisting] = useState43(/* @__PURE__ */ new Set());
+  useEffect24(() => {
     if (!onCheckSlugs) {
       const all = /* @__PURE__ */ new Set();
       (data.entities || []).forEach((e) => {
@@ -13805,38 +13629,38 @@ var ChatStructuredData = ({
   return /* @__PURE__ */ jsxs77("div", { className: "mt-3 space-y-3 not-prose", dir: resolvedDir, children: [
     hasEntities && /* @__PURE__ */ jsxs77("div", { children: [
       /* @__PURE__ */ jsxs77("div", { className: "flex items-center gap-1.5 mb-2", children: [
-        /* @__PURE__ */ jsx91(Globe7, { className: "w-3.5 h-3.5 text-emerald-400" }),
-        /* @__PURE__ */ jsx91("span", { className: "text-[11px] font-semibold text-muted-foreground uppercase tracking-wider", children: isRTL ? "\u0627\u0644\u062C\u0647\u0627\u062A \u0627\u0644\u0645\u0630\u0643\u0648\u0631\u0629" : "Mentioned Entities" })
+        /* @__PURE__ */ jsx89(Globe7, { className: "w-3.5 h-3.5 text-emerald-400" }),
+        /* @__PURE__ */ jsx89("span", { className: "text-[11px] font-semibold text-muted-foreground uppercase tracking-wider", children: isRTL ? "\u0627\u0644\u062C\u0647\u0627\u062A \u0627\u0644\u0645\u0630\u0643\u0648\u0631\u0629" : "Mentioned Entities" })
       ] }),
-      /* @__PURE__ */ jsx91("div", { className: "flex flex-wrap gap-1.5", children: validEntities.map((e, i) => /* @__PURE__ */ jsx91(EntityChip, { entity: e, lang, onNavigate }, e.slug || i)) })
+      /* @__PURE__ */ jsx89("div", { className: "flex flex-wrap gap-1.5", children: validEntities.map((e, i) => /* @__PURE__ */ jsx89(EntityChip, { entity: e, lang, onNavigate }, e.slug || i)) })
     ] }),
     hasAlerts && /* @__PURE__ */ jsxs77("div", { children: [
       /* @__PURE__ */ jsxs77("div", { className: "flex items-center gap-1.5 mb-2", children: [
-        /* @__PURE__ */ jsx91(AlertTriangle3, { className: "w-3.5 h-3.5 text-red-400" }),
-        /* @__PURE__ */ jsx91("span", { className: "text-[11px] font-semibold text-muted-foreground uppercase tracking-wider", children: isRTL ? "\u0625\u0634\u0627\u0631\u0627\u062A" : "Alerts" })
+        /* @__PURE__ */ jsx89(AlertTriangle3, { className: "w-3.5 h-3.5 text-red-400" }),
+        /* @__PURE__ */ jsx89("span", { className: "text-[11px] font-semibold text-muted-foreground uppercase tracking-wider", children: isRTL ? "\u0625\u0634\u0627\u0631\u0627\u062A" : "Alerts" })
       ] }),
-      /* @__PURE__ */ jsx91("div", { className: "space-y-1.5", children: validAlerts.map((a, i) => /* @__PURE__ */ jsx91(AlertCard, { alert: a, lang, onNavigate }, a.slug || i)) })
+      /* @__PURE__ */ jsx89("div", { className: "space-y-1.5", children: validAlerts.map((a, i) => /* @__PURE__ */ jsx89(AlertCard, { alert: a, lang, onNavigate }, a.slug || i)) })
     ] }),
     hasNarratives && /* @__PURE__ */ jsxs77("div", { children: [
       /* @__PURE__ */ jsxs77("div", { className: "flex items-center gap-1.5 mb-2", children: [
-        /* @__PURE__ */ jsx91(BookOpen, { className: "w-3.5 h-3.5 text-amber-400" }),
-        /* @__PURE__ */ jsx91("span", { className: "text-[11px] font-semibold text-muted-foreground uppercase tracking-wider", children: isRTL ? "\u0627\u0644\u0633\u0631\u062F\u064A\u0627\u062A" : "Narratives" })
+        /* @__PURE__ */ jsx89(BookOpen, { className: "w-3.5 h-3.5 text-amber-400" }),
+        /* @__PURE__ */ jsx89("span", { className: "text-[11px] font-semibold text-muted-foreground uppercase tracking-wider", children: isRTL ? "\u0627\u0644\u0633\u0631\u062F\u064A\u0627\u062A" : "Narratives" })
       ] }),
-      /* @__PURE__ */ jsx91("div", { className: "space-y-1.5", children: validNarratives.map((n, i) => /* @__PURE__ */ jsx91(NarrativeCard, { narrative: n, lang, onNavigate }, i)) })
+      /* @__PURE__ */ jsx89("div", { className: "space-y-1.5", children: validNarratives.map((n, i) => /* @__PURE__ */ jsx89(NarrativeCard, { narrative: n, lang, onNavigate }, i)) })
     ] }),
     hasEvents && /* @__PURE__ */ jsxs77("div", { children: [
       /* @__PURE__ */ jsxs77("div", { className: "flex items-center gap-1.5 mb-2", children: [
-        /* @__PURE__ */ jsx91(Calendar2, { className: "w-3.5 h-3.5 text-purple-400" }),
-        /* @__PURE__ */ jsx91("span", { className: "text-[11px] font-semibold text-muted-foreground uppercase tracking-wider", children: isRTL ? "\u0627\u0644\u0623\u062D\u062F\u0627\u062B" : "Events" })
+        /* @__PURE__ */ jsx89(Calendar2, { className: "w-3.5 h-3.5 text-purple-400" }),
+        /* @__PURE__ */ jsx89("span", { className: "text-[11px] font-semibold text-muted-foreground uppercase tracking-wider", children: isRTL ? "\u0627\u0644\u0623\u062D\u062F\u0627\u062B" : "Events" })
       ] }),
-      /* @__PURE__ */ jsx91("div", { className: "flex flex-wrap gap-1.5", children: validEvents.map((e, i) => /* @__PURE__ */ jsx91(EventChip, { event: e, lang, onNavigate }, e.slug || i)) })
+      /* @__PURE__ */ jsx89("div", { className: "flex flex-wrap gap-1.5", children: validEvents.map((e, i) => /* @__PURE__ */ jsx89(EventChip, { event: e, lang, onNavigate }, e.slug || i)) })
     ] }),
     hasThemes && /* @__PURE__ */ jsxs77("div", { children: [
       /* @__PURE__ */ jsxs77("div", { className: "flex items-center gap-1.5 mb-2", children: [
-        /* @__PURE__ */ jsx91(TrendingUp2, { className: "w-3.5 h-3.5 text-foreground/60" }),
-        /* @__PURE__ */ jsx91("span", { className: "text-[11px] font-semibold text-muted-foreground uppercase tracking-wider", children: isRTL ? "\u0627\u0644\u0645\u0648\u0627\u0636\u064A\u0639" : "Themes" })
+        /* @__PURE__ */ jsx89(TrendingUp2, { className: "w-3.5 h-3.5 text-foreground/60" }),
+        /* @__PURE__ */ jsx89("span", { className: "text-[11px] font-semibold text-muted-foreground uppercase tracking-wider", children: isRTL ? "\u0627\u0644\u0645\u0648\u0627\u0636\u064A\u0639" : "Themes" })
       ] }),
-      /* @__PURE__ */ jsx91("div", { className: "flex flex-wrap gap-1.5", children: themes2.map((th, i) => /* @__PURE__ */ jsx91(ThemeChip, { theme: th, lang }, i)) })
+      /* @__PURE__ */ jsx89("div", { className: "flex flex-wrap gap-1.5", children: themes2.map((th, i) => /* @__PURE__ */ jsx89(ThemeChip, { theme: th, lang }, i)) })
     ] })
   ] });
 };
@@ -13844,7 +13668,7 @@ ChatStructuredData.displayName = "ChatStructuredData";
 var ChatStructuredData_default = ChatStructuredData;
 
 // src/components/copilot/UnifiedCopilotDock.tsx
-import { Fragment as Fragment23, jsx as jsx92, jsxs as jsxs78 } from "react/jsx-runtime";
+import { Fragment as Fragment23, jsx as jsx90, jsxs as jsxs78 } from "react/jsx-runtime";
 function useSafeT() {
   try {
     return useT2();
@@ -13866,14 +13690,14 @@ var PersonaPicker = ({
   personas: personasProp
 }) => {
   const list = personasProp && personasProp.length > 0 ? personasProp : PERSONAS;
-  return /* @__PURE__ */ jsx92("div", { className: "flex items-center gap-1 flex-wrap", children: list.map((p) => /* @__PURE__ */ jsxs78(
+  return /* @__PURE__ */ jsx90("div", { className: "flex items-center gap-1 flex-wrap", children: list.map((p) => /* @__PURE__ */ jsxs78(
     "button",
     {
       onClick: () => !disabled && onChange(p.id),
       disabled,
       className: `inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium transition-all duration-fast ease-standard border ${value === p.id ? "bg-primary/15 text-primary border-primary/30" : "bg-transparent text-muted-foreground border-border hover:bg-muted hover:text-foreground"}`,
       children: [
-        p.icon && /* @__PURE__ */ jsx92("span", { children: p.icon }),
+        p.icon && /* @__PURE__ */ jsx90("span", { children: p.icon }),
         language === "ar" ? p.labelAr : p.label
       ]
     },
@@ -13927,7 +13751,7 @@ var UnifiedCopilotDock = ({
   const language = langCtx ? langCtx.language : languageProp;
   const t2 = langCtx ? langCtx.t : fallbackT;
   const isRTL = language === "ar";
-  const handleArtifactAction = useCallback15(
+  const handleArtifactAction = useCallback14(
     (item) => {
       if (onArtifactAction) {
         onArtifactAction(item);
@@ -13939,7 +13763,7 @@ var UnifiedCopilotDock = ({
     },
     [onArtifactAction, chatState]
   );
-  const handleArtifactInteract = useCallback15(
+  const handleArtifactInteract = useCallback14(
     (interaction) => {
       if (onArtifactInteract) {
         onArtifactInteract(interaction);
@@ -13950,29 +13774,29 @@ var UnifiedCopilotDock = ({
     },
     [onArtifactInteract, chatState]
   );
-  const [isExpanded, setIsExpanded] = useState45(defaultExpanded ?? false);
-  const [forcedTools, setForcedTools] = useState45({});
-  const [attachments, setAttachments] = useState45([]);
-  const [thinkingMode, setThinkingMode] = useState45(false);
-  const [isDragging, setIsDragging] = useState45(false);
-  const [persona, setPersona] = useState45("analyst");
-  const [historyOpen, setHistoryOpen] = useState45(false);
-  const [historyItems, setHistoryItems] = useState45([]);
-  const [insightTriggered, setInsightTriggered] = useState45(false);
-  const [snapshottedChips, setSnapshottedChips] = useState45();
-  const [slashMenuOpen, setSlashMenuOpen] = useState45(false);
-  const [atMenuOpen, setAtMenuOpen] = useState45(false);
-  const [slashQuery, setSlashQuery] = useState45("");
-  const [atQuery, setAtQuery] = useState45("");
-  const slashMenuRef = useRef18(null);
-  const atMenuRef = useRef18(null);
-  const [toolsPanelOpen, setToolsPanelOpen] = useState45(false);
-  const prevIsStreamingRef = useRef18(false);
-  const messagesEndRef = useRef18(null);
-  const inputRef = useRef18(null);
-  const pendingAutoSendRef = useRef18(null);
-  const dragCounterRef = useRef18(0);
-  const toolbarUploadRef = useRef18(null);
+  const [isExpanded, setIsExpanded] = useState44(defaultExpanded ?? false);
+  const [forcedTools, setForcedTools] = useState44({});
+  const [attachments, setAttachments] = useState44([]);
+  const [thinkingMode, setThinkingMode] = useState44(false);
+  const [isDragging, setIsDragging] = useState44(false);
+  const [persona, setPersona] = useState44("analyst");
+  const [historyOpen, setHistoryOpen] = useState44(false);
+  const [historyItems, setHistoryItems] = useState44([]);
+  const [insightTriggered, setInsightTriggered] = useState44(false);
+  const [snapshottedChips, setSnapshottedChips] = useState44();
+  const [slashMenuOpen, setSlashMenuOpen] = useState44(false);
+  const [atMenuOpen, setAtMenuOpen] = useState44(false);
+  const [slashQuery, setSlashQuery] = useState44("");
+  const [atQuery, setAtQuery] = useState44("");
+  const slashMenuRef = useRef17(null);
+  const atMenuRef = useRef17(null);
+  const [toolsPanelOpen, setToolsPanelOpen] = useState44(false);
+  const prevIsStreamingRef = useRef17(false);
+  const messagesEndRef = useRef17(null);
+  const inputRef = useRef17(null);
+  const pendingAutoSendRef = useRef17(null);
+  const dragCounterRef = useRef17(0);
+  const toolbarUploadRef = useRef17(null);
   const getInitialDockPosition = () => {
     try {
       const saved = localStorage.getItem("sentra-copilot-dock-position");
@@ -13981,7 +13805,7 @@ var UnifiedCopilotDock = ({
     }
     return "bottom";
   };
-  const [dockPosition, setDockPosition] = useState45(getInitialDockPosition);
+  const [dockPosition, setDockPosition] = useState44(getInitialDockPosition);
   const handleDockPositionChange = (pos) => {
     setDockPosition(pos);
     try {
@@ -13991,7 +13815,7 @@ var UnifiedCopilotDock = ({
   };
   const FLOAT_MIN_W = 320;
   const FLOAT_MIN_H = 360;
-  const defaultFloatRect = useCallback15(() => {
+  const defaultFloatRect = useCallback14(() => {
     const w = 420;
     const h = 560;
     const vw = typeof window !== "undefined" ? window.innerWidth : 1280;
@@ -14000,7 +13824,7 @@ var UnifiedCopilotDock = ({
     const y = Math.max(24, vh - h - 24);
     return { x, y, w, h };
   }, [isRTL]);
-  const clampFloatRect = useCallback15((r) => {
+  const clampFloatRect = useCallback14((r) => {
     if (typeof window === "undefined") return r;
     const vw = window.innerWidth;
     const vh = window.innerHeight;
@@ -14010,7 +13834,7 @@ var UnifiedCopilotDock = ({
     const y = Math.min(Math.max(r.y, 8), Math.max(8, vh - h - 8));
     return { x, y, w, h };
   }, []);
-  const [floatRect, setFloatRect] = useState45(() => {
+  const [floatRect, setFloatRect] = useState44(() => {
     try {
       const saved = localStorage.getItem("sentra-copilot-float-rect");
       if (saved) return clampFloatRect(JSON.parse(saved));
@@ -14018,19 +13842,19 @@ var UnifiedCopilotDock = ({
     }
     return defaultFloatRect();
   });
-  const persistFloatRect = useCallback15((r) => {
+  const persistFloatRect = useCallback14((r) => {
     try {
       localStorage.setItem("sentra-copilot-float-rect", JSON.stringify(r));
     } catch {
     }
   }, []);
-  const floatGestureRef = useRef18(null);
-  const effectiveDockPosition = useMemo13(() => {
+  const floatGestureRef = useRef17(null);
+  const effectiveDockPosition = useMemo12(() => {
     if (typeof window !== "undefined" && window.innerWidth < 640) return "bottom";
     return dockPosition;
   }, [dockPosition]);
   const isFloat = effectiveDockPosition === "float";
-  const onFloatPointerMove = useCallback15((e) => {
+  const onFloatPointerMove = useCallback14((e) => {
     const g = floatGestureRef.current;
     if (!g) return;
     const dx = e.clientX - g.startX;
@@ -14043,7 +13867,7 @@ var UnifiedCopilotDock = ({
       setFloatRect(clampFloatRect({ x, y: g.orig.y, w, h: g.orig.h + dy }));
     }
   }, [clampFloatRect, isRTL]);
-  const endFloatGesture = useCallback15(() => {
+  const endFloatGesture = useCallback14(() => {
     if (!floatGestureRef.current) return;
     floatGestureRef.current = null;
     window.removeEventListener("pointermove", onFloatPointerMove);
@@ -14053,7 +13877,7 @@ var UnifiedCopilotDock = ({
       return r;
     });
   }, [onFloatPointerMove, persistFloatRect]);
-  const startFloatGesture = useCallback15(
+  const startFloatGesture = useCallback14(
     (mode) => (e) => {
       if (!isFloat) return;
       e.preventDefault();
@@ -14063,17 +13887,17 @@ var UnifiedCopilotDock = ({
     },
     [isFloat, floatRect, onFloatPointerMove, endFloatGesture]
   );
-  useEffect27(() => () => {
+  useEffect25(() => () => {
     window.removeEventListener("pointermove", onFloatPointerMove);
     window.removeEventListener("pointerup", endFloatGesture);
   }, [onFloatPointerMove, endFloatGesture]);
-  useEffect27(() => {
+  useEffect25(() => {
     if (!isFloat) return;
     const onResize = () => setFloatRect((r) => clampFloatRect(r));
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, [isFloat, clampFloatRect]);
-  const dockClasses = useMemo13(() => {
+  const dockClasses = useMemo12(() => {
     if (!isExpanded) return "fixed bottom-0 left-0 right-0 z-50 h-14 transition-all duration-300";
     switch (effectiveDockPosition) {
       case "float":
@@ -14087,11 +13911,11 @@ var UnifiedCopilotDock = ({
         return "fixed bottom-0 left-0 right-0 z-50 h-[calc(100vh-3.5rem)] sm:h-[60vh] transition-all duration-300";
     }
   }, [isExpanded, effectiveDockPosition]);
-  const floatStyle = useMemo13(() => {
+  const floatStyle = useMemo12(() => {
     if (!isFloat || !isExpanded) return void 0;
     return { left: floatRect.x, top: floatRect.y, width: floatRect.w, height: floatRect.h };
   }, [isFloat, isExpanded, floatRect]);
-  const expandedBorderClass = useMemo13(() => {
+  const expandedBorderClass = useMemo12(() => {
     switch (effectiveDockPosition) {
       case "left":
         return "border-e";
@@ -14103,7 +13927,7 @@ var UnifiedCopilotDock = ({
         return "border-t";
     }
   }, [effectiveDockPosition]);
-  const expandedShadowClass = useMemo13(() => {
+  const expandedShadowClass = useMemo12(() => {
     switch (effectiveDockPosition) {
       case "left":
         return "shadow-[4px_0_15px_rgba(0,0,0,0.12)]";
@@ -14115,10 +13939,10 @@ var UnifiedCopilotDock = ({
         return "shadow-2xl";
     }
   }, [effectiveDockPosition]);
-  useEffect27(() => {
+  useEffect25(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [chatState.messages, chatState.agentSteps]);
-  useEffect27(() => {
+  useEffect25(() => {
     if (pendingMessage) {
       if (pendingAutoSend) {
         pendingAutoSendRef.current = pendingMessage;
@@ -14135,7 +13959,7 @@ var UnifiedCopilotDock = ({
       }
     }
   }, [pendingMessage, onPendingMessageConsumed]);
-  useEffect27(() => {
+  useEffect25(() => {
     if (chatState.messages.length === 0) {
       if (pendingAutoSendRef.current && !chatState.isLoading) {
         const msg = pendingAutoSendRef.current;
@@ -14147,17 +13971,17 @@ var UnifiedCopilotDock = ({
       }
     }
   }, [chatState.messages, chatState.isLoading]);
-  useEffect27(() => {
+  useEffect25(() => {
     if (historyOpen && chatState.onFetchHistory) {
       chatState.onFetchHistory().then(setHistoryItems);
     } else if (historyOpen && chatState.conversationHistory) {
       setHistoryItems(chatState.conversationHistory);
     }
   }, [historyOpen, chatState]);
-  useEffect27(() => {
+  useEffect25(() => {
     if (defaultExpanded) setIsExpanded(true);
   }, [defaultExpanded]);
-  useEffect27(() => {
+  useEffect25(() => {
     if (!isExpanded) return;
     const handleEscape = (e) => {
       if (e.key === "Escape") {
@@ -14168,7 +13992,7 @@ var UnifiedCopilotDock = ({
     window.addEventListener("keydown", handleEscape);
     return () => window.removeEventListener("keydown", handleEscape);
   }, [isExpanded, onClose]);
-  useEffect27(() => {
+  useEffect25(() => {
     const wasStreaming = prevIsStreamingRef.current;
     prevIsStreamingRef.current = chatState.isStreaming;
     if (wasStreaming && !chatState.isStreaming && isExpanded && !slashMenuOpen && !atMenuOpen) {
@@ -14199,7 +14023,7 @@ var UnifiedCopilotDock = ({
     setIsExpanded(true);
     setTimeout(() => inputRef.current?.focus(), 300);
   };
-  const handleSend = useCallback15(() => {
+  const handleSend = useCallback14(() => {
     if (!chatState.inputValue.trim()) return;
     const hasTools = Object.values(forcedTools).some(Boolean);
     const atts = attachments.length > 0 ? attachments.map((a) => ({ url: a.url, data: a.data, name: a.name, type: a.type })) : void 0;
@@ -14242,7 +14066,7 @@ var UnifiedCopilotDock = ({
       if (chatState.inputValue.trim()) handleSend();
     }
   };
-  const handleInputChange = useCallback15((value) => {
+  const handleInputChange = useCallback14((value) => {
     chatState.onInputChange(value);
     const hasSlashItems = effAllowedTools && effAllowedTools.length > 0 || effAllowedSkills && effAllowedSkills.length > 0;
     if (hasSlashItems) {
@@ -14267,7 +14091,7 @@ var UnifiedCopilotDock = ({
     if (slashMenuOpen) setSlashMenuOpen(false);
     if (atMenuOpen) setAtMenuOpen(false);
   }, [chatState, effAllowedTools, effAllowedSkills, personas, showAgents, slashMenuOpen, atMenuOpen]);
-  const handleSlashSelect = useCallback15((command) => {
+  const handleSlashSelect = useCallback14((command) => {
     const value = chatState.inputValue;
     const updated = value.replace(/(?:^|\s)\/[^\s]*$/, (match) => {
       const prefix = match.startsWith(" ") ? " " : "";
@@ -14278,7 +14102,7 @@ var UnifiedCopilotDock = ({
     setSlashQuery("");
     requestAnimationFrame(() => inputRef.current?.focus());
   }, [chatState]);
-  const handleAtSelect = useCallback15((name) => {
+  const handleAtSelect = useCallback14((name) => {
     const value = chatState.inputValue;
     const updated = value.replace(/(?:^|\s)@[^\s]*$/, (match) => {
       const prefix = match.startsWith(" ") ? " " : "";
@@ -14289,7 +14113,7 @@ var UnifiedCopilotDock = ({
     setAtQuery("");
     requestAnimationFrame(() => inputRef.current?.focus());
   }, [chatState]);
-  const handleDroppedFiles = useCallback15(async (files) => {
+  const handleDroppedFiles = useCallback14(async (files) => {
     const newAttachments = await Promise.all(
       files.map(
         (file) => new Promise((resolve) => {
@@ -14331,18 +14155,18 @@ var UnifiedCopilotDock = ({
     const borderRadius = size === "lg" ? "rounded-xl" : size === "md" ? "rounded-lg" : "rounded-md";
     if (isTwin && twinImg) {
       return /* @__PURE__ */ jsxs78(Avatar, { className: `${sizeClasses} shrink-0`, children: [
-        /* @__PURE__ */ jsx92(AvatarImage, { src: twinImg, alt: context.title }),
-        /* @__PURE__ */ jsx92(AvatarFallback, { className: `bg-gradient-to-br from-violet-500 to-indigo-600 text-white ${textSize} font-bold`, children: twinInitials })
+        /* @__PURE__ */ jsx90(AvatarImage, { src: twinImg, alt: context.title }),
+        /* @__PURE__ */ jsx90(AvatarFallback, { className: `bg-gradient-to-br from-violet-500 to-indigo-600 text-white ${textSize} font-bold`, children: twinInitials })
       ] });
     }
     if (isTwin) {
-      return /* @__PURE__ */ jsx92("div", { className: `${sizeClasses} ${borderRadius} flex items-center justify-center shrink-0 bg-gradient-to-br from-violet-500 to-indigo-600`, children: /* @__PURE__ */ jsx92(Users2, { className: `${iconSize} text-white` }) });
+      return /* @__PURE__ */ jsx90("div", { className: `${sizeClasses} ${borderRadius} flex items-center justify-center shrink-0 bg-gradient-to-br from-violet-500 to-indigo-600`, children: /* @__PURE__ */ jsx90(Users2, { className: `${iconSize} text-white` }) });
     }
-    return /* @__PURE__ */ jsx92("div", { className: `${sizeClasses} ${borderRadius} flex items-center justify-center shrink-0 bg-gradient-to-br from-primary to-primary/70`, children: /* @__PURE__ */ jsx92(Sparkles8, { className: `${iconSize} text-primary-foreground` }) });
+    return /* @__PURE__ */ jsx90("div", { className: `${sizeClasses} ${borderRadius} flex items-center justify-center shrink-0 bg-gradient-to-br from-primary to-primary/70`, children: /* @__PURE__ */ jsx90(Sparkles8, { className: `${iconSize} text-primary-foreground` }) });
   };
   const emptyMessage = t2("copilot:noDataAvailable");
   return /* @__PURE__ */ jsxs78(Fragment23, { children: [
-    /* @__PURE__ */ jsx92("div", { className: "h-16 w-full shrink-0", "aria-hidden": "true" }),
+    /* @__PURE__ */ jsx90("div", { className: "h-16 w-full shrink-0", "aria-hidden": "true" }),
     /* @__PURE__ */ jsxs78(
       "div",
       {
@@ -14359,8 +14183,8 @@ var UnifiedCopilotDock = ({
               className: "h-full bg-card/95 backdrop-blur-lg border-t border-border shadow-lg flex items-center gap-3 px-4 cursor-pointer hover:bg-accent/30 transition-colors duration-fast ease-standard",
               onClick: handleExpand,
               children: [
-                /* @__PURE__ */ jsx92(TwinAvatar, { size: "md" }),
-                /* @__PURE__ */ jsx92("div", { className: "flex-1 min-w-0", children: /* @__PURE__ */ jsx92(
+                /* @__PURE__ */ jsx90(TwinAvatar, { size: "md" }),
+                /* @__PURE__ */ jsx90("div", { className: "flex-1 min-w-0", children: /* @__PURE__ */ jsx90(
                   "input",
                   {
                     type: "text",
@@ -14385,12 +14209,12 @@ var UnifiedCopilotDock = ({
                     className: "w-full bg-transparent text-base md:text-sm text-foreground placeholder:text-muted-foreground focus:outline-none"
                   }
                 ) }),
-                /* @__PURE__ */ jsx92(ChevronUp4, { className: "w-4 h-4 text-muted-foreground shrink-0" })
+                /* @__PURE__ */ jsx90(ChevronUp4, { className: "w-4 h-4 text-muted-foreground shrink-0" })
               ]
             }
           ),
           isExpanded && /* @__PURE__ */ jsxs78("div", { className: `relative h-full bg-card/95 backdrop-blur-lg ${expandedBorderClass} border-border ${expandedShadowClass} flex flex-col`, children: [
-            isFloat && /* @__PURE__ */ jsx92(
+            isFloat && /* @__PURE__ */ jsx90(
               "div",
               {
                 role: "separator",
@@ -14398,7 +14222,7 @@ var UnifiedCopilotDock = ({
                 onPointerDown: startFloatGesture("resize"),
                 className: `absolute bottom-0 ${isRTL ? "left-0" : "right-0"} z-10 h-5 w-5 ${isRTL ? "cursor-sw-resize" : "cursor-se-resize"} touch-none flex items-end justify-end p-0.5 text-muted-foreground/50 hover:text-muted-foreground`,
                 style: isRTL ? { transform: "scaleX(-1)" } : void 0,
-                children: /* @__PURE__ */ jsx92("svg", { viewBox: "0 0 10 10", className: "h-2.5 w-2.5", fill: "currentColor", "aria-hidden": "true", children: /* @__PURE__ */ jsx92("path", { d: "M9 1 1 9M9 5 5 9M9 9 9 9", stroke: "currentColor", strokeWidth: "1.2", fill: "none" }) })
+                children: /* @__PURE__ */ jsx90("svg", { viewBox: "0 0 10 10", className: "h-2.5 w-2.5", fill: "currentColor", "aria-hidden": "true", children: /* @__PURE__ */ jsx90("path", { d: "M9 1 1 9M9 5 5 9M9 9 9 9", stroke: "currentColor", strokeWidth: "1.2", fill: "none" }) })
               }
             ),
             /* @__PURE__ */ jsxs78(
@@ -14408,18 +14232,18 @@ var UnifiedCopilotDock = ({
                 onPointerDown: isFloat ? startFloatGesture("move") : void 0,
                 children: [
                   /* @__PURE__ */ jsxs78("div", { className: "flex items-center gap-2.5", children: [
-                    isFloat && /* @__PURE__ */ jsx92(GripVertical4, { className: "w-3.5 h-3.5 text-muted-foreground/60 shrink-0", "aria-hidden": "true" }),
-                    /* @__PURE__ */ jsx92(TwinAvatar, { size: "md" }),
+                    isFloat && /* @__PURE__ */ jsx90(GripVertical4, { className: "w-3.5 h-3.5 text-muted-foreground/60 shrink-0", "aria-hidden": "true" }),
+                    /* @__PURE__ */ jsx90(TwinAvatar, { size: "md" }),
                     /* @__PURE__ */ jsxs78("div", { children: [
                       /* @__PURE__ */ jsxs78("div", { className: "flex items-center gap-2", children: [
-                        /* @__PURE__ */ jsx92("h3", { className: "text-sm font-semibold text-foreground", children: chatState.conversationTitle || aiName }),
-                        twinBadge && /* @__PURE__ */ jsx92("span", { className: "text-[9px] px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-400 font-medium", children: twinBadge }),
+                        /* @__PURE__ */ jsx90("h3", { className: "text-sm font-semibold text-foreground", children: chatState.conversationTitle || aiName }),
+                        twinBadge && /* @__PURE__ */ jsx90("span", { className: "text-[9px] px-1.5 py-0.5 rounded-full bg-violet-500/20 text-violet-400 font-medium", children: twinBadge }),
                         /* @__PURE__ */ jsxs78("span", { className: `text-[9px] px-1.5 py-0.5 rounded-full font-medium shrink-0 inline-flex items-center gap-0.5 ${thinkingMode ? "bg-amber-500/20 text-amber-400" : "bg-cyan-500/20 text-cyan-400"}`, children: [
-                          thinkingMode ? /* @__PURE__ */ jsx92(Brain3, { className: "w-2.5 h-2.5" }) : /* @__PURE__ */ jsx92(Zap2, { className: "w-2.5 h-2.5" }),
+                          thinkingMode ? /* @__PURE__ */ jsx90(Brain3, { className: "w-2.5 h-2.5" }) : /* @__PURE__ */ jsx90(Zap2, { className: "w-2.5 h-2.5" }),
                           thinkingMode ? t2("copilot:thinking") : t2("copilot:fast")
                         ] })
                       ] }),
-                      /* @__PURE__ */ jsx92("p", { className: "text-[10px] text-muted-foreground line-clamp-2", children: isTwin ? t2("copilot:aiPersonaSimulation") : dockContextLabel || context.title }),
+                      /* @__PURE__ */ jsx90("p", { className: "text-[10px] text-muted-foreground line-clamp-2", children: isTwin ? t2("copilot:aiPersonaSimulation") : dockContextLabel || context.title }),
                       dockContextBadge && /* @__PURE__ */ jsxs78(
                         "button",
                         {
@@ -14430,7 +14254,7 @@ var UnifiedCopilotDock = ({
                           } : void 0,
                           className: `inline-flex items-center gap-1 text-[9px] px-1.5 py-0.5 rounded-full mt-0.5 transition-all duration-fast ease-standard border ${dockContextBadge.color} ${onNavigate ? "hover:brightness-125 cursor-pointer border-current/20" : "opacity-60 cursor-default border-transparent"}`,
                           children: [
-                            onNavigate && /* @__PURE__ */ jsx92(ExternalLink5, { className: "w-2.5 h-2.5 shrink-0" }),
+                            onNavigate && /* @__PURE__ */ jsx90(ExternalLink5, { className: "w-2.5 h-2.5 shrink-0" }),
                             /* @__PURE__ */ jsxs78("span", { className: "truncate max-w-[150px] font-medium", children: [
                               language === "ar" ? dockContextBadge.labelAr : dockContextBadge.label,
                               dockContextLabel ? ` \xB7 ${dockContextLabel}` : ""
@@ -14442,18 +14266,18 @@ var UnifiedCopilotDock = ({
                   ] }),
                   /* @__PURE__ */ jsxs78("div", { className: "flex items-center gap-1", onPointerDown: (e) => e.stopPropagation(), children: [
                     /* @__PURE__ */ jsxs78(DropdownMenu, { dir: isRTL ? "rtl" : "ltr", children: [
-                      /* @__PURE__ */ jsx92(DropdownMenuTrigger, { asChild: true, children: /* @__PURE__ */ jsx92(
+                      /* @__PURE__ */ jsx90(DropdownMenuTrigger, { asChild: true, children: /* @__PURE__ */ jsx90(
                         Button,
                         {
                           variant: "ghost",
                           size: "icon",
                           className: "h-7 w-7",
                           "aria-label": language === "ar" ? "\u0645\u0648\u0636\u0639 \u0627\u0644\u0646\u0627\u0641\u0630\u0629" : "Dock position",
-                          children: /* @__PURE__ */ jsx92(MoreVertical, { className: "w-3.5 h-3.5", "aria-hidden": "true" })
+                          children: /* @__PURE__ */ jsx90(MoreVertical, { className: "w-3.5 h-3.5", "aria-hidden": "true" })
                         }
                       ) }),
                       /* @__PURE__ */ jsxs78(DropdownMenuContent, { align: "end", className: "w-52", children: [
-                        /* @__PURE__ */ jsx92(DropdownMenuLabel, { className: "text-[10px] text-muted-foreground font-normal", dir: isRTL ? "rtl" : "ltr", children: t2("copilot:dockPosition") }),
+                        /* @__PURE__ */ jsx90(DropdownMenuLabel, { className: "text-[10px] text-muted-foreground font-normal", dir: isRTL ? "rtl" : "ltr", children: t2("copilot:dockPosition") }),
                         /* @__PURE__ */ jsxs78(
                           DropdownMenuItem,
                           {
@@ -14461,9 +14285,9 @@ var UnifiedCopilotDock = ({
                             dir: isRTL ? "rtl" : "ltr",
                             className: dockPosition === "left" ? "text-primary" : "",
                             children: [
-                              /* @__PURE__ */ jsx92(PanelLeft, { className: `w-3.5 h-3.5 me-2` }),
+                              /* @__PURE__ */ jsx90(PanelLeft, { className: `w-3.5 h-3.5 me-2` }),
                               t2("copilot:dockLeft"),
-                              dockPosition === "left" && /* @__PURE__ */ jsx92(Check8, { className: `w-3 h-3 ms-auto text-primary` })
+                              dockPosition === "left" && /* @__PURE__ */ jsx90(Check8, { className: `w-3 h-3 ms-auto text-primary` })
                             ]
                           }
                         ),
@@ -14474,9 +14298,9 @@ var UnifiedCopilotDock = ({
                             dir: isRTL ? "rtl" : "ltr",
                             className: dockPosition === "right" ? "text-primary" : "",
                             children: [
-                              /* @__PURE__ */ jsx92(PanelRight, { className: `w-3.5 h-3.5 me-2` }),
+                              /* @__PURE__ */ jsx90(PanelRight, { className: `w-3.5 h-3.5 me-2` }),
                               t2("copilot:dockRight"),
-                              dockPosition === "right" && /* @__PURE__ */ jsx92(Check8, { className: `w-3 h-3 ms-auto text-primary` })
+                              dockPosition === "right" && /* @__PURE__ */ jsx90(Check8, { className: `w-3 h-3 ms-auto text-primary` })
                             ]
                           }
                         ),
@@ -14487,13 +14311,13 @@ var UnifiedCopilotDock = ({
                             dir: isRTL ? "rtl" : "ltr",
                             className: dockPosition === "bottom" ? "text-primary" : "",
                             children: [
-                              /* @__PURE__ */ jsx92(PanelBottom, { className: `w-3.5 h-3.5 me-2` }),
+                              /* @__PURE__ */ jsx90(PanelBottom, { className: `w-3.5 h-3.5 me-2` }),
                               t2("copilot:dockBottom"),
-                              dockPosition === "bottom" && /* @__PURE__ */ jsx92(Check8, { className: `w-3 h-3 ms-auto text-primary` })
+                              dockPosition === "bottom" && /* @__PURE__ */ jsx90(Check8, { className: `w-3 h-3 ms-auto text-primary` })
                             ]
                           }
                         ),
-                        /* @__PURE__ */ jsx92(DropdownMenuSeparator, {}),
+                        /* @__PURE__ */ jsx90(DropdownMenuSeparator, {}),
                         /* @__PURE__ */ jsxs78(
                           DropdownMenuItem,
                           {
@@ -14501,15 +14325,15 @@ var UnifiedCopilotDock = ({
                             dir: isRTL ? "rtl" : "ltr",
                             className: dockPosition === "float" ? "text-primary" : "",
                             children: [
-                              /* @__PURE__ */ jsx92(Move, { className: `w-3.5 h-3.5 me-2` }),
+                              /* @__PURE__ */ jsx90(Move, { className: `w-3.5 h-3.5 me-2` }),
                               t2("copilot:dockFloat"),
-                              dockPosition === "float" && /* @__PURE__ */ jsx92(Check8, { className: `w-3 h-3 ms-auto text-primary` })
+                              dockPosition === "float" && /* @__PURE__ */ jsx90(Check8, { className: `w-3 h-3 ms-auto text-primary` })
                             ]
                           }
                         )
                       ] })
                     ] }),
-                    /* @__PURE__ */ jsx92(
+                    /* @__PURE__ */ jsx90(
                       Button,
                       {
                         variant: "ghost",
@@ -14518,14 +14342,14 @@ var UnifiedCopilotDock = ({
                         onClick: () => handleDockPositionChange(isFloat ? "bottom" : "float"),
                         title: isFloat ? t2("copilot:redock") : t2("copilot:undock"),
                         "aria-label": isFloat ? t2("copilot:redock") : t2("copilot:undock"),
-                        children: isFloat ? /* @__PURE__ */ jsx92(Minimize2, { className: "w-3.5 h-3.5" }) : /* @__PURE__ */ jsx92(Move, { className: "w-3.5 h-3.5" })
+                        children: isFloat ? /* @__PURE__ */ jsx90(Minimize2, { className: "w-3.5 h-3.5" }) : /* @__PURE__ */ jsx90(Move, { className: "w-3.5 h-3.5" })
                       }
                     ),
                     (chatState.onFetchHistory || chatState.conversationHistory) && /* @__PURE__ */ jsxs78(Popover, { open: historyOpen, onOpenChange: setHistoryOpen, children: [
-                      /* @__PURE__ */ jsx92(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsx92(Button, { variant: "ghost", size: "icon", className: "h-7 w-7", title: t2("copilot:history"), children: /* @__PURE__ */ jsx92(Clock5, { className: "w-3.5 h-3.5" }) }) }),
+                      /* @__PURE__ */ jsx90(PopoverTrigger, { asChild: true, children: /* @__PURE__ */ jsx90(Button, { variant: "ghost", size: "icon", className: "h-7 w-7", title: t2("copilot:history"), children: /* @__PURE__ */ jsx90(Clock5, { className: "w-3.5 h-3.5" }) }) }),
                       /* @__PURE__ */ jsxs78(PopoverContent, { align: "end", className: "w-72 p-0", dir: isRTL ? "rtl" : "ltr", children: [
-                        /* @__PURE__ */ jsx92("div", { className: "p-3 border-b border-border", children: /* @__PURE__ */ jsx92("p", { className: "text-xs font-medium text-foreground", children: t2("copilot:conversationHistory") }) }),
-                        /* @__PURE__ */ jsx92(ScrollArea, { className: "max-h-64", children: /* @__PURE__ */ jsx92("div", { className: "p-2 space-y-0.5", children: historyItems.length === 0 ? /* @__PURE__ */ jsx92("p", { className: "text-xs text-muted-foreground text-center py-4", children: t2("copilot:noPreviousConversations") }) : historyItems.map((conv) => /* @__PURE__ */ jsxs78(
+                        /* @__PURE__ */ jsx90("div", { className: "p-3 border-b border-border", children: /* @__PURE__ */ jsx90("p", { className: "text-xs font-medium text-foreground", children: t2("copilot:conversationHistory") }) }),
+                        /* @__PURE__ */ jsx90(ScrollArea, { className: "max-h-64", children: /* @__PURE__ */ jsx90("div", { className: "p-2 space-y-0.5", children: historyItems.length === 0 ? /* @__PURE__ */ jsx90("p", { className: "text-xs text-muted-foreground text-center py-4", children: t2("copilot:noPreviousConversations") }) : historyItems.map((conv) => /* @__PURE__ */ jsxs78(
                           "div",
                           {
                             className: `group flex items-center gap-1 rounded-lg transition-colors duration-fast ease-standard hover:bg-muted ${conv.id === chatState.conversationId ? "bg-primary/10" : ""}`,
@@ -14536,19 +14360,19 @@ var UnifiedCopilotDock = ({
                                   onClick: () => handleLoadConversation(conv.id),
                                   className: `flex-1 min-w-0 text-start px-2.5 py-2 text-xs`,
                                   children: [
-                                    /* @__PURE__ */ jsx92("p", { className: "font-medium text-foreground line-clamp-1", children: conv.title || conv.context_label || "Untitled" }),
-                                    /* @__PURE__ */ jsx92("p", { className: "text-[10px] text-muted-foreground mt-0.5", children: new Date(conv.updated_at).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US") })
+                                    /* @__PURE__ */ jsx90("p", { className: "font-medium text-foreground line-clamp-1", children: conv.title || conv.context_label || "Untitled" }),
+                                    /* @__PURE__ */ jsx90("p", { className: "text-[10px] text-muted-foreground mt-0.5", children: new Date(conv.updated_at).toLocaleDateString(language === "ar" ? "ar-SA" : "en-US") })
                                   ]
                                 }
                               ),
-                              chatState.onDeleteConversation && /* @__PURE__ */ jsx92(
+                              chatState.onDeleteConversation && /* @__PURE__ */ jsx90(
                                 "button",
                                 {
                                   onClick: () => handleDeleteConversation(conv.id),
                                   className: "shrink-0 me-1.5 p-1 rounded text-muted-foreground opacity-0 group-hover:opacity-100 hover:text-destructive hover:bg-destructive/10 transition-all duration-fast ease-standard",
                                   title: t2("copilot:deleteConversation"),
                                   "aria-label": t2("copilot:deleteConversation"),
-                                  children: /* @__PURE__ */ jsx92(Trash25, { className: "w-3 h-3" })
+                                  children: /* @__PURE__ */ jsx90(Trash25, { className: "w-3 h-3" })
                                 }
                               )
                             ]
@@ -14557,7 +14381,7 @@ var UnifiedCopilotDock = ({
                         )) }) })
                       ] })
                     ] }),
-                    /* @__PURE__ */ jsx92(
+                    /* @__PURE__ */ jsx90(
                       Button,
                       {
                         variant: "ghost",
@@ -14568,10 +14392,10 @@ var UnifiedCopilotDock = ({
                           setThinkingMode(false);
                         },
                         title: t2("copilot:newChat"),
-                        children: /* @__PURE__ */ jsx92(Plus5, { className: "w-3.5 h-3.5" })
+                        children: /* @__PURE__ */ jsx90(Plus5, { className: "w-3.5 h-3.5" })
                       }
                     ),
-                    onExpandToFullPage && /* @__PURE__ */ jsx92(
+                    onExpandToFullPage && /* @__PURE__ */ jsx90(
                       Button,
                       {
                         variant: "ghost",
@@ -14579,10 +14403,10 @@ var UnifiedCopilotDock = ({
                         className: "h-7 w-7",
                         onClick: onExpandToFullPage,
                         title: t2("copilot:fullView"),
-                        children: /* @__PURE__ */ jsx92(Maximize2, { className: "w-3.5 h-3.5" })
+                        children: /* @__PURE__ */ jsx90(Maximize2, { className: "w-3.5 h-3.5" })
                       }
                     ),
-                    /* @__PURE__ */ jsx92(
+                    /* @__PURE__ */ jsx90(
                       Button,
                       {
                         variant: "ghost",
@@ -14593,35 +14417,35 @@ var UnifiedCopilotDock = ({
                           setIsExpanded(false);
                           onClose?.();
                         },
-                        children: /* @__PURE__ */ jsx92(X6, { className: "w-4 h-4", "aria-hidden": "true" })
+                        children: /* @__PURE__ */ jsx90(X6, { className: "w-4 h-4", "aria-hidden": "true" })
                       }
                     )
                   ] })
                 ]
               }
             ),
-            /* @__PURE__ */ jsx92(ScrollArea, { className: "flex-1 px-4 py-3", dir: isRTL ? "rtl" : "ltr", children: /* @__PURE__ */ jsxs78("div", { className: "space-y-3", children: [
+            /* @__PURE__ */ jsx90(ScrollArea, { className: "flex-1 px-4 py-3", dir: isRTL ? "rtl" : "ltr", children: /* @__PURE__ */ jsxs78("div", { className: "space-y-3", children: [
               isTwin && chatState.messages.length === 0 && /* @__PURE__ */ jsxs78("div", { className: "mx-auto max-w-md mb-3 p-2.5 bg-amber-500/10 border border-amber-500/30 rounded-lg flex items-start gap-2", children: [
-                /* @__PURE__ */ jsx92(AlertTriangle4, { className: "w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" }),
-                /* @__PURE__ */ jsx92("p", { className: "text-[11px] text-amber-500/90", children: t2("copilot:twinDisclaimer") })
+                /* @__PURE__ */ jsx90(AlertTriangle4, { className: "w-3.5 h-3.5 text-amber-500 shrink-0 mt-0.5" }),
+                /* @__PURE__ */ jsx90("p", { className: "text-[11px] text-amber-500/90", children: t2("copilot:twinDisclaimer") })
               ] }),
               chatState.messages.length === 0 && !chatState.isLoading && /* @__PURE__ */ jsxs78("div", { className: "text-center py-6", children: [
-                /* @__PURE__ */ jsx92("div", { className: "mx-auto mb-3 flex justify-center", children: /* @__PURE__ */ jsx92(TwinAvatar, { size: "lg" }) }),
-                seedGreeting ? /* @__PURE__ */ jsx92("div", { className: "max-w-md mx-auto mb-4 p-3 bg-muted rounded-xl border border-border text-start", children: /* @__PURE__ */ jsx92("p", { className: "text-sm text-foreground", dir: "auto", children: seedGreeting }) }) : /* @__PURE__ */ jsx92("p", { className: "text-sm text-muted-foreground mb-4", children: placeholder }),
-                quickActions && quickActions.length > 0 ? /* @__PURE__ */ jsx92("div", { className: "flex flex-wrap justify-center gap-2 max-w-md mx-auto", children: quickActions.map((qa, i) => /* @__PURE__ */ jsxs78(
+                /* @__PURE__ */ jsx90("div", { className: "mx-auto mb-3 flex justify-center", children: /* @__PURE__ */ jsx90(TwinAvatar, { size: "lg" }) }),
+                seedGreeting ? /* @__PURE__ */ jsx90("div", { className: "max-w-md mx-auto mb-4 p-3 bg-muted rounded-xl border border-border text-start", children: /* @__PURE__ */ jsx90("p", { className: "text-sm text-foreground", dir: "auto", children: seedGreeting }) }) : /* @__PURE__ */ jsx90("p", { className: "text-sm text-muted-foreground mb-4", children: placeholder }),
+                quickActions && quickActions.length > 0 ? /* @__PURE__ */ jsx90("div", { className: "flex flex-wrap justify-center gap-2 max-w-md mx-auto", children: quickActions.map((qa, i) => /* @__PURE__ */ jsxs78(
                   "button",
                   {
                     onClick: () => chatState.onSend(qa.prompt, { thinkingMode }),
                     className: "inline-flex items-center gap-1.5 text-xs px-3 py-1.5 bg-primary/10 hover:bg-primary/15 text-foreground rounded-full transition-colors duration-fast ease-standard border border-primary/20 hover:border-primary/40",
                     children: [
-                      /* @__PURE__ */ jsx92(Sparkles8, { className: "w-3 h-3 text-primary shrink-0", "aria-hidden": "true" }),
+                      /* @__PURE__ */ jsx90(Sparkles8, { className: "w-3 h-3 text-primary shrink-0", "aria-hidden": "true" }),
                       language === "ar" ? qa.label_ar : qa.label_en
                     ]
                   },
                   i
-                )) }) : /* @__PURE__ */ jsx92("div", { className: "flex flex-wrap justify-center gap-2 max-w-md mx-auto", children: context.suggestions.map((suggestion, i) => {
+                )) }) : /* @__PURE__ */ jsx90("div", { className: "flex flex-wrap justify-center gap-2 max-w-md mx-auto", children: context.suggestions.map((suggestion, i) => {
                   const text = typeof suggestion === "string" ? suggestion : language === "ar" ? suggestion.ar : suggestion.en;
-                  return /* @__PURE__ */ jsx92(
+                  return /* @__PURE__ */ jsx90(
                     "button",
                     {
                       onClick: () => chatState.onSend(text, { thinkingMode }),
@@ -14659,15 +14483,15 @@ var UnifiedCopilotDock = ({
                 const displayContent = message.role === "user" && message.content.startsWith("[COMPARE_ACCEPT]") ? t2("copilot:comparisonFactorsAccepted") : renderedMarkdown;
                 if (message.hidden && message.role === "user") {
                   const insightText = message.content.match(/"([^"]+)"/)?.[1] || t2("copilot:insightFromDashboard");
-                  return /* @__PURE__ */ jsx92("div", { className: "flex justify-center py-1", children: /* @__PURE__ */ jsxs78("div", { className: "inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/5 border border-primary/20 rounded-full text-[11px] text-primary/70 max-w-[90%]", children: [
-                    /* @__PURE__ */ jsx92(Lightbulb, { className: "w-3 h-3 shrink-0" }),
-                    /* @__PURE__ */ jsx92("span", { className: "truncate", dir: "auto", children: insightText })
+                  return /* @__PURE__ */ jsx90("div", { className: "flex justify-center py-1", children: /* @__PURE__ */ jsxs78("div", { className: "inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary/5 border border-primary/20 rounded-full text-[11px] text-primary/70 max-w-[90%]", children: [
+                    /* @__PURE__ */ jsx90(Lightbulb, { className: "w-3 h-3 shrink-0" }),
+                    /* @__PURE__ */ jsx90("span", { className: "truncate", dir: "auto", children: insightText })
                   ] }) }, message.id);
                 }
                 return /* @__PURE__ */ jsxs78("div", { children: [
                   message.role === "assistant" && message.steps && message.steps.length > 0 && /* @__PURE__ */ jsxs78("div", { className: "flex gap-2 mb-1 justify-start", children: [
-                    /* @__PURE__ */ jsx92("div", { className: "mt-1 shrink-0", children: /* @__PURE__ */ jsx92(TwinAvatar, { size: "sm" }) }),
-                    /* @__PURE__ */ jsx92("div", { className: "min-w-0 flex-1 max-w-[calc(85%-2rem)]", children: /* @__PURE__ */ jsx92(
+                    /* @__PURE__ */ jsx90("div", { className: "mt-1 shrink-0", children: /* @__PURE__ */ jsx90(TwinAvatar, { size: "sm" }) }),
+                    /* @__PURE__ */ jsx90("div", { className: "min-w-0 flex-1 max-w-[calc(85%-2rem)]", children: /* @__PURE__ */ jsx90(
                       AgentSteps_default,
                       {
                         steps: message.steps,
@@ -14678,10 +14502,10 @@ var UnifiedCopilotDock = ({
                     ) })
                   ] }),
                   /* @__PURE__ */ jsxs78("div", { className: `flex gap-2 ${message.role === "user" ? "justify-end" : "justify-start"}`, children: [
-                    message.role === "assistant" && /* @__PURE__ */ jsx92("div", { className: "mt-1 shrink-0", children: /* @__PURE__ */ jsx92(TwinAvatar, { size: "sm" }) }),
-                    /* @__PURE__ */ jsx92("div", { className: `max-w-[85%] rounded-xl px-3 py-2 text-sm ${message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground border border-border"}`, children: message.role === "assistant" ? /* @__PURE__ */ jsxs78("div", { className: "max-w-none break-words", dir: isRTL ? "rtl" : "ltr", children: [
-                      /* @__PURE__ */ jsx92(MarkdownContent_default, { content: displayContent, dir: isRTL ? "rtl" : "ltr" }),
-                      structuredData && /* @__PURE__ */ jsx92(
+                    message.role === "assistant" && /* @__PURE__ */ jsx90("div", { className: "mt-1 shrink-0", children: /* @__PURE__ */ jsx90(TwinAvatar, { size: "sm" }) }),
+                    /* @__PURE__ */ jsx90("div", { className: `max-w-[85%] rounded-xl px-3 py-2 text-sm ${message.role === "user" ? "bg-primary text-primary-foreground" : "bg-muted text-foreground border border-border"}`, children: message.role === "assistant" ? /* @__PURE__ */ jsxs78("div", { className: "max-w-none break-words", dir: isRTL ? "rtl" : "ltr", children: [
+                      /* @__PURE__ */ jsx90(MarkdownContent_default, { content: displayContent, dir: isRTL ? "rtl" : "ltr" }),
+                      structuredData && /* @__PURE__ */ jsx90(
                         ChatStructuredData_default,
                         {
                           data: structuredData,
@@ -14691,7 +14515,7 @@ var UnifiedCopilotDock = ({
                           onCheckSlugs
                         }
                       ),
-                      message.briefing && /* @__PURE__ */ jsx92(
+                      message.briefing && /* @__PURE__ */ jsx90(
                         ChatStructuredData_default,
                         {
                           data: message.briefing,
@@ -14701,7 +14525,7 @@ var UnifiedCopilotDock = ({
                           onCheckSlugs
                         }
                       ),
-                      compareFactorsData && /* @__PURE__ */ jsx92(
+                      compareFactorsData && /* @__PURE__ */ jsx90(
                         CompareFactorsCard_default,
                         {
                           data: compareFactorsData,
@@ -14710,7 +14534,7 @@ var UnifiedCopilotDock = ({
                           language
                         }
                       ),
-                      message.citations && message.citations.length > 0 && /* @__PURE__ */ jsx92("div", { className: "mt-2 pt-2 border-t border-border/50 flex flex-wrap gap-1", dir: isRTL ? "rtl" : "ltr", children: message.citations.map((c) => /* @__PURE__ */ jsxs78(
+                      message.citations && message.citations.length > 0 && /* @__PURE__ */ jsx90("div", { className: "mt-2 pt-2 border-t border-border/50 flex flex-wrap gap-1", dir: isRTL ? "rtl" : "ltr", children: message.citations.map((c) => /* @__PURE__ */ jsxs78(
                         "button",
                         {
                           type: "button",
@@ -14718,13 +14542,13 @@ var UnifiedCopilotDock = ({
                           className: "inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-primary/10 hover:bg-primary/20 text-primary text-[10px] font-medium transition-colors duration-fast ease-standard border border-primary/20",
                           title: c.description || c.title,
                           children: [
-                            /* @__PURE__ */ jsx92("span", { className: "inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-primary/20 text-primary text-[8px] font-bold", children: c.number }),
-                            /* @__PURE__ */ jsx92("span", { className: "truncate max-w-[120px]", children: c.title })
+                            /* @__PURE__ */ jsx90("span", { className: "inline-flex items-center justify-center w-3.5 h-3.5 rounded-full bg-primary/20 text-primary text-[8px] font-bold", children: c.number }),
+                            /* @__PURE__ */ jsx90("span", { className: "truncate max-w-[120px]", children: c.title })
                           ]
                         },
                         c.number
                       )) }),
-                      message.a2uiArtifacts && message.a2uiArtifacts.length > 0 && /* @__PURE__ */ jsx92("div", { className: "mt-2 space-y-2", dir: isRTL ? "rtl" : "ltr", children: message.a2uiArtifacts.map((artifact, artIdx) => /* @__PURE__ */ jsx92(
+                      message.a2uiArtifacts && message.a2uiArtifacts.length > 0 && /* @__PURE__ */ jsx90("div", { className: "mt-2 space-y-2", dir: isRTL ? "rtl" : "ltr", children: message.a2uiArtifacts.map((artifact, artIdx) => /* @__PURE__ */ jsx90(
                         ArtifactRenderer,
                         {
                           artifact,
@@ -14736,7 +14560,7 @@ var UnifiedCopilotDock = ({
                         artIdx
                       )) })
                     ] }) : displayContent }),
-                    message.role === "user" && /* @__PURE__ */ jsx92("div", { className: "w-6 h-6 rounded-md bg-muted flex items-center justify-center shrink-0 mt-1", children: /* @__PURE__ */ jsx92(User2, { className: "w-3 h-3 text-muted-foreground" }) })
+                    message.role === "user" && /* @__PURE__ */ jsx90("div", { className: "w-6 h-6 rounded-md bg-muted flex items-center justify-center shrink-0 mt-1", children: /* @__PURE__ */ jsx90(User2, { className: "w-3 h-3 text-muted-foreground" }) })
                   ] }),
                   message.role === "assistant" && !message.id.startsWith("streaming-") && renderedMarkdown && /* @__PURE__ */ jsxs78("div", { className: "flex items-center gap-1 mt-1 justify-start ps-8", children: [
                     /* @__PURE__ */ jsxs78(
@@ -14748,8 +14572,8 @@ var UnifiedCopilotDock = ({
                         }),
                         className: "flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors duration-fast ease-standard",
                         children: [
-                          /* @__PURE__ */ jsx92(Copy2, { className: "w-3 h-3" }),
-                          /* @__PURE__ */ jsx92("span", { children: t2("copilot:copyResponse") })
+                          /* @__PURE__ */ jsx90(Copy2, { className: "w-3 h-3" }),
+                          /* @__PURE__ */ jsx90("span", { children: t2("copilot:copyResponse") })
                         ]
                       }
                     ),
@@ -14762,8 +14586,8 @@ var UnifiedCopilotDock = ({
                         }),
                         className: "flex items-center gap-1 px-2 py-0.5 rounded text-[10px] text-muted-foreground hover:text-foreground hover:bg-muted/60 transition-colors duration-fast ease-standard",
                         children: [
-                          /* @__PURE__ */ jsx92(Share2, { className: "w-3 h-3" }),
-                          /* @__PURE__ */ jsx92("span", { children: t2("copilot:shareResponse") })
+                          /* @__PURE__ */ jsx90(Share2, { className: "w-3 h-3" }),
+                          /* @__PURE__ */ jsx90("span", { children: t2("copilot:shareResponse") })
                         ]
                       }
                     )
@@ -14771,8 +14595,8 @@ var UnifiedCopilotDock = ({
                 ] }, message.id);
               }),
               chatState.streamError && /* @__PURE__ */ jsxs78("div", { className: "flex gap-2 justify-start", children: [
-                /* @__PURE__ */ jsx92("div", { className: "mt-1 shrink-0", children: /* @__PURE__ */ jsx92(TwinAvatar, { size: "sm" }) }),
-                /* @__PURE__ */ jsx92("div", { className: "min-w-0 flex-1 max-w-[calc(85%-2rem)]", children: /* @__PURE__ */ jsx92(
+                /* @__PURE__ */ jsx90("div", { className: "mt-1 shrink-0", children: /* @__PURE__ */ jsx90(TwinAvatar, { size: "sm" }) }),
+                /* @__PURE__ */ jsx90("div", { className: "min-w-0 flex-1 max-w-[calc(85%-2rem)]", children: /* @__PURE__ */ jsx90(
                   StreamErrorBanner_default,
                   {
                     onRetry: chatState.onRetry,
@@ -14781,7 +14605,7 @@ var UnifiedCopilotDock = ({
                   }
                 ) })
               ] }),
-              snapshottedChips && snapshottedChips.length > 0 && insightTriggered && chatState.messages.length === 2 && !chatState.isLoading && chatState.messages[1]?.role === "assistant" && /* @__PURE__ */ jsx92("div", { className: "flex flex-wrap justify-center gap-2 max-w-md mx-auto py-2", children: snapshottedChips.map((chip, i) => /* @__PURE__ */ jsx92(
+              snapshottedChips && snapshottedChips.length > 0 && insightTriggered && chatState.messages.length === 2 && !chatState.isLoading && chatState.messages[1]?.role === "assistant" && /* @__PURE__ */ jsx90("div", { className: "flex flex-wrap justify-center gap-2 max-w-md mx-auto py-2", children: snapshottedChips.map((chip, i) => /* @__PURE__ */ jsx90(
                 "button",
                 {
                   onClick: () => {
@@ -14795,14 +14619,14 @@ var UnifiedCopilotDock = ({
                 i
               )) }),
               (chatState.isLoading || chatState.isStreaming) && !chatState.isReceiving && chatState.agentSteps.length > 0 && /* @__PURE__ */ jsxs78("div", { className: "flex gap-2 justify-start", children: [
-                /* @__PURE__ */ jsx92("div", { className: "mt-1 shrink-0", children: /* @__PURE__ */ jsx92(TwinAvatar, { size: "sm" }) }),
-                /* @__PURE__ */ jsx92("div", { className: "min-w-0 flex-1 max-w-[calc(85%-2rem)]", children: /* @__PURE__ */ jsx92(AgentSteps_default, { steps: chatState.agentSteps, isStreaming: true, language, dir: isRTL ? "rtl" : "ltr" }) })
+                /* @__PURE__ */ jsx90("div", { className: "mt-1 shrink-0", children: /* @__PURE__ */ jsx90(TwinAvatar, { size: "sm" }) }),
+                /* @__PURE__ */ jsx90("div", { className: "min-w-0 flex-1 max-w-[calc(85%-2rem)]", children: /* @__PURE__ */ jsx90(AgentSteps_default, { steps: chatState.agentSteps, isStreaming: true, language, dir: isRTL ? "rtl" : "ltr" }) })
               ] }),
               (chatState.isLoading || chatState.isStreaming || chatState.isFinalizing) && !chatState.isReceiving && chatState.agentSteps.length === 0 && /* @__PURE__ */ jsxs78("div", { className: "flex gap-2 justify-start", children: [
-                /* @__PURE__ */ jsx92("div", { className: "w-6 h-6 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0", children: /* @__PURE__ */ jsx92(Loader29, { className: "w-3 h-3 text-primary-foreground animate-spin" }) }),
-                /* @__PURE__ */ jsx92("div", { className: "bg-muted rounded-xl px-3 py-2 border border-border", children: /* @__PURE__ */ jsx92("span", { className: "text-xs text-muted-foreground animate-pulse", children: t2("copilot:thinkingIndicator") }) })
+                /* @__PURE__ */ jsx90("div", { className: "w-6 h-6 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0", children: /* @__PURE__ */ jsx90(Loader29, { className: "w-3 h-3 text-primary-foreground animate-spin" }) }),
+                /* @__PURE__ */ jsx90("div", { className: "bg-muted rounded-xl px-3 py-2 border border-border", children: /* @__PURE__ */ jsx90("span", { className: "text-xs text-muted-foreground animate-pulse", children: t2("copilot:thinkingIndicator") }) })
               ] }),
-              /* @__PURE__ */ jsx92("div", { dir: isRTL ? "rtl" : "ltr", ref: messagesEndRef })
+              /* @__PURE__ */ jsx90("div", { dir: isRTL ? "rtl" : "ltr", ref: messagesEndRef })
             ] }) }),
             /* @__PURE__ */ jsxs78(
               "div",
@@ -14840,8 +14664,8 @@ var UnifiedCopilotDock = ({
                   }
                 },
                 children: [
-                  isDragging && /* @__PURE__ */ jsx92("div", { className: "absolute inset-0 z-10 flex items-center justify-center bg-primary/5 border-2 border-dashed border-primary/40 rounded-lg backdrop-blur-sm", children: /* @__PURE__ */ jsx92("p", { className: "text-xs font-medium text-primary", children: t2("copilot:dropFiles") }) }),
-                  /* @__PURE__ */ jsx92(
+                  isDragging && /* @__PURE__ */ jsx90("div", { className: "absolute inset-0 z-10 flex items-center justify-center bg-primary/5 border-2 border-dashed border-primary/40 rounded-lg backdrop-blur-sm", children: /* @__PURE__ */ jsx90("p", { className: "text-xs font-medium text-primary", children: t2("copilot:dropFiles") }) }),
+                  /* @__PURE__ */ jsx90(
                     ChatToolbar_default,
                     {
                       forcedTools,
@@ -14863,7 +14687,7 @@ var UnifiedCopilotDock = ({
                       }
                     }
                   ),
-                  !isTwin && (personas === void 0 || (personas ?? PERSONAS).length > 0) && /* @__PURE__ */ jsx92(
+                  !isTwin && (personas === void 0 || (personas ?? PERSONAS).length > 0) && /* @__PURE__ */ jsx90(
                     PersonaPicker,
                     {
                       value: persona,
@@ -14874,30 +14698,30 @@ var UnifiedCopilotDock = ({
                     }
                   ),
                   SHOW_TOOLS_PANEL && /* @__PURE__ */ jsxs78(Collapsible, { open: toolsPanelOpen, onOpenChange: setToolsPanelOpen, children: [
-                    /* @__PURE__ */ jsx92(CollapsibleTrigger, { asChild: true, children: /* @__PURE__ */ jsxs78(
+                    /* @__PURE__ */ jsx90(CollapsibleTrigger, { asChild: true, children: /* @__PURE__ */ jsxs78(
                       "button",
                       {
                         type: "button",
                         className: "flex items-center gap-1.5 text-[11px] text-muted-foreground hover:text-foreground transition-colors duration-fast ease-standard",
                         "aria-expanded": toolsPanelOpen,
                         children: [
-                          /* @__PURE__ */ jsx92(Wrench, { className: "w-3 h-3 shrink-0" }),
-                          /* @__PURE__ */ jsx92("span", { children: language === "ar" ? "\u0627\u0644\u0623\u062F\u0648\u0627\u062A \u0648\u0627\u0644\u0645\u0647\u0627\u0631\u0627\u062A" : "Tools & Skills" }),
-                          /* @__PURE__ */ jsx92(ChevronDown10, { className: `w-3 h-3 transition-transform duration-fast ease-standard ${toolsPanelOpen ? "rotate-180" : ""}` })
+                          /* @__PURE__ */ jsx90(Wrench, { className: "w-3 h-3 shrink-0" }),
+                          /* @__PURE__ */ jsx90("span", { children: language === "ar" ? "\u0627\u0644\u0623\u062F\u0648\u0627\u062A \u0648\u0627\u0644\u0645\u0647\u0627\u0631\u0627\u062A" : "Tools & Skills" }),
+                          /* @__PURE__ */ jsx90(ChevronDown10, { className: `w-3 h-3 transition-transform duration-fast ease-standard ${toolsPanelOpen ? "rotate-180" : ""}` })
                         ]
                       }
                     ) }),
-                    /* @__PURE__ */ jsx92(CollapsibleContent, { children: /* @__PURE__ */ jsxs78("div", { className: "mt-1.5 rounded-lg border border-border bg-muted/40 p-2 space-y-1", children: [
+                    /* @__PURE__ */ jsx90(CollapsibleContent, { children: /* @__PURE__ */ jsxs78("div", { className: "mt-1.5 rounded-lg border border-border bg-muted/40 p-2 space-y-1", children: [
                       effAllowedTools && effAllowedTools.map((tool) => /* @__PURE__ */ jsxs78(
                         "div",
                         {
                           className: "flex items-center justify-between gap-2 rounded-md px-2 py-1 hover:bg-muted transition-colors duration-fast ease-standard",
                           children: [
                             /* @__PURE__ */ jsxs78("div", { className: "flex items-center gap-1.5 min-w-0", children: [
-                              /* @__PURE__ */ jsx92(Terminal2, { className: "w-3 h-3 shrink-0 text-blue-400" }),
-                              /* @__PURE__ */ jsx92("span", { className: "text-xs text-foreground truncate", children: tool.name })
+                              /* @__PURE__ */ jsx90(Terminal2, { className: "w-3 h-3 shrink-0 text-blue-400" }),
+                              /* @__PURE__ */ jsx90("span", { className: "text-xs text-foreground truncate", children: tool.name })
                             ] }),
-                            /* @__PURE__ */ jsx92(
+                            /* @__PURE__ */ jsx90(
                               "button",
                               {
                                 type: "button",
@@ -14922,10 +14746,10 @@ var UnifiedCopilotDock = ({
                           className: "flex items-center justify-between gap-2 rounded-md px-2 py-1 hover:bg-muted transition-colors duration-fast ease-standard",
                           children: [
                             /* @__PURE__ */ jsxs78("div", { className: "flex items-center gap-1.5 min-w-0", children: [
-                              /* @__PURE__ */ jsx92(Zap2, { className: "w-3 h-3 shrink-0 text-amber-400" }),
-                              /* @__PURE__ */ jsx92("span", { className: "text-xs text-foreground truncate", children: skill.name })
+                              /* @__PURE__ */ jsx90(Zap2, { className: "w-3 h-3 shrink-0 text-amber-400" }),
+                              /* @__PURE__ */ jsx90("span", { className: "text-xs text-foreground truncate", children: skill.name })
                             ] }),
-                            /* @__PURE__ */ jsx92(
+                            /* @__PURE__ */ jsx90(
                               "button",
                               {
                                 type: "button",
@@ -14946,20 +14770,20 @@ var UnifiedCopilotDock = ({
                       ))
                     ] }) })
                   ] }),
-                  attachments.length > 0 && /* @__PURE__ */ jsx92("div", { className: "flex flex-wrap gap-1.5", children: attachments.map((att, i) => /* @__PURE__ */ jsxs78(
+                  attachments.length > 0 && /* @__PURE__ */ jsx90("div", { className: "flex flex-wrap gap-1.5", children: attachments.map((att, i) => /* @__PURE__ */ jsxs78(
                     "div",
                     {
                       className: "inline-flex items-center gap-1.5 px-2 py-1 bg-muted border border-border rounded-md text-[11px] text-foreground max-w-[160px]",
                       children: [
-                        /* @__PURE__ */ jsx92("span", { className: "truncate font-medium", children: att.name }),
-                        /* @__PURE__ */ jsx92(
+                        /* @__PURE__ */ jsx90("span", { className: "truncate font-medium", children: att.name }),
+                        /* @__PURE__ */ jsx90(
                           "button",
                           {
                             type: "button",
                             onClick: () => setAttachments((prev) => prev.filter((_, idx) => idx !== i)),
                             className: "shrink-0 text-muted-foreground hover:text-foreground transition-colors duration-fast ease-standard",
                             "aria-label": language === "ar" ? `\u0625\u0632\u0627\u0644\u0629 ${att.name}` : `Remove ${att.name}`,
-                            children: /* @__PURE__ */ jsx92(X6, { className: "w-3 h-3" })
+                            children: /* @__PURE__ */ jsx90(X6, { className: "w-3 h-3" })
                           }
                         )
                       ]
@@ -14967,14 +14791,14 @@ var UnifiedCopilotDock = ({
                     `${att.name}-${i}`
                   )) }),
                   /* @__PURE__ */ jsxs78("div", { className: "relative", children: [
-                    slashMenuOpen && /* @__PURE__ */ jsx92(
+                    slashMenuOpen && /* @__PURE__ */ jsx90(
                       "div",
                       {
                         ref: slashMenuRef,
                         className: "absolute bottom-full mb-1 start-0 w-72 z-50 rounded-lg border border-border bg-popover shadow-md overflow-hidden",
                         dir: isRTL ? "rtl" : "ltr",
                         children: /* @__PURE__ */ jsxs78(Command, { shouldFilter: false, children: [
-                          /* @__PURE__ */ jsx92(
+                          /* @__PURE__ */ jsx90(
                             CommandInput,
                             {
                               value: slashQuery,
@@ -14985,8 +14809,8 @@ var UnifiedCopilotDock = ({
                             }
                           ),
                           /* @__PURE__ */ jsxs78(CommandList, { className: "max-h-52", children: [
-                            /* @__PURE__ */ jsx92(CommandEmpty, { className: "text-xs py-3", children: language === "ar" ? "\u0644\u0627 \u062A\u0648\u062C\u062F \u0623\u0648\u0627\u0645\u0631" : "No commands found" }),
-                            effAllowedTools && effAllowedTools.length > 0 && /* @__PURE__ */ jsx92(CommandGroup, { heading: language === "ar" ? "\u0623\u062F\u0648\u0627\u062A" : "Tools", children: effAllowedTools.filter(
+                            /* @__PURE__ */ jsx90(CommandEmpty, { className: "text-xs py-3", children: language === "ar" ? "\u0644\u0627 \u062A\u0648\u062C\u062F \u0623\u0648\u0627\u0645\u0631" : "No commands found" }),
+                            effAllowedTools && effAllowedTools.length > 0 && /* @__PURE__ */ jsx90(CommandGroup, { heading: language === "ar" ? "\u0623\u062F\u0648\u0627\u062A" : "Tools", children: effAllowedTools.filter(
                               (t3) => !slashQuery || (t3.function_name ?? t3.slug).toLowerCase().includes(slashQuery.toLowerCase()) || t3.name.toLowerCase().includes(slashQuery.toLowerCase())
                             ).map((tool) => /* @__PURE__ */ jsxs78(
                               CommandItem,
@@ -14995,17 +14819,17 @@ var UnifiedCopilotDock = ({
                                 onSelect: () => handleSlashSelect(tool.function_name ?? tool.slug),
                                 className: "text-xs cursor-pointer",
                                 children: [
-                                  /* @__PURE__ */ jsx92(Terminal2, { className: "w-3 h-3 me-2 shrink-0 text-blue-400" }),
+                                  /* @__PURE__ */ jsx90(Terminal2, { className: "w-3 h-3 me-2 shrink-0 text-blue-400" }),
                                   /* @__PURE__ */ jsxs78("span", { className: "font-mono text-primary me-1.5", children: [
                                     "/",
                                     tool.function_name ?? tool.slug
                                   ] }),
-                                  /* @__PURE__ */ jsx92("span", { className: "text-muted-foreground truncate", children: tool.name })
+                                  /* @__PURE__ */ jsx90("span", { className: "text-muted-foreground truncate", children: tool.name })
                                 ]
                               },
                               tool.slug
                             )) }),
-                            effAllowedSkills && effAllowedSkills.length > 0 && /* @__PURE__ */ jsx92(CommandGroup, { heading: language === "ar" ? "\u0645\u0647\u0627\u0631\u0627\u062A" : "Skills", children: effAllowedSkills.filter(
+                            effAllowedSkills && effAllowedSkills.length > 0 && /* @__PURE__ */ jsx90(CommandGroup, { heading: language === "ar" ? "\u0645\u0647\u0627\u0631\u0627\u062A" : "Skills", children: effAllowedSkills.filter(
                               (s) => !slashQuery || s.slug.toLowerCase().includes(slashQuery.toLowerCase()) || s.name.toLowerCase().includes(slashQuery.toLowerCase())
                             ).map((skill) => /* @__PURE__ */ jsxs78(
                               CommandItem,
@@ -15014,12 +14838,12 @@ var UnifiedCopilotDock = ({
                                 onSelect: () => handleSlashSelect(`skill ${skill.slug}`),
                                 className: "text-xs cursor-pointer",
                                 children: [
-                                  /* @__PURE__ */ jsx92(Zap2, { className: "w-3 h-3 me-2 shrink-0 text-amber-400" }),
+                                  /* @__PURE__ */ jsx90(Zap2, { className: "w-3 h-3 me-2 shrink-0 text-amber-400" }),
                                   /* @__PURE__ */ jsxs78("span", { className: "font-mono text-primary me-1.5", children: [
                                     "/skill ",
                                     skill.slug
                                   ] }),
-                                  /* @__PURE__ */ jsx92("span", { className: "text-muted-foreground truncate", children: skill.name })
+                                  /* @__PURE__ */ jsx90("span", { className: "text-muted-foreground truncate", children: skill.name })
                                 ]
                               },
                               skill.slug
@@ -15028,14 +14852,14 @@ var UnifiedCopilotDock = ({
                         ] })
                       }
                     ),
-                    atMenuOpen && showAgents && /* @__PURE__ */ jsx92(
+                    atMenuOpen && showAgents && /* @__PURE__ */ jsx90(
                       "div",
                       {
                         ref: atMenuRef,
                         className: "absolute bottom-full mb-1 start-0 w-64 z-50 rounded-lg border border-border bg-popover shadow-md overflow-hidden",
                         dir: isRTL ? "rtl" : "ltr",
                         children: /* @__PURE__ */ jsxs78(Command, { shouldFilter: false, children: [
-                          /* @__PURE__ */ jsx92(
+                          /* @__PURE__ */ jsx90(
                             CommandInput,
                             {
                               value: atQuery,
@@ -15046,8 +14870,8 @@ var UnifiedCopilotDock = ({
                             }
                           ),
                           /* @__PURE__ */ jsxs78(CommandList, { className: "max-h-48", children: [
-                            /* @__PURE__ */ jsx92(CommandEmpty, { className: "text-xs py-3", children: language === "ar" ? "\u0644\u0627 \u064A\u0648\u062C\u062F \u0648\u0643\u0644\u0627\u0621" : "No agents found" }),
-                            /* @__PURE__ */ jsx92(CommandGroup, { heading: language === "ar" ? "\u0627\u0644\u0648\u0643\u0644\u0627\u0621" : "Agents", children: (personas ?? PERSONAS).filter(
+                            /* @__PURE__ */ jsx90(CommandEmpty, { className: "text-xs py-3", children: language === "ar" ? "\u0644\u0627 \u064A\u0648\u062C\u062F \u0648\u0643\u0644\u0627\u0621" : "No agents found" }),
+                            /* @__PURE__ */ jsx90(CommandGroup, { heading: language === "ar" ? "\u0627\u0644\u0648\u0643\u0644\u0627\u0621" : "Agents", children: (personas ?? PERSONAS).filter(
                               (p) => !atQuery || p.label.toLowerCase().includes(atQuery.toLowerCase()) || p.id.toLowerCase().includes(atQuery.toLowerCase())
                             ).map((p) => /* @__PURE__ */ jsxs78(
                               CommandItem,
@@ -15056,8 +14880,8 @@ var UnifiedCopilotDock = ({
                                 onSelect: () => handleAtSelect(p.label),
                                 className: "text-xs cursor-pointer",
                                 children: [
-                                  p.icon ? /* @__PURE__ */ jsx92("span", { className: "me-2 text-sm", children: p.icon }) : /* @__PURE__ */ jsx92(AtSign, { className: "w-3 h-3 me-2 shrink-0 text-emerald-400" }),
-                                  /* @__PURE__ */ jsx92("span", { className: "text-foreground", children: p.label })
+                                  p.icon ? /* @__PURE__ */ jsx90("span", { className: "me-2 text-sm", children: p.icon }) : /* @__PURE__ */ jsx90(AtSign, { className: "w-3 h-3 me-2 shrink-0 text-emerald-400" }),
+                                  /* @__PURE__ */ jsx90("span", { className: "text-foreground", children: p.label })
                                 ]
                               },
                               p.id
@@ -15075,7 +14899,7 @@ var UnifiedCopilotDock = ({
                         },
                         className: "flex items-end gap-2",
                         children: [
-                          /* @__PURE__ */ jsx92(
+                          /* @__PURE__ */ jsx90(
                             Textarea,
                             {
                               ref: inputRef,
@@ -15091,7 +14915,7 @@ var UnifiedCopilotDock = ({
                               className: "flex-1 min-h-[36px] max-h-[120px] resize-none text-sm py-2"
                             }
                           ),
-                          /* @__PURE__ */ jsx92(
+                          /* @__PURE__ */ jsx90(
                             Button,
                             {
                               type: "submit",
@@ -15099,7 +14923,7 @@ var UnifiedCopilotDock = ({
                               disabled: chatState.isLoading || !chatState.inputValue.trim(),
                               className: "h-9 w-9 shrink-0",
                               "aria-label": language === "ar" ? "\u0625\u0631\u0633\u0627\u0644" : "Send",
-                              children: /* @__PURE__ */ jsx92(Send, { className: "w-4 h-4", "aria-hidden": "true" })
+                              children: /* @__PURE__ */ jsx90(Send, { className: "w-4 h-4", "aria-hidden": "true" })
                             }
                           )
                         ]
@@ -15119,7 +14943,7 @@ UnifiedCopilotDock.displayName = "UnifiedCopilotDock";
 var UnifiedCopilotDock_default = UnifiedCopilotDock;
 
 // src/components/copilot/CopilotProvider.tsx
-import { jsx as jsx93, jsxs as jsxs79 } from "react/jsx-runtime";
+import { jsx as jsx91, jsxs as jsxs79 } from "react/jsx-runtime";
 function useSafeLanguage() {
   try {
     const ctx = useT2();
@@ -15153,7 +14977,7 @@ var AGENT_AR_NAMES = {
   "agent-persona-diplomat": "\u0627\u0644\u062F\u0628\u0644\u0648\u0645\u0627\u0633\u064A",
   "agent-persona-osint": "\u0628\u0627\u062D\u062B OSINT"
 };
-var CopilotContext = createContext4(null);
+var CopilotContext = createContext2(null);
 var DEFAULT_CONTEXT = {
   type: "global",
   contextRef: "",
@@ -15176,26 +15000,26 @@ var CopilotProvider = ({
   client: injectedClient
 }) => {
   const { language } = useSafeLanguage();
-  const [isOpen, setIsOpen] = useState46(defaultOpen);
-  const [pendingMessage, setPendingMessage] = useState46(null);
-  const [pendingAutoSend, setPendingAutoSend] = useState46(false);
-  const [config, setConfig] = useState46(null);
-  const [messages, setMessages] = useState46([]);
-  const [inputValue, setInputValue] = useState46("");
-  const [isLoading, setIsLoading] = useState46(false);
-  const [isStreaming, setIsStreaming] = useState46(false);
-  const [isReceiving, setIsReceiving] = useState46(false);
-  const [isFinalizing, setIsFinalizing] = useState46(false);
-  const [streamingText, setStreamingText] = useState46("");
-  const [agentSteps, setAgentSteps] = useState46([]);
-  const [streamError, setStreamError] = useState46(null);
-  const [sessionId, setSessionId] = useState46(null);
-  const [sessionTitle, setSessionTitle] = useState46(void 0);
-  const lastPayloadRef = useRef19(null);
-  const abortRef = useRef19(null);
-  const clientRef = useRef19(injectedClient ?? null);
+  const [isOpen, setIsOpen] = useState45(defaultOpen);
+  const [pendingMessage, setPendingMessage] = useState45(null);
+  const [pendingAutoSend, setPendingAutoSend] = useState45(false);
+  const [config, setConfig] = useState45(null);
+  const [messages, setMessages] = useState45([]);
+  const [inputValue, setInputValue] = useState45("");
+  const [isLoading, setIsLoading] = useState45(false);
+  const [isStreaming, setIsStreaming] = useState45(false);
+  const [isReceiving, setIsReceiving] = useState45(false);
+  const [isFinalizing, setIsFinalizing] = useState45(false);
+  const [streamingText, setStreamingText] = useState45("");
+  const [agentSteps, setAgentSteps] = useState45([]);
+  const [streamError, setStreamError] = useState45(null);
+  const [sessionId, setSessionId] = useState45(null);
+  const [sessionTitle, setSessionTitle] = useState45(void 0);
+  const lastPayloadRef = useRef18(null);
+  const abortRef = useRef18(null);
+  const clientRef = useRef18(injectedClient ?? null);
   clientRef.current = injectedClient ?? null;
-  useEffect28(() => {
+  useEffect26(() => {
     let cancelled = false;
     const fetchConfig = async () => {
       try {
@@ -15229,7 +15053,7 @@ var CopilotProvider = ({
     handles: s.handles,
     query: s.query
   });
-  const handleSend = useCallback16(
+  const handleSend = useCallback15(
     async (text, opts) => {
       if (!text.trim()) return;
       abortRef.current?.abort();
@@ -15364,7 +15188,7 @@ var CopilotProvider = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [messages, language, context.mode, baseUrl, token, pageContext, sessionId, sessionTitle]
   );
-  const handleRetry = useCallback16(() => {
+  const handleRetry = useCallback15(() => {
     if (!lastPayloadRef.current) return;
     const { text, opts } = lastPayloadRef.current;
     setMessages(
@@ -15373,7 +15197,7 @@ var CopilotProvider = ({
     setStreamError(null);
     void handleSend(text, opts);
   }, [handleSend]);
-  const handleNewConversation = useCallback16(() => {
+  const handleNewConversation = useCallback15(() => {
     abortRef.current?.abort();
     setMessages([]);
     setInputValue("");
@@ -15388,7 +15212,7 @@ var CopilotProvider = ({
     setSessionId(null);
     setSessionTitle(void 0);
   }, []);
-  const handleFetchHistory = useCallback16(async () => {
+  const handleFetchHistory = useCallback15(async () => {
     try {
       const url = baseUrl.endsWith("/") ? `${baseUrl}copilot/sessions` : `${baseUrl}/copilot/sessions`;
       const res = await fetch(url, {
@@ -15407,7 +15231,7 @@ var CopilotProvider = ({
       return [];
     }
   }, [baseUrl, token]);
-  const handleDeleteConversation = useCallback16(
+  const handleDeleteConversation = useCallback15(
     async (id) => {
       const url = baseUrl.endsWith("/") ? `${baseUrl}copilot/sessions/${id}` : `${baseUrl}/copilot/sessions/${id}`;
       const res = await fetch(url, {
@@ -15421,7 +15245,7 @@ var CopilotProvider = ({
     },
     [baseUrl, token]
   );
-  const handleLoadConversation = useCallback16(
+  const handleLoadConversation = useCallback15(
     async (id) => {
       abortRef.current?.abort();
       try {
@@ -15449,7 +15273,7 @@ var CopilotProvider = ({
     },
     [baseUrl, token]
   );
-  const handleStop = useCallback16(() => {
+  const handleStop = useCallback15(() => {
     abortRef.current?.abort();
     setIsLoading(false);
     setIsStreaming(false);
@@ -15488,7 +15312,7 @@ var CopilotProvider = ({
     labelAr: a.name_ar || AGENT_AR_NAMES[a.slug] || a.name,
     icon: void 0
   })) : void 0;
-  const handleArtifactAction = useCallback16(
+  const handleArtifactAction = useCallback15(
     (item) => {
       if (!item.prompt) return;
       setIsOpen(true);
@@ -15496,7 +15320,7 @@ var CopilotProvider = ({
     },
     [handleSend]
   );
-  const handleArtifactInteract = useCallback16(
+  const handleArtifactInteract = useCallback15(
     (interaction) => {
       setIsOpen(true);
       const text = `[interaction:${interaction.kind}]`;
@@ -15507,15 +15331,15 @@ var CopilotProvider = ({
     },
     [handleSend]
   );
-  const handleOpen = useCallback16((opts) => {
+  const handleOpen = useCallback15((opts) => {
     setIsOpen(true);
     if (opts?.message) {
       setPendingMessage(opts.message);
       setPendingAutoSend(opts.autoSend ?? false);
     }
   }, []);
-  const handleClose = useCallback16(() => setIsOpen(false), []);
-  const handlePendingMessageConsumed = useCallback16(() => {
+  const handleClose = useCallback15(() => setIsOpen(false), []);
+  const handlePendingMessageConsumed = useCallback15(() => {
     setPendingMessage(null);
     setPendingAutoSend(false);
   }, []);
@@ -15527,7 +15351,7 @@ var CopilotProvider = ({
   };
   return /* @__PURE__ */ jsxs79(CopilotContext.Provider, { value: contextValue, children: [
     children,
-    /* @__PURE__ */ jsx93(
+    /* @__PURE__ */ jsx91(
       UnifiedCopilotDock_default,
       {
         chatState,
@@ -15552,7 +15376,7 @@ var CopilotProvider = ({
 };
 CopilotProvider.displayName = "CopilotProvider";
 var useCopilot = () => {
-  const ctx = useContext4(CopilotContext);
+  const ctx = useContext2(CopilotContext);
   if (!ctx) {
     throw new Error("[useCopilot] Must be used inside <CopilotProvider> from @prism/ui");
   }
@@ -15561,7 +15385,7 @@ var useCopilot = () => {
 
 // src/components/copilot/CopilotLauncher.tsx
 import { Sparkles as Sparkles9 } from "lucide-react";
-import { jsx as jsx94, jsxs as jsxs80 } from "react/jsx-runtime";
+import { jsx as jsx92, jsxs as jsxs80 } from "react/jsx-runtime";
 function useSafeT2() {
   try {
     return useT2();
@@ -15583,8 +15407,8 @@ var CopilotLauncher = ({
     open();
   };
   if (variant === "fab") {
-    return /* @__PURE__ */ jsx94(TooltipProvider, { children: /* @__PURE__ */ jsxs80(Tooltip, { children: [
-      /* @__PURE__ */ jsx94(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsx94(
+    return /* @__PURE__ */ jsx92(TooltipProvider, { children: /* @__PURE__ */ jsxs80(Tooltip, { children: [
+      /* @__PURE__ */ jsx92(TooltipTrigger, { asChild: true, children: /* @__PURE__ */ jsx92(
         "button",
         {
           type: "button",
@@ -15601,10 +15425,10 @@ var CopilotLauncher = ({
             isOpen && "ring-2 ring-primary/30",
             className
           ),
-          children: /* @__PURE__ */ jsx94(Sparkles9, { className: "h-5 w-5", "aria-hidden": "true" })
+          children: /* @__PURE__ */ jsx92(Sparkles9, { className: "h-5 w-5", "aria-hidden": "true" })
         }
       ) }),
-      /* @__PURE__ */ jsx94(
+      /* @__PURE__ */ jsx92(
         TooltipContent,
         {
           side: language === "ar" ? "left" : "right",
@@ -15629,8 +15453,8 @@ var CopilotLauncher = ({
         className
       ),
       children: [
-        /* @__PURE__ */ jsx94(Sparkles9, { className: "h-4 w-4", "aria-hidden": "true" }),
-        /* @__PURE__ */ jsx94("span", { className: "hidden sm:inline", children: resolvedLabel })
+        /* @__PURE__ */ jsx92(Sparkles9, { className: "h-4 w-4", "aria-hidden": "true" }),
+        /* @__PURE__ */ jsx92("span", { className: "hidden sm:inline", children: resolvedLabel })
       ]
     }
   );
@@ -15638,9 +15462,9 @@ var CopilotLauncher = ({
 CopilotLauncher.displayName = "CopilotLauncher";
 
 // src/components/copilot/CopilotSelectionTrigger.tsx
-import { useCallback as useCallback17, useEffect as useEffect29, useRef as useRef20, useState as useState47 } from "react";
+import { useCallback as useCallback16, useEffect as useEffect27, useRef as useRef19, useState as useState46 } from "react";
 import { Sparkles as Sparkles10 } from "lucide-react";
-import { jsx as jsx95, jsxs as jsxs81 } from "react/jsx-runtime";
+import { jsx as jsx93, jsxs as jsxs81 } from "react/jsx-runtime";
 function useSafeT3() {
   try {
     return useT2();
@@ -15661,9 +15485,9 @@ var CopilotSelectionTrigger = ({
   const language = ctx?.language ?? "en";
   const t2 = ctx?.t ?? fallbackT;
   const isRTL = language === "ar";
-  const [anchor, setAnchor] = useState47(null);
-  const dismissedRef = useRef20(false);
-  const withinBoundary = useCallback17(
+  const [anchor, setAnchor] = useState46(null);
+  const dismissedRef = useRef19(false);
+  const withinBoundary = useCallback16(
     (node) => {
       if (!boundarySelector) return true;
       let el = node && node.nodeType === Node.ELEMENT_NODE ? node : node?.parentElement ?? null;
@@ -15671,7 +15495,7 @@ var CopilotSelectionTrigger = ({
     },
     [boundarySelector]
   );
-  const evaluateSelection = useCallback17(() => {
+  const evaluateSelection = useCallback16(() => {
     if (dismissedRef.current) {
       dismissedRef.current = false;
       return;
@@ -15701,7 +15525,7 @@ var CopilotSelectionTrigger = ({
     const y = rect.bottom;
     setAnchor({ x, y, text: raw.slice(0, maxChars) });
   }, [minChars, maxChars, withinBoundary, isRTL]);
-  useEffect29(() => {
+  useEffect27(() => {
     const settle = () => window.setTimeout(evaluateSelection, 0);
     const onUp = () => settle();
     const onKey = (e) => {
@@ -15748,7 +15572,7 @@ var CopilotSelectionTrigger = ({
     transform: isRTL ? "translateX(-100%)" : void 0,
     zIndex: 60
   };
-  return /* @__PURE__ */ jsx95("div", { style, dir: isRTL ? "rtl" : "ltr", "data-testid": "copilot-selection-trigger", children: /* @__PURE__ */ jsxs81(
+  return /* @__PURE__ */ jsx93("div", { style, dir: isRTL ? "rtl" : "ltr", "data-testid": "copilot-selection-trigger", children: /* @__PURE__ */ jsxs81(
     "button",
     {
       type: "button",
@@ -15757,7 +15581,7 @@ var CopilotSelectionTrigger = ({
       "aria-label": resolvedLabel,
       className: "inline-flex items-center gap-1.5 h-8 px-3 rounded-full bg-primary text-primary-foreground text-xs font-medium shadow-lg border border-primary/30 hover:bg-primary/90 transition-colors duration-fast ease-standard focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 animate-in fade-in zoom-in-95",
       children: [
-        /* @__PURE__ */ jsx95(Sparkles10, { className: "h-3.5 w-3.5", "aria-hidden": "true" }),
+        /* @__PURE__ */ jsx93(Sparkles10, { className: "h-3.5 w-3.5", "aria-hidden": "true" }),
         resolvedLabel
       ]
     }
@@ -15766,19 +15590,19 @@ var CopilotSelectionTrigger = ({
 CopilotSelectionTrigger.displayName = "CopilotSelectionTrigger";
 
 // src/components/copilot/ChatThread.tsx
-import { useRef as useRef21, useEffect as useEffect30 } from "react";
+import { useRef as useRef20, useEffect as useEffect28 } from "react";
 import { User as User3, Sparkles as Sparkles12 } from "lucide-react";
 
 // src/components/copilot/StreamingMessage.tsx
 import { Loader2 as Loader210, Sparkles as Sparkles11 } from "lucide-react";
-import { jsx as jsx96, jsxs as jsxs82 } from "react/jsx-runtime";
+import { jsx as jsx94, jsxs as jsxs82 } from "react/jsx-runtime";
 var StreamingMessage = ({ text, isStreaming, language = "en", dir }) => {
   const isAR = language === "ar";
   const resolvedDir = dir ?? (isAR ? "rtl" : "ltr");
   if (!text && isStreaming) {
     return /* @__PURE__ */ jsxs82("div", { className: "flex items-center gap-2 px-3 py-2 bg-muted rounded-xl border border-border", children: [
-      /* @__PURE__ */ jsx96(Loader210, { className: "w-3.5 h-3.5 animate-spin text-muted-foreground shrink-0" }),
-      /* @__PURE__ */ jsx96("span", { className: "text-xs text-muted-foreground animate-pulse", children: isAR ? "\u062C\u0627\u0631\u064D \u0627\u0644\u062A\u0641\u0643\u064A\u0631..." : "Thinking..." })
+      /* @__PURE__ */ jsx94(Loader210, { className: "w-3.5 h-3.5 animate-spin text-muted-foreground shrink-0" }),
+      /* @__PURE__ */ jsx94("span", { className: "text-xs text-muted-foreground animate-pulse", children: isAR ? "\u062C\u0627\u0631\u064D \u0627\u0644\u062A\u0641\u0643\u064A\u0631..." : "Thinking..." })
     ] });
   }
   return /* @__PURE__ */ jsxs82(
@@ -15787,8 +15611,8 @@ var StreamingMessage = ({ text, isStreaming, language = "en", dir }) => {
       className: "bg-muted rounded-xl px-3 py-2 border border-border text-sm text-foreground",
       dir: resolvedDir,
       children: [
-        /* @__PURE__ */ jsx96(MarkdownContent_default, { content: text, dir: resolvedDir, className: "max-w-none" }),
-        isStreaming && /* @__PURE__ */ jsx96("span", { className: "inline-block w-1.5 h-3.5 bg-primary animate-pulse rounded-sm ms-0.5 align-middle" })
+        /* @__PURE__ */ jsx94(MarkdownContent_default, { content: text, dir: resolvedDir, className: "max-w-none" }),
+        isStreaming && /* @__PURE__ */ jsx94("span", { className: "inline-block w-1.5 h-3.5 bg-primary animate-pulse rounded-sm ms-0.5 align-middle" })
       ]
     }
   );
@@ -15797,56 +15621,56 @@ StreamingMessage.displayName = "StreamingMessage";
 var StreamingMessage_default = StreamingMessage;
 var StreamingSpinner = ({ language = "en" }) => {
   return /* @__PURE__ */ jsxs82("div", { className: "flex gap-2 items-start", children: [
-    /* @__PURE__ */ jsx96("div", { className: "w-6 h-6 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 mt-0.5", children: /* @__PURE__ */ jsx96(Sparkles11, { className: "w-3.5 h-3.5 text-primary-foreground" }) }),
-    /* @__PURE__ */ jsx96("div", { className: "bg-muted rounded-xl px-3 py-2 border border-border", children: /* @__PURE__ */ jsx96("span", { className: "text-xs text-muted-foreground animate-pulse", children: language === "ar" ? "\u062C\u0627\u0631\u064D \u0627\u0644\u062A\u062D\u0645\u064A\u0644..." : "Loading..." }) })
+    /* @__PURE__ */ jsx94("div", { className: "w-6 h-6 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 mt-0.5", children: /* @__PURE__ */ jsx94(Sparkles11, { className: "w-3.5 h-3.5 text-primary-foreground" }) }),
+    /* @__PURE__ */ jsx94("div", { className: "bg-muted rounded-xl px-3 py-2 border border-border", children: /* @__PURE__ */ jsx94("span", { className: "text-xs text-muted-foreground animate-pulse", children: language === "ar" ? "\u062C\u0627\u0631\u064D \u0627\u0644\u062A\u062D\u0645\u064A\u0644..." : "Loading..." }) })
   ] });
 };
 StreamingSpinner.displayName = "StreamingSpinner";
 
 // src/components/copilot/ArtifactViewer.tsx
-import { jsx as jsx97, jsxs as jsxs83 } from "react/jsx-runtime";
+import { jsx as jsx95, jsxs as jsxs83 } from "react/jsx-runtime";
 var MapOfEventsArtifact = ({ data, language = "en" }) => /* @__PURE__ */ jsxs83("div", { className: "rounded-lg border border-border bg-muted/40 p-3", children: [
-  /* @__PURE__ */ jsx97("p", { className: "text-xs font-medium text-muted-foreground mb-2", children: language === "ar" ? "\u062E\u0631\u064A\u0637\u0629 \u0627\u0644\u0623\u062D\u062F\u0627\u062B" : "Map of Events" }),
-  /* @__PURE__ */ jsx97("pre", { className: "text-xs text-foreground/80 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
+  /* @__PURE__ */ jsx95("p", { className: "text-xs font-medium text-muted-foreground mb-2", children: language === "ar" ? "\u062E\u0631\u064A\u0637\u0629 \u0627\u0644\u0623\u062D\u062F\u0627\u062B" : "Map of Events" }),
+  /* @__PURE__ */ jsx95("pre", { className: "text-xs text-foreground/80 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
 ] });
 MapOfEventsArtifact.displayName = "MapOfEventsArtifact";
 var TimelineArtifact = ({ data, language = "en" }) => /* @__PURE__ */ jsxs83("div", { className: "rounded-lg border border-border bg-muted/40 p-3", children: [
-  /* @__PURE__ */ jsx97("p", { className: "text-xs font-medium text-muted-foreground mb-2", children: language === "ar" ? "\u0627\u0644\u062C\u062F\u0648\u0644 \u0627\u0644\u0632\u0645\u0646\u064A" : "Timeline" }),
-  /* @__PURE__ */ jsx97("pre", { className: "text-xs text-foreground/80 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
+  /* @__PURE__ */ jsx95("p", { className: "text-xs font-medium text-muted-foreground mb-2", children: language === "ar" ? "\u0627\u0644\u062C\u062F\u0648\u0644 \u0627\u0644\u0632\u0645\u0646\u064A" : "Timeline" }),
+  /* @__PURE__ */ jsx95("pre", { className: "text-xs text-foreground/80 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
 ] });
 TimelineArtifact.displayName = "TimelineArtifact";
 var NetworkGraphArtifact = ({ data, language = "en" }) => /* @__PURE__ */ jsxs83("div", { className: "rounded-lg border border-border bg-muted/40 p-3", children: [
-  /* @__PURE__ */ jsx97("p", { className: "text-xs font-medium text-muted-foreground mb-2", children: language === "ar" ? "\u0631\u0633\u0645 \u0627\u0644\u0634\u0628\u0643\u0629" : "Network Graph" }),
-  /* @__PURE__ */ jsx97("pre", { className: "text-xs text-foreground/80 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
+  /* @__PURE__ */ jsx95("p", { className: "text-xs font-medium text-muted-foreground mb-2", children: language === "ar" ? "\u0631\u0633\u0645 \u0627\u0644\u0634\u0628\u0643\u0629" : "Network Graph" }),
+  /* @__PURE__ */ jsx95("pre", { className: "text-xs text-foreground/80 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
 ] });
 NetworkGraphArtifact.displayName = "NetworkGraphArtifact";
 var KpiCardArtifact = ({ data, language = "en" }) => /* @__PURE__ */ jsxs83("div", { className: "rounded-lg border border-border bg-muted/40 p-3", children: [
-  /* @__PURE__ */ jsx97("p", { className: "text-xs font-medium text-muted-foreground mb-2", children: language === "ar" ? "\u0645\u0624\u0634\u0631\u0627\u062A \u0627\u0644\u0623\u062F\u0627\u0621" : "KPI Card" }),
-  /* @__PURE__ */ jsx97("pre", { className: "text-xs text-foreground/80 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
+  /* @__PURE__ */ jsx95("p", { className: "text-xs font-medium text-muted-foreground mb-2", children: language === "ar" ? "\u0645\u0624\u0634\u0631\u0627\u062A \u0627\u0644\u0623\u062F\u0627\u0621" : "KPI Card" }),
+  /* @__PURE__ */ jsx95("pre", { className: "text-xs text-foreground/80 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
 ] });
 KpiCardArtifact.displayName = "KpiCardArtifact";
 var FallbackArtifact = ({ slug, data, language = "en" }) => /* @__PURE__ */ jsxs83("div", { className: "rounded-lg border border-dashed border-border bg-muted/30 p-3", children: [
-  /* @__PURE__ */ jsx97("p", { className: "text-xs font-medium text-muted-foreground mb-1", children: language === "ar" ? `\u0645\u0643\u0648\u0651\u0646: ${slug}` : `Artifact: ${slug}` }),
-  /* @__PURE__ */ jsx97("pre", { className: "text-xs text-foreground/70 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
+  /* @__PURE__ */ jsx95("p", { className: "text-xs font-medium text-muted-foreground mb-1", children: language === "ar" ? `\u0645\u0643\u0648\u0651\u0646: ${slug}` : `Artifact: ${slug}` }),
+  /* @__PURE__ */ jsx95("pre", { className: "text-xs text-foreground/70 overflow-auto max-h-48 whitespace-pre-wrap break-all", children: JSON.stringify(data, null, 2) })
 ] });
 FallbackArtifact.displayName = "FallbackArtifact";
 var ArtifactViewer = ({ artifact, language = "en", dir }) => {
   const resolvedDir = dir ?? (language === "ar" ? "rtl" : "ltr");
   const title = language === "ar" ? artifact.title_ar || artifact.title || artifact.controller_slug : artifact.title || artifact.controller_slug;
   return /* @__PURE__ */ jsxs83("div", { className: "space-y-1.5", dir: resolvedDir, children: [
-    title && /* @__PURE__ */ jsx97("p", { className: "text-xs font-semibold text-foreground/70 px-0.5", children: title }),
+    title && /* @__PURE__ */ jsx95("p", { className: "text-xs font-semibold text-foreground/70 px-0.5", children: title }),
     (() => {
       switch (artifact.controller_slug) {
         case "map-of-events":
-          return /* @__PURE__ */ jsx97(MapOfEventsArtifact, { data: artifact.data, language });
+          return /* @__PURE__ */ jsx95(MapOfEventsArtifact, { data: artifact.data, language });
         case "timeline":
-          return /* @__PURE__ */ jsx97(TimelineArtifact, { data: artifact.data, language });
+          return /* @__PURE__ */ jsx95(TimelineArtifact, { data: artifact.data, language });
         case "network-graph":
-          return /* @__PURE__ */ jsx97(NetworkGraphArtifact, { data: artifact.data, language });
+          return /* @__PURE__ */ jsx95(NetworkGraphArtifact, { data: artifact.data, language });
         case "kpi-card":
-          return /* @__PURE__ */ jsx97(KpiCardArtifact, { data: artifact.data, language });
+          return /* @__PURE__ */ jsx95(KpiCardArtifact, { data: artifact.data, language });
         default:
-          return /* @__PURE__ */ jsx97(FallbackArtifact, { slug: artifact.controller_slug, data: artifact.data, language });
+          return /* @__PURE__ */ jsx95(FallbackArtifact, { slug: artifact.controller_slug, data: artifact.data, language });
       }
     })()
   ] });
@@ -15855,10 +15679,10 @@ ArtifactViewer.displayName = "ArtifactViewer";
 var ArtifactViewer_default = ArtifactViewer;
 
 // src/components/copilot/ChatThread.tsx
-import { jsx as jsx98, jsxs as jsxs84 } from "react/jsx-runtime";
-var AssistantAvatar = () => /* @__PURE__ */ jsx98("div", { className: "w-6 h-6 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 mt-1", children: /* @__PURE__ */ jsx98(Sparkles12, { className: "w-3.5 h-3.5 text-primary-foreground" }) });
+import { jsx as jsx96, jsxs as jsxs84 } from "react/jsx-runtime";
+var AssistantAvatar = () => /* @__PURE__ */ jsx96("div", { className: "w-6 h-6 rounded-md bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center shrink-0 mt-1", children: /* @__PURE__ */ jsx96(Sparkles12, { className: "w-3.5 h-3.5 text-primary-foreground" }) });
 AssistantAvatar.displayName = "AssistantAvatar";
-var UserAvatar = () => /* @__PURE__ */ jsx98("div", { className: "w-6 h-6 rounded-md bg-muted flex items-center justify-center shrink-0 mt-1", children: /* @__PURE__ */ jsx98(User3, { className: "w-3.5 h-3.5 text-muted-foreground" }) });
+var UserAvatar = () => /* @__PURE__ */ jsx96("div", { className: "w-6 h-6 rounded-md bg-muted flex items-center justify-center shrink-0 mt-1", children: /* @__PURE__ */ jsx96(User3, { className: "w-3.5 h-3.5 text-muted-foreground" }) });
 UserAvatar.displayName = "UserAvatar";
 var ChatThread = ({
   messages,
@@ -15868,15 +15692,15 @@ var ChatThread = ({
   dir
 }) => {
   const isRTL = dir === "rtl" || dir === void 0 && language === "ar";
-  const bottomRef = useRef21(null);
-  useEffect30(() => {
+  const bottomRef = useRef20(null);
+  useEffect28(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages.length, streamingText]);
   const isEmpty = messages.length === 0 && !isStreaming;
-  return /* @__PURE__ */ jsx98(ScrollArea, { className: "flex-1 px-4 py-3", children: /* @__PURE__ */ jsxs84("div", { className: "space-y-3 min-h-full", dir: isRTL ? "rtl" : "ltr", children: [
+  return /* @__PURE__ */ jsx96(ScrollArea, { className: "flex-1 px-4 py-3", children: /* @__PURE__ */ jsxs84("div", { className: "space-y-3 min-h-full", dir: isRTL ? "rtl" : "ltr", children: [
     isEmpty && /* @__PURE__ */ jsxs84("div", { className: "flex flex-col items-center justify-center py-16 gap-3", children: [
-      /* @__PURE__ */ jsx98("div", { className: "w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center", children: /* @__PURE__ */ jsx98(Sparkles12, { className: "w-5 h-5 text-primary-foreground" }) }),
-      /* @__PURE__ */ jsx98("p", { className: "text-sm text-muted-foreground text-center max-w-xs", children: language === "ar" ? "\u0627\u0633\u0623\u0644 \u0627\u0644\u0645\u0633\u0627\u0639\u062F \u0623\u064A \u0633\u0624\u0627\u0644 \u0648\u0633\u064A\u0631\u062F \u0628\u0627\u0644\u0645\u0639\u0644\u0648\u0645\u0627\u062A \u0627\u0644\u062A\u064A \u062A\u062D\u062A\u0627\u062C\u0647\u0627" : "Ask the copilot anything \u2014 it will answer with the information you need" })
+      /* @__PURE__ */ jsx96("div", { className: "w-10 h-10 rounded-xl bg-gradient-to-br from-primary to-primary/70 flex items-center justify-center", children: /* @__PURE__ */ jsx96(Sparkles12, { className: "w-5 h-5 text-primary-foreground" }) }),
+      /* @__PURE__ */ jsx96("p", { className: "text-sm text-muted-foreground text-center max-w-xs", children: language === "ar" ? "\u0627\u0633\u0623\u0644 \u0627\u0644\u0645\u0633\u0627\u0639\u062F \u0623\u064A \u0633\u0624\u0627\u0644 \u0648\u0633\u064A\u0631\u062F \u0628\u0627\u0644\u0645\u0639\u0644\u0648\u0645\u0627\u062A \u0627\u0644\u062A\u064A \u062A\u062D\u062A\u0627\u062C\u0647\u0627" : "Ask the copilot anything \u2014 it will answer with the information you need" })
     ] }),
     messages.map((msg) => {
       const text = language === "ar" ? msg.text_ar || msg.text_en : msg.text_en;
@@ -15886,11 +15710,11 @@ var ChatThread = ({
         {
           className: `flex gap-2 ${isUser ? isRTL ? "justify-start flex-row-reverse" : "justify-end" : isRTL ? "justify-end flex-row-reverse" : "justify-start"}`,
           children: [
-            !isUser && !isRTL && /* @__PURE__ */ jsx98(AssistantAvatar, {}),
-            isUser && isRTL && /* @__PURE__ */ jsx98(UserAvatar, {}),
+            !isUser && !isRTL && /* @__PURE__ */ jsx96(AssistantAvatar, {}),
+            isUser && isRTL && /* @__PURE__ */ jsx96(UserAvatar, {}),
             /* @__PURE__ */ jsxs84("div", { className: "max-w-[85%] space-y-1.5", children: [
-              isUser ? /* @__PURE__ */ jsx98("div", { className: "rounded-xl px-3 py-2 bg-primary text-primary-foreground text-sm", children: text }) : /* @__PURE__ */ jsx98(StreamingMessage_default, { text, isStreaming: false, language, dir: isRTL ? "rtl" : "ltr" }),
-              msg.artifacts && msg.artifacts.length > 0 && /* @__PURE__ */ jsx98("div", { className: "space-y-2", children: msg.artifacts.map((artifact, idx) => /* @__PURE__ */ jsx98(
+              isUser ? /* @__PURE__ */ jsx96("div", { className: "rounded-xl px-3 py-2 bg-primary text-primary-foreground text-sm", children: text }) : /* @__PURE__ */ jsx96(StreamingMessage_default, { text, isStreaming: false, language, dir: isRTL ? "rtl" : "ltr" }),
+              msg.artifacts && msg.artifacts.length > 0 && /* @__PURE__ */ jsx96("div", { className: "space-y-2", children: msg.artifacts.map((artifact, idx) => /* @__PURE__ */ jsx96(
                 ArtifactViewer_default,
                 {
                   artifact,
@@ -15899,7 +15723,7 @@ var ChatThread = ({
                 },
                 `${msg.id}-artifact-${idx}`
               )) }),
-              msg.a2uiArtifacts && msg.a2uiArtifacts.length > 0 && /* @__PURE__ */ jsx98("div", { className: "space-y-2", children: msg.a2uiArtifacts.map((artifact, idx) => /* @__PURE__ */ jsx98(
+              msg.a2uiArtifacts && msg.a2uiArtifacts.length > 0 && /* @__PURE__ */ jsx96("div", { className: "space-y-2", children: msg.a2uiArtifacts.map((artifact, idx) => /* @__PURE__ */ jsx96(
                 ArtifactRenderer,
                 {
                   artifact,
@@ -15909,16 +15733,16 @@ var ChatThread = ({
                 `${msg.id}-a2ui-${idx}`
               )) })
             ] }),
-            !isUser && isRTL && /* @__PURE__ */ jsx98(AssistantAvatar, {}),
-            isUser && !isRTL && /* @__PURE__ */ jsx98(UserAvatar, {})
+            !isUser && isRTL && /* @__PURE__ */ jsx96(AssistantAvatar, {}),
+            isUser && !isRTL && /* @__PURE__ */ jsx96(UserAvatar, {})
           ]
         },
         msg.id
       );
     }),
     (isStreaming || streamingText) && /* @__PURE__ */ jsxs84("div", { className: `flex gap-2 ${isRTL ? "justify-end flex-row-reverse" : "justify-start"}`, children: [
-      !isRTL && /* @__PURE__ */ jsx98(AssistantAvatar, {}),
-      /* @__PURE__ */ jsx98("div", { className: "max-w-[85%]", children: /* @__PURE__ */ jsx98(
+      !isRTL && /* @__PURE__ */ jsx96(AssistantAvatar, {}),
+      /* @__PURE__ */ jsx96("div", { className: "max-w-[85%]", children: /* @__PURE__ */ jsx96(
         StreamingMessage_default,
         {
           text: streamingText,
@@ -15927,9 +15751,9 @@ var ChatThread = ({
           dir: isRTL ? "rtl" : "ltr"
         }
       ) }),
-      isRTL && /* @__PURE__ */ jsx98(AssistantAvatar, {})
+      isRTL && /* @__PURE__ */ jsx96(AssistantAvatar, {})
     ] }),
-    /* @__PURE__ */ jsx98("div", { ref: bottomRef })
+    /* @__PURE__ */ jsx96("div", { ref: bottomRef })
   ] }) });
 };
 ChatThread.displayName = "ChatThread";
