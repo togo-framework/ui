@@ -17,7 +17,11 @@
       "types": "./dist/shadcn.d.ts",
       "import": "./dist/shadcn.js"
     },
-    "./shadcn.css": "./dist/shadcn.css"
+    "./shadcn.css": "./dist/shadcn.css",
+    "./theme": {
+      "types": "./dist/theme/index.d.ts",
+      "import": "./dist/theme/index.js"
+    }
   },
   "files": [
     "dist",
@@ -28,6 +32,7 @@
   ],
   "scripts": {
     "build": "tsup",
+    "lint:tokens": "node scripts/check-tokens.mjs",
     "dev": "tsup --watch",
     "storybook": "storybook dev -p 6006",
     "build-storybook": "storybook build",

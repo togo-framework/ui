@@ -70,7 +70,7 @@ const MapPlaceholder = ({ isDark }: { isDark: boolean }) => (
   <div
     className={cn(
       'w-full h-full flex flex-col items-center justify-center gap-3',
-      isDark ? 'bg-[#0a0e1a]' : 'bg-slate-100',
+      isDark ? 'bg-[hsl(var(--sr-navy-deep))]' : 'bg-muted',
     )}
     role="img"
     aria-label="Map placeholder — supply renderMap prop to render the actual map"

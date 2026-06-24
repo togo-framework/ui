@@ -2,7 +2,7 @@ import { defineConfig } from "tsup";
 
 // Build the kit as ESM + type declarations, copying the stylesheet to dist.
 export default defineConfig({
-  entry: ["src/index.ts", "src/shadcn.ts"],
+  entry: ["src/index.ts", "src/shadcn.ts", "src/theme/index.ts"],
   format: ["esm"],
   dts: true,
   sourcemap: true,
