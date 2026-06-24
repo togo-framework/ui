@@ -32,6 +32,8 @@ export interface TypingTerminalProps {
   loop?: boolean;
   /** Fixed body height (px). The window never grows/jumps while typing. */
   height?: number;
+  /** Fired once when the playback (or the static frame) completes. */
+  onComplete?: () => void;
 }
 
 type Frame = { lines: React.ReactNode[]; showEnd: boolean };
@@ -56,15 +58,17 @@ const keepStaticFrame = () =>
   typeof window !== "undefined" &&
   (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || (navigator as Navigator)?.webdriver === true);
 
-export function TypingTerminal({ steps, endSlot, title = "~/myapp — togo", className, typeMs = 26, lineMs = 110, loop = false, height = 360 }: TypingTerminalProps) {
+export function TypingTerminal({ steps, endSlot, title = "~/myapp — togo", className, typeMs = 26, lineMs = 110, loop = false, height = 360, onComplete }: TypingTerminalProps) {
   // SSR / first paint = the complete final frame (crawlers + no-JS see everything).
   const [frame, setFrame] = React.useState<Frame>(() => fullFrame(steps));
   const [done, setDone] = React.useState(false);
   const [runId, setRunId] = React.useState(0);
   const scrollRef = React.useRef<HTMLDivElement>(null);
+  const onDone = React.useRef(onComplete);
+  onDone.current = onComplete;
 
   React.useEffect(() => {
-    if (keepStaticFrame()) { setDone(true); return; } // keep the static final frame
+    if (keepStaticFrame()) { setDone(true); onDone.current?.(); return; } // keep the static final frame
     let alive = true;
     const timers: ReturnType<typeof setTimeout>[] = [];
     const wait = (ms: number) => new Promise<void>((res) => timers.push(setTimeout(res, ms)));
@@ -98,7 +102,7 @@ export function TypingTerminal({ steps, endSlot, title = "~/myapp — togo", cla
         if (!alive) return;
         setFrame({ lines: [...lines], showEnd: true });
         toBottom();
-        if (!loop) { setDone(true); return; }
+        if (!loop) { setDone(true); onDone.current?.(); return; }
         await wait(4200);
       } while (alive);
     }
