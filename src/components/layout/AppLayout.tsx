@@ -99,7 +99,7 @@ export function AppLayout({
   const primary = brand.primary || "hsl(var(--primary))";
   return (
     <SidebarProvider defaultOpen={defaultSidebarOpen} dir={language === "ar" ? "rtl" : "ltr"}>
-      <Sidebar>
+      <Sidebar side={language === "ar" ? "right" : "left"}>
         <SidebarHeader className="border-b border-sidebar-border">
           <div className="flex items-center gap-2 px-2 py-1.5">
             <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg text-white" style={{ background: primary }}>

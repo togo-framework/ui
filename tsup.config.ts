@@ -8,6 +8,6 @@ export default defineConfig({
   sourcemap: true,
   clean: true,
   external: ["react", "react-dom", "lucide-react", "leaflet"],
-  loader: { ".css": "copy" },
+  loader: { ".css": "copy", ".svg": "dataurl" },
   onSuccess: "cp src/styles.css dist/styles.css && cp src/styles.css dist/shadcn.css && mkdir -p dist/theme && cp src/theme/*.css dist/theme/",
 });
