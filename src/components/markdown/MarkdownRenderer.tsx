@@ -9,6 +9,41 @@ import type { ColumnDef } from "@tanstack/react-table";
 import { cn } from "../../lib/utils";
 import { DataTable } from "../data-table/DataTable";
 
+// Standalone syntax highlighting for CodeBlock — registers just the languages we use
+// (keeps the bundle lean; reuses the highlight.js the kit already depends on).
+import hljs from "highlight.js/lib/core";
+import hlBash from "highlight.js/lib/languages/bash";
+import hlGo from "highlight.js/lib/languages/go";
+import hlTs from "highlight.js/lib/languages/typescript";
+import hlJs from "highlight.js/lib/languages/javascript";
+import hlJson from "highlight.js/lib/languages/json";
+import hlYaml from "highlight.js/lib/languages/yaml";
+import hlSql from "highlight.js/lib/languages/sql";
+import hlGraphql from "highlight.js/lib/languages/graphql";
+import hlPwsh from "highlight.js/lib/languages/powershell";
+import hlDockerfile from "highlight.js/lib/languages/dockerfile";
+
+const HL_LANGS: Record<string, any> = {
+  bash: hlBash, go: hlGo, typescript: hlTs, javascript: hlJs, json: hlJson,
+  yaml: hlYaml, sql: hlSql, graphql: hlGraphql, powershell: hlPwsh, dockerfile: hlDockerfile,
+};
+for (const [name, def] of Object.entries(HL_LANGS)) {
+  try { if (!hljs.getLanguage(name)) hljs.registerLanguage(name, def); } catch { /* noop */ }
+}
+const HL_ALIAS: Record<string, string> = {
+  sh: "bash", shell: "bash", zsh: "bash", console: "bash",
+  ts: "typescript", tsx: "typescript", js: "javascript", jsx: "javascript", mjs: "javascript",
+  yml: "yaml", ps: "powershell", ps1: "powershell", gql: "graphql", docker: "dockerfile",
+};
+/** Highlight a raw code string to hljs HTML; returns null if the language is unknown. */
+function highlightToHtml(code: string, lang?: string): string | null {
+  const key = lang ? HL_ALIAS[lang] ?? lang : undefined;
+  try {
+    if (key && hljs.getLanguage(key)) return hljs.highlight(code, { language: key }).value;
+  } catch { /* fall through */ }
+  return null;
+}
+
 export interface MarkdownRendererProps {
   content: string;
   language?: "en" | "ar";
@@ -87,8 +122,16 @@ export function CodeBlock({ lang, children }: { lang?: string; children?: React.
     a.href = url; a.download = `code.${lang || "txt"}.png`; a.click();
   };
 
+  // Standalone use (e.g. on a landing page) passes a raw string → highlight it here.
+  // MarkdownRenderer passes already-highlighted nodes (rehype-highlight) → render as-is.
+  const raw =
+    typeof children === "string" ? children
+    : Array.isArray(children) && children.every((c) => typeof c === "string") ? children.join("")
+    : null;
+  const html = raw != null ? highlightToHtml(raw.replace(/\n$/, ""), lang) : null;
+
   return (
-    <div className="my-3 overflow-hidden rounded-lg border border-border">
+    <div className="tg-code my-3 overflow-hidden rounded-lg border border-border">
       <div className="flex items-center justify-between border-b border-border bg-muted/60 px-3 py-1.5">
         <span className="font-mono text-xs text-muted-foreground">{lang || "code"}</span>
         <span className="flex items-center gap-1">
@@ -102,7 +145,9 @@ export function CodeBlock({ lang, children }: { lang?: string; children?: React.
       </div>
       <div ref={boxRef} className="bg-muted/40 p-3">
         <pre dir="ltr" className="overflow-x-auto text-[0.8rem] leading-relaxed [&>code]:bg-transparent [&>code]:p-0">
-          <code ref={codeRef} className={cn("hljs", lang && `language-${lang}`)}>{children}</code>
+          {html != null
+            ? <code ref={codeRef} className={cn("hljs", lang && `language-${lang}`)} dangerouslySetInnerHTML={{ __html: html }} />
+            : <code ref={codeRef} className={cn("hljs", lang && `language-${lang}`)}>{children}</code>}
         </pre>
       </div>
     </div>
