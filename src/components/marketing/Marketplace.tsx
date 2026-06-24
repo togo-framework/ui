@@ -60,55 +60,56 @@ export function MarketplaceCard({
   const extra = (providers || []).length - shown.length;
   return (
     <a href={href} className={cn("group block h-full", className)}>
-      <div className="rounded-2xl border border-border bg-card/40 overflow-hidden h-full flex flex-col transition-all duration-200 hover:border-foreground/25 hover:-translate-y-0.5">
-        <div
-          className="relative h-28 flex items-center justify-center overflow-hidden"
-          style={{ background: `radial-gradient(120% 140% at 0% 0%, ${tint}55, transparent 62%), linear-gradient(135deg, ${tint}26, #0b1016)` }}
-        >
-          <div className="absolute inset-0 opacity-[0.14]" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)", backgroundSize: "16px 16px" }} />
+      <div className="rounded-2xl border border-border bg-card p-5 h-full flex flex-col transition-all duration-200 hover:border-foreground/30 hover:shadow-md">
+        {/* header — solid brand-tile icon + name/category (clean hierarchy, no noisy cover) */}
+        <div className="flex items-start gap-3.5">
           {(Icon || brandIcon) && (
-            <div className="relative grid place-items-center w-14 h-14 rounded-2xl bg-black/20 ring-1 ring-white/20 transition-transform duration-300 group-hover:scale-105">
-              <Glyph icon={Icon} brand={brandIcon} />
+            <div className="grid place-items-center w-11 h-11 rounded-xl shrink-0 shadow-sm transition-transform duration-200 group-hover:scale-[1.04]"
+              style={{ background: `linear-gradient(140deg, ${tint}, ${tint}cc)` }}>
+              <Glyph icon={Icon} brand={brandIcon} size={21} />
             </div>
           )}
-          {typeof providers !== "undefined" && providers.length > 0 && (
-            <span className="absolute top-3 start-3 text-[10px] font-mono px-2 py-0.5 rounded-full bg-black/30 text-white/80 ring-1 ring-white/20">{providers.length} providers</span>
-          )}
-          {enabled && <span className="absolute top-3 end-3 text-[10px] font-mono px-2 py-0.5 rounded-full bg-black/30 text-emerald-300 ring-1 ring-emerald-400/30">enabled</span>}
-        </div>
-        <div className="p-5 flex flex-col flex-1">
-          <div className="flex items-center gap-2">
-            <h3 style={DISPLAY} className="text-[15px] font-bold truncate">{name}</h3>
-            {category && <span className="ms-auto shrink-0 text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full border border-border text-muted-foreground">{category}</span>}
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center gap-2">
+              <h3 style={DISPLAY} className="text-[15px] font-bold truncate">{name}</h3>
+              {enabled && <span className="shrink-0 text-[10px] font-mono px-1.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400">enabled</span>}
+            </div>
+            <div className="flex items-center gap-1.5 mt-1 text-[10px] font-mono uppercase tracking-wider text-muted-foreground">
+              {category && <span>{category}</span>}
+              {typeof providers !== "undefined" && providers.length > 0 && <span className="text-muted-foreground/60">· {providers.length} providers</span>}
+            </div>
           </div>
-          <p className="text-[13px] text-muted-foreground mt-1.5 line-clamp-2 flex-1">{description || "A togo-framework plugin."}</p>
+        </div>
 
-          {shown.length > 0 && (
-            <div className="mt-3 flex flex-wrap gap-1.5">
-              {shown.map((p) => (
-                <span
-                  key={p.href}
-                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = p.href; }}
-                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/40 ps-1.5 pe-2.5 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:border-foreground/25 transition-colors cursor-pointer"
-                >
-                  <span className="grid place-items-center w-4 h-4 rounded-full" style={{ background: `${(p.color || tint)}26` }}>
-                    <Glyph icon={p.icon} brand={p.brand} size={10} />
-                  </span>
-                  {p.name}
+        <p className="text-[13px] text-muted-foreground mt-3.5 line-clamp-2 flex-1">{description || "A togo-framework plugin."}</p>
+
+        {shown.length > 0 && (
+          <div className="mt-3.5 flex flex-wrap gap-1.5">
+            {shown.map((p) => (
+              <span
+                key={p.href}
+                onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = p.href; }}
+                className="inline-flex items-center gap-1.5 rounded-full border border-border bg-muted/40 ps-1.5 pe-2.5 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:border-foreground/30 transition-colors cursor-pointer"
+              >
+                <span className="grid place-items-center w-4 h-4 rounded-full shrink-0" style={{ background: p.color || tint }}>
+                  <Glyph icon={p.icon} brand={p.brand} size={10} />
                 </span>
-              ))}
-              {extra > 0 && <span className="inline-flex items-center rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground">+{extra}</span>}
-            </div>
-          )}
+                {p.name}
+              </span>
+            ))}
+            {extra > 0 && <span className="inline-flex items-center rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground">+{extra}</span>}
+          </div>
+        )}
 
-          <div className="flex items-center gap-3 mt-3 text-[11px] text-muted-foreground font-mono">
+        {(author || (typeof stars === "number" && stars > 0) || (typeof downloads === "number" && downloads > 0)) && (
+          <div className="flex items-center gap-3 mt-3.5 pt-3.5 border-t border-border/60 text-[11px] text-muted-foreground font-mono">
             {author && <span className="truncate">{author}</span>}
             <span className="ms-auto flex items-center gap-3 shrink-0">
               {typeof stars === "number" && stars > 0 && <span className="flex items-center gap-1"><Star size={11} /> {stars}</span>}
               {typeof downloads === "number" && downloads > 0 && <span className="flex items-center gap-1"><Download size={11} /> {downloads}</span>}
             </span>
           </div>
-        </div>
+        )}
       </div>
     </a>
   );
