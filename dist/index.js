@@ -10746,14 +10746,12 @@ import {
 import { jsx as jsx67, jsxs as jsxs57 } from "react/jsx-runtime";
 var CHART_PALETTE = [
   "hsl(var(--primary))",
-  "hsl(var(--gold, 45 90% 58%))",
-  "hsl(var(--alert-amber))",
+  "hsl(var(--info))",
+  "hsl(var(--warning))",
   "hsl(var(--success))",
   "hsl(var(--alert-cyan))",
-  "#7E96BA",
-  // sentra-navy-300 (fallback)
-  "#B38A22"
-  // sentra-gold-600 (fallback)
+  "hsl(var(--muted-foreground))",
+  "hsl(var(--destructive))"
 ];
 function seriesLabel(s, language) {
   return language === "ar" && s.label_ar ? s.label_ar : s.label_en;

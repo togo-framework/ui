@@ -38,14 +38,15 @@ import type { A2UIChartData, A2UIChartSeries } from './types'
 // Values are CSS colour strings that contrast on bg-card / bg-muted surfaces.
 // We avoid hex literals where possible; these are the computed outputs of the
 // --primary (navy) and --gold tokens at typical dark-mode luminance values.
+// Token-driven series palette — re-themes with the active theme (ToGO Flow + status).
 const CHART_PALETTE = [
   'hsl(var(--primary))',
-  'hsl(var(--gold, 45 90% 58%))',
-  'hsl(var(--alert-amber))',
+  'hsl(var(--info))',
+  'hsl(var(--warning))',
   'hsl(var(--success))',
   'hsl(var(--alert-cyan))',
-  '#7E96BA',   // sentra-navy-300 (fallback)
-  '#B38A22',   // sentra-gold-600 (fallback)
+  'hsl(var(--muted-foreground))',
+  'hsl(var(--destructive))',
 ]
 
 // ── Label resolution ──────────────────────────────────────────────────────────
