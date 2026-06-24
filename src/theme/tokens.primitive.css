@@ -52,8 +52,12 @@
   --togo-shadow-md: 0 8px 24px rgba(20, 26, 29, .10);
   --togo-shadow-accent: 0 12px 24px rgba(22, 89, 200, .25);
 
-  /* ── Type families — Latin display/body/mono; Lusail = the Arabic face ── */
-  --togo-font-display: "Sora", "Lusail", system-ui, sans-serif;
-  --togo-font-body:    "IBM Plex Sans", "Lusail", system-ui, sans-serif;
-  --togo-font-mono:    "JetBrains Mono", ui-monospace, monospace;
+  /* ── Type families ──
+   * Latin display/body/mono. Lusail is the ARABIC face and is applied ONLY to
+   * RTL/Arabic content (see the [dir="rtl"], :lang(ar) rule in styles.css) — it is
+   * intentionally NOT in these Latin stacks, so if the brand fonts fail to load the
+   * fallback is clean system-ui, never Lusail rendering Latin (which looks heavy/wrong). */
+  --togo-font-display: "Sora", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --togo-font-body:    "IBM Plex Sans", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --togo-font-mono:    "JetBrains Mono", ui-monospace, SFMono-Regular, Menlo, monospace;
 }
