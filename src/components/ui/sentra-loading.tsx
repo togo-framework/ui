@@ -22,6 +22,7 @@
 
 import * as LucideIcons from 'lucide-react'
 import type { LucideIcon } from 'lucide-react'
+import { Logo } from '../brand/Logo'
 
 interface SentraLoadingProps {
   language?: 'en' | 'ar'
@@ -82,9 +83,15 @@ const SentraLoading = ({
           className="absolute h-[4.2rem] w-[4.2rem] rounded-full border border-primary/15 border-b-primary/60 animate-spin"
           style={{ animationDuration: '1.8s', animationDirection: 'reverse' }}
         />
+        {/* The brand icon IS the loader. When no Lucide icon is wired, fall back to
+            the ToGO mark so the core is never empty. */}
         {Icon ? (
           <Icon className="relative h-10 w-10 text-primary animate-pulse" aria-hidden />
-        ) : null}
+        ) : (
+          <span className="relative text-primary animate-pulse" aria-hidden>
+            <Logo variant="mono" tone="inherit" size={38} />
+          </span>
+        )}
       </div>
 
       {/* Platform title — the current product's name in the active language */}

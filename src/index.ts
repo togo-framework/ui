@@ -91,6 +91,7 @@ export { default as MarkdownContent } from "./components/chat/MarkdownContent";
 
 // ── feedback (reporter surface) ──
 export * from "./components/feedback";
+export * from "./components/brand";
 
 // ── dynamic editable sections ──
 export { DynamicSection, SectionBoard } from "./components/sections/SectionBoard";
