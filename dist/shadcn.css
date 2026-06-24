@@ -399,16 +399,17 @@
 .tg-root { font-family: var(--tg-font); }
 /* RTL: components use logical properties (ps/pe/ms/me/start/end) and flip under [dir="rtl"]. */
 
-/* ── highlight.js theme (token-driven; works in dark & light) ── */
-.tg-md .hljs { color: hsl(var(--foreground)); }
-.tg-md .hljs-comment, .tg-md .hljs-quote { color: hsl(var(--muted-foreground)); font-style: italic; }
-.tg-md .hljs-keyword, .tg-md .hljs-selector-tag, .tg-md .hljs-built_in, .tg-md .hljs-name, .tg-md .hljs-tag { color: hsl(var(--primary)); }
-.tg-md .hljs-string, .tg-md .hljs-title, .tg-md .hljs-section, .tg-md .hljs-attribute, .tg-md .hljs-literal, .tg-md .hljs-template-tag, .tg-md .hljs-template-variable, .tg-md .hljs-type, .tg-md .hljs-addition { color: hsl(var(--success)); }
-.tg-md .hljs-number, .tg-md .hljs-symbol, .tg-md .hljs-bullet, .tg-md .hljs-link, .tg-md .hljs-meta, .tg-md .hljs-selector-id, .tg-md .hljs-selector-class { color: hsl(var(--info)); }
-.tg-md .hljs-attr, .tg-md .hljs-variable, .tg-md .hljs-params { color: hsl(var(--warning)); }
-.tg-md .hljs-deletion { color: hsl(var(--destructive)); }
-.tg-md .hljs-emphasis { font-style: italic; }
-.tg-md .hljs-strong { font-weight: 700; }
+/* ── highlight.js theme (token-driven; works in dark & light) ──
+   Scoped to both the markdown renderer (.tg-md) and the standalone CodeBlock (.tg-code). */
+:where(.tg-md, .tg-code) .hljs { color: hsl(var(--foreground)); }
+:where(.tg-md, .tg-code) .hljs-comment, :where(.tg-md, .tg-code) .hljs-quote { color: hsl(var(--muted-foreground)); font-style: italic; }
+:where(.tg-md, .tg-code) .hljs-keyword, :where(.tg-md, .tg-code) .hljs-selector-tag, :where(.tg-md, .tg-code) .hljs-built_in, :where(.tg-md, .tg-code) .hljs-name, :where(.tg-md, .tg-code) .hljs-tag { color: hsl(var(--primary)); }
+:where(.tg-md, .tg-code) .hljs-string, :where(.tg-md, .tg-code) .hljs-title, :where(.tg-md, .tg-code) .hljs-section, :where(.tg-md, .tg-code) .hljs-attribute, :where(.tg-md, .tg-code) .hljs-literal, :where(.tg-md, .tg-code) .hljs-template-tag, :where(.tg-md, .tg-code) .hljs-template-variable, :where(.tg-md, .tg-code) .hljs-type, :where(.tg-md, .tg-code) .hljs-addition { color: hsl(var(--success)); }
+:where(.tg-md, .tg-code) .hljs-number, :where(.tg-md, .tg-code) .hljs-symbol, :where(.tg-md, .tg-code) .hljs-bullet, :where(.tg-md, .tg-code) .hljs-link, :where(.tg-md, .tg-code) .hljs-meta, :where(.tg-md, .tg-code) .hljs-selector-id, :where(.tg-md, .tg-code) .hljs-selector-class { color: hsl(var(--info)); }
+:where(.tg-md, .tg-code) .hljs-attr, :where(.tg-md, .tg-code) .hljs-variable, :where(.tg-md, .tg-code) .hljs-params { color: hsl(var(--warning)); }
+:where(.tg-md, .tg-code) .hljs-deletion { color: hsl(var(--destructive)); }
+:where(.tg-md, .tg-code) .hljs-emphasis { font-style: italic; }
+:where(.tg-md, .tg-code) .hljs-strong { font-weight: 700; }
 
 /* ════════════════════════════════════════════════════════════════════════════
  * ToGO BRAND REMAP — re-point the inherited (prism) HSL tokens onto the ToGO
