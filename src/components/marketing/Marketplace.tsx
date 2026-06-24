@@ -4,7 +4,6 @@ import * as React from "react";
 import type { LucideIcon } from "lucide-react";
 import { Search, Star, Download } from "lucide-react";
 import { cn } from "../../lib/utils";
-import { GlassCard } from "./Glass";
 
 const DISPLAY: React.CSSProperties = { fontFamily: '"Sora", var(--togo-font-body, ui-sans-serif, system-ui, sans-serif)' };
 
@@ -34,14 +33,14 @@ export function MarketplaceCard({
 }: MarketplaceCardProps) {
   return (
     <a href={href} className={cn("group block h-full", className)}>
-      <GlassCard hover className="overflow-hidden h-full flex flex-col p-0">
+      <div className="rounded-2xl border border-border bg-card/40 overflow-hidden h-full flex flex-col transition-all duration-200 hover:border-foreground/25 hover:-translate-y-0.5">
         <div
           className="relative h-28 flex items-center justify-center overflow-hidden"
           style={{ background: `radial-gradient(120% 140% at 0% 0%, ${categoryColor}55, transparent 62%), linear-gradient(135deg, ${categoryColor}26, #0b1016)` }}
         >
           <div className="absolute inset-0 opacity-[0.14]" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)", backgroundSize: "16px 16px" }} />
           {Icon && (
-            <div className="relative grid place-items-center w-14 h-14 rounded-2xl bg-white/10 backdrop-blur-sm ring-1 ring-white/15 transition-transform duration-300 group-hover:scale-105">
+            <div className="relative grid place-items-center w-14 h-14 rounded-2xl bg-black/20 ring-1 ring-white/20 transition-transform duration-300 group-hover:scale-105">
               <Icon size={28} style={{ color: "#fff" }} />
             </div>
           )}
@@ -50,7 +49,7 @@ export function MarketplaceCard({
         <div className="p-5 flex flex-col flex-1">
           <div className="flex items-center gap-2">
             <h3 style={DISPLAY} className="text-[15px] font-bold truncate">{name}</h3>
-            {category && <span className="ms-auto shrink-0 text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full border border-white/12 text-muted-foreground">{category}</span>}
+            {category && <span className="ms-auto shrink-0 text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full border border-border text-muted-foreground">{category}</span>}
           </div>
           <p className="text-[13px] text-muted-foreground mt-1.5 line-clamp-2 flex-1">{description || "A togo-framework plugin."}</p>
           <div className="flex items-center gap-3 mt-3 text-[11px] text-muted-foreground font-mono">
@@ -61,7 +60,7 @@ export function MarketplaceCard({
             </span>
           </div>
         </div>
-      </GlassCard>
+      </div>
     </a>
   );
 }
@@ -73,7 +72,7 @@ export function StatsRow({ stats, className }: { stats: StatTile[]; className?: 
   return (
     <div className={cn("grid grid-cols-3 gap-3 sm:gap-4", className)}>
       {stats.map((s, i) => (
-        <div key={i} className="rounded-2xl border border-white/10 bg-white/[0.04] backdrop-blur-md px-4 sm:px-5 py-4 text-center">
+        <div key={i} className="rounded-2xl border border-border bg-card/40 px-4 sm:px-5 py-4 text-center">
           <div className="text-[10px] font-mono uppercase tracking-[0.16em] text-muted-foreground/70">{s.label}</div>
           <div style={DISPLAY} className="text-2xl sm:text-3xl font-bold mt-1">{s.value}</div>
         </div>
@@ -105,14 +104,14 @@ export function FilterBar({ search, onSearch, chips, active, onChip, sort, searc
             value={search}
             onChange={(e) => onSearch(e.target.value)}
             placeholder={searchPlaceholder}
-            className="w-full h-11 ps-10 pe-4 rounded-full border border-white/12 bg-white/[0.05] backdrop-blur-md text-sm outline-none focus:border-[color:rgba(31,199,220,.5)] transition-colors"
+            className="w-full h-11 ps-10 pe-4 rounded-full border border-border bg-card/40 text-sm outline-none focus:border-[color:rgba(31,199,220,.5)] transition-colors"
           />
         </div>
         {sort && (
           <select
             value={sort.value}
             onChange={(e) => sort.onSort(e.target.value)}
-            className="h-11 px-4 rounded-full border border-white/12 bg-white/[0.05] backdrop-blur-md text-sm outline-none cursor-pointer"
+            className="h-11 px-4 rounded-full border border-border bg-card/40 text-sm outline-none cursor-pointer"
           >
             {sort.options.map((o) => <option key={o.value} value={o.value} className="bg-[#0b1016]">{o.label}</option>)}
           </select>
@@ -129,7 +128,7 @@ export function FilterBar({ search, onSearch, chips, active, onChip, sort, searc
                 "font-mono text-[12px] px-3.5 py-1.5 rounded-full border transition-colors",
                 on
                   ? "border-[color:rgba(31,199,220,.5)] text-[#5CDDEC] bg-[color:rgba(31,199,220,.08)]"
-                  : "border-white/12 text-muted-foreground hover:text-foreground hover:bg-white/[0.05]",
+                  : "border-border text-muted-foreground hover:text-foreground hover:bg-card/40",
               )}
             >
               {c.label}{typeof c.count === "number" && <span className="opacity-50"> {c.count}</span>}
@@ -149,14 +148,14 @@ export function Pager({ page, pages, onPage, className }: { page: number; pages:
   const btn = "min-w-9 h-9 px-2 rounded-full border text-sm font-mono transition-colors";
   return (
     <div className={cn("flex items-center justify-center gap-1.5", className)}>
-      <button disabled={page <= 1} onClick={() => onPage(page - 1)} className={cn(btn, "border-white/12 text-muted-foreground hover:text-foreground disabled:opacity-30")}>‹</button>
+      <button disabled={page <= 1} onClick={() => onPage(page - 1)} className={cn(btn, "border-border text-muted-foreground hover:text-foreground disabled:opacity-30")}>‹</button>
       {nums.map((n, i) => (
         <React.Fragment key={n}>
           {i > 0 && n - nums[i - 1] > 1 && <span className="text-muted-foreground/50 px-1">…</span>}
-          <button onClick={() => onPage(n)} className={cn(btn, n === page ? "border-[color:rgba(31,199,220,.5)] text-[#5CDDEC] bg-[color:rgba(31,199,220,.08)]" : "border-white/12 text-muted-foreground hover:text-foreground")}>{n}</button>
+          <button onClick={() => onPage(n)} className={cn(btn, n === page ? "border-[color:rgba(31,199,220,.5)] text-[#5CDDEC] bg-[color:rgba(31,199,220,.08)]" : "border-border text-muted-foreground hover:text-foreground")}>{n}</button>
         </React.Fragment>
       ))}
-      <button disabled={page >= pages} onClick={() => onPage(page + 1)} className={cn(btn, "border-white/12 text-muted-foreground hover:text-foreground disabled:opacity-30")}>›</button>
+      <button disabled={page >= pages} onClick={() => onPage(page + 1)} className={cn(btn, "border-border text-muted-foreground hover:text-foreground disabled:opacity-30")}>›</button>
     </div>
   );
 }

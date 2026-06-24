@@ -48,7 +48,7 @@ function DocsGroup({ group, activeHref, defaultOpen, onNavigate }: { group: Docs
         {group.label}
       </button>
       {open && (
-        <ul className="mt-0.5 mb-2 ms-3 border-s border-white/10">
+        <ul className="mt-0.5 mb-2 ms-3 border-s border-border">
           {group.items.map((i) => {
             const on = i.href === activeHref;
             return (
@@ -90,7 +90,7 @@ export function DocsTOC({ items, className }: { items: TocItem[]; className?: st
   return (
     <nav className={cn("text-sm", className)}>
       <div className="text-[10px] font-mono uppercase tracking-[0.16em] text-muted-foreground/60 mb-3">On this page</div>
-      <ul className="border-s border-white/10">
+      <ul className="border-s border-border">
         {items.map((i) => (
           <li key={i.id} style={{ paddingInlineStart: `${(Math.max(1, i.level) - 1) * 12}px` }}>
             <a href={`#${i.id}`} className={cn("block ps-3 -ms-px border-s py-1 transition-colors", active === i.id ? "border-[#1FC7DC] text-[#5CDDEC]" : "border-transparent text-muted-foreground hover:text-foreground")}>{i.text}</a>
@@ -146,22 +146,22 @@ export function CommandPalette({ items, placeholder = "Search docs & plugins…"
     : items.slice(0, 24);
   return (
     <>
-      <button onClick={() => setOpen(true)} className={cn("inline-flex items-center gap-2 h-9 px-3 rounded-full border border-white/12 bg-white/[0.05] text-sm text-muted-foreground hover:text-foreground transition-colors", className)}>
+      <button onClick={() => setOpen(true)} className={cn("inline-flex items-center gap-2 h-9 px-3 rounded-full border border-border bg-card/40 text-sm text-muted-foreground hover:text-foreground transition-colors", className)}>
         <Search size={14} /> <span className="hidden sm:inline">Search</span>
-        <kbd className="hidden sm:inline font-mono text-[10px] border border-white/15 rounded px-1 py-0.5">⌘K</kbd>
+        <kbd className="hidden sm:inline font-mono text-[10px] border border-border rounded px-1 py-0.5">⌘K</kbd>
       </button>
       {open && (
-        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] bg-black/60 backdrop-blur-sm" onClick={() => setOpen(false)}>
-          <div className="w-full max-w-xl mx-4 rounded-2xl border border-white/12 bg-[#0b1016]/95 backdrop-blur-xl shadow-[0_30px_80px_-20px_rgba(0,0,0,.8)] overflow-hidden" onClick={(e) => e.stopPropagation()}>
-            <div className="flex items-center gap-3 px-4 border-b border-white/10">
+        <div className="fixed inset-0 z-[100] flex items-start justify-center pt-[12vh] bg-black/60" onClick={() => setOpen(false)}>
+          <div className="w-full max-w-xl mx-4 rounded-2xl border border-border bg-card shadow-[0_30px_80px_-20px_rgba(0,0,0,.8)] overflow-hidden" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center gap-3 px-4 border-b border-border">
               <Search size={16} className="text-muted-foreground" />
               <input autoFocus value={q} onChange={(e) => setQ(e.target.value)} placeholder={placeholder} className="flex-1 h-12 bg-transparent outline-none text-sm" />
-              <kbd className="font-mono text-[10px] text-muted-foreground border border-white/15 rounded px-1">esc</kbd>
+              <kbd className="font-mono text-[10px] text-muted-foreground border border-border rounded px-1">esc</kbd>
             </div>
             <ul className="max-h-[50vh] overflow-auto p-2">
               {results.map((r, idx) => (
                 <li key={idx}>
-                  <a href={r.href} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-white/[0.06]">
+                  <a href={r.href} className="flex items-center gap-3 px-3 py-2.5 rounded-lg hover:bg-card/40">
                     <span className="text-sm truncate">{r.label}</span>
                     {r.sublabel && <span className="text-xs text-muted-foreground truncate min-w-0">{r.sublabel}</span>}
                     {r.group && <span className="ms-auto shrink-0 text-[10px] font-mono uppercase text-muted-foreground/60">{r.group}</span>}
