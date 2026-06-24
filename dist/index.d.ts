@@ -2507,16 +2507,50 @@ interface A2UICardField {
     label: string;
     value: string | number;
 }
-/** Data payload for kind: "card". */
+/** Tone for a card metric tile — drives its color coding. */
+type A2UICardTone = 'positive' | 'negative' | 'neutral';
+/** A named icon for a metric tile (resolved to a lucide icon by the renderer). */
+type A2UICardIcon = 'trend' | 'users' | 'clock' | 'source' | 'shield' | 'chart' | 'alert' | 'check' | 'globe';
+/** One metric tile in the rich card grid. */
+interface A2UICardMetric {
+    label_en: string;
+    label_ar?: string;
+    value: string | number;
+    /** positive → green, negative → red, neutral → muted. Default neutral. */
+    tone?: A2UICardTone;
+    icon?: A2UICardIcon;
+    /** Optional tiny sparkline values for the tile. */
+    trend?: number[];
+}
+/**
+ * Data payload for kind: "card".
+ *
+ * Two shapes are supported:
+ *  - Simple: body_en/ar + fields (key/value rows).
+ *  - Rich (intelligence card): summary_en/ar headline + a 2-col grid of metric
+ *    tiles + a related-items list + a footer recommendation. The renderer prefers
+ *    the rich shape when `metrics`/`summary` are present, else falls back to body.
+ */
 interface A2UICardData {
     title_en?: string;
     title_ar?: string;
     body_en?: string;
     body_ar?: string;
+    /** Headline finding sentence (rich card). */
+    summary_en?: string;
+    summary_ar?: string;
     /** Severity level — maps to SeverityChip tokens when provided. */
     severity?: 'critical' | 'high' | 'medium' | 'low';
-    /** Key/value detail rows rendered below the body. */
+    /** Key/value detail rows rendered below the body (simple shape). */
     fields?: A2UICardField[];
+    /** Metric tiles rendered as a 2-column grid (rich shape). */
+    metrics?: A2UICardMetric[];
+    /** Related items list (rich shape). */
+    related_en?: string[];
+    related_ar?: string[];
+    /** Footer recommendation / note (rich shape). */
+    footer_en?: string;
+    footer_ar?: string;
 }
 /** One action item in an A2UI actions artifact. */
 interface A2UIActionItem {
@@ -2709,6 +2743,20 @@ declare const ArtifactChart: {
     displayName: string;
 };
 
+/**
+ * ArtifactCard — renders an A2UI "card" artifact.
+ *
+ * Two layouts:
+ *  - **Rich** (intelligence card): a summary headline, a 2-column grid of metric
+ *    tiles (label + big value + icon, tone-color-coded green/red/neutral, optional
+ *    sparkline), a related-items list, and a footer recommendation. Used when the
+ *    payload carries `metrics`/`summary`.
+ *  - **Simple**: title + body + key/value fields. Backward-compatible fallback.
+ *
+ * Bilingual (title/summary/related/footer _en/_ar), RTL-safe (logical props),
+ * token-themed for dark/light. displayName set (Rule 7).
+ */
+
 interface ArtifactCardProps {
     data: A2UICardData;
     /** Outer artifact title (title_en / title_ar from the A2UIArtifact envelope). */
@@ -2817,27 +2865,22 @@ declare const SeverityChip: {
 interface MarkdownContentProps {
     /** Markdown source — typically an assistant chat message. */
     content: string;
-    /**
-     * Text direction. Drives RTL-safe layout (logical padding on lists and
-     * blockquotes flips automatically; code blocks stay LTR regardless).
-     * Defaults to 'ltr'.
-     */
+    /** Text direction. RTL maps to the Arabic locale of the renderer. Default 'ltr'. */
     dir?: 'ltr' | 'rtl';
     /** Extra classes merged onto the wrapper. */
     className?: string;
 }
 /**
- * MarkdownContent
+ * MarkdownContent — shared markdown renderer for assistant chat messages
+ * (copilot dock, chat thread, project chat).
  *
- * Shared markdown renderer for assistant chat messages (copilot dock, chat
- * thread, project chat). GFM enabled (tables, strikethrough, task lists,
- * autolinks).
- *
- * Security: `skipHtml` — raw HTML in the markdown source is never rendered,
- * so no sanitizer is needed; links open in a new tab with rel="noopener".
- *
- * User messages should stay plain text — only assistant output goes through
- * this component.
+ * Delegates to the kit's `MarkdownRenderer`, so a full assistant reply parses
+ * over the SAME rich pipeline as standalone markdown: GFM tables render through
+ * the sortable **DataTable** (with CSV export), fenced code blocks become the
+ * **CodeBlock** (copy + PNG export, syntax-highlighted), ```mermaid fences render
+ * as diagrams. Raw HTML is not rendered (no rehype-raw). Artifacts (a2ui blocks)
+ * are stripped by the provider and rendered separately, so an assistant turn
+ * shows BOTH its markdown text and its artifacts.
  */
 declare const MarkdownContent: {
     ({ content, dir, className }: MarkdownContentProps): React$1.JSX.Element;
