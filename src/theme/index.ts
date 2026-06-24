@@ -21,3 +21,15 @@ export {
   type BrandingProviderProps,
   type BrandContextValue,
 } from "./BrandingProvider";
+
+export {
+  ThemeProvider,
+  useTheme,
+  type ThemeProviderProps,
+  type ThemeContextValue,
+  type TogoTheme,
+  type ThemeOverrides,
+  type Dir,
+} from "./ThemeProvider";
+
+export { themes, themeInitScript, themeBase, STORAGE_KEY, type ThemeDef, type ThemeBase } from "./themes";

@@ -65,11 +65,15 @@ const preview: Preview = {
       React.useEffect(() => {
         if (ctx.viewMode === "docs") return;
         document.documentElement.classList.toggle("dark", theme === "dark");
+        // data-theme drives the --togo-color-* semantic layer (ThemeProvider switch
+        // surface); .dark keeps the bridged tokens + dark: utilities in sync.
+        document.documentElement.setAttribute("data-theme", theme);
         document.documentElement.setAttribute("dir", dir);
       }, [theme, dir]);
       return (
         <div
           dir={dir}
+          data-theme={theme}
           className={`tg-root ${theme === "dark" ? "dark" : ""} bg-background text-foreground`}
           style={{ padding: fullBleed ? 0 : 24, minHeight: "100vh" }}
         >
