@@ -1,3 +1,4 @@
+import * as React from 'react'
 import type { Meta, StoryObj } from '@storybook/react'
 import { PluginDetailLayout, WorkflowPipeline } from '../components/plugin-detail'
 import { MOCK_TABS, MOCK_PLUGIN, MOCK_ACTIVITY, MOCK_PIPELINE_MODEL } from './_fixtures/plugin'
@@ -27,19 +28,29 @@ const TabContent = ({ language, tab }: { language: 'en' | 'ar'; tab: string }) =
   )
 }
 
+// PluginDetailLayout is designed to live INSIDE an AdminLayout <main> — it cancels
+// that main's padding with negative margins and fills its height. This host div
+// reproduces that padded, height-bounded, overflow-clipped main so the layout sits
+// flush (no off-screen cutoff) and the content column scrolls internally.
+const AdminMainHost = ({ children }: { children: React.ReactNode }) => (
+  <div className="h-screen overflow-hidden bg-background p-3 sm:p-4 md:p-6">{children}</div>
+)
+
 const Page = ({ language, activeTab }: { language: 'en' | 'ar'; activeTab?: string }) => {
   const tab = activeTab ?? 'workflow'
   return (
-    <PluginDetailLayout
-      tabs={MOCK_TABS}
-      activeTab={tab}
-      onTabChange={(key) => console.log('[Layout] tab change →', key)}
-      plugin={MOCK_PLUGIN}
-      activity={MOCK_ACTIVITY}
-      language={language}
-    >
-      <TabContent language={language} tab={tab} />
-    </PluginDetailLayout>
+    <AdminMainHost>
+      <PluginDetailLayout
+        tabs={MOCK_TABS}
+        activeTab={tab}
+        onTabChange={(key) => console.log('[Layout] tab change →', key)}
+        plugin={MOCK_PLUGIN}
+        activity={MOCK_ACTIVITY}
+        language={language}
+      >
+        <TabContent language={language} tab={tab} />
+      </PluginDetailLayout>
+    </AdminMainHost>
   )
 }
 
