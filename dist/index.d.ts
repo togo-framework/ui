@@ -1117,11 +1117,12 @@ interface ProfileViewProps {
     onChangePassword?: () => void;
     onToggle2FA?: (enabled: boolean) => void;
     onRevokeSession?: (id: string) => void;
+    onChangeAvatar?: () => void;
 }
-/** ProfileView — a presentational account/security/sessions profile screen built from the
- * kit primitives. Product-agnostic: pass user data + callbacks. RTL + bilingual via
- * `language`; themed via tokens (dark/light). */
-declare function ProfileView({ user, language, sessions, twoFactorEnabled, onSave, onChangePassword, onToggle2FA, onRevokeSession, }: ProfileViewProps): React$1.JSX.Element;
+/** ProfileView — a real settings screen: a section sidebar (Account / Security / Sessions)
+ * beside the active section's content. Product-agnostic (data + callbacks in), RTL + bilingual
+ * via `language`, fully token-themed (dark/light). */
+declare function ProfileView({ user, language, sessions, twoFactorEnabled, onSave, onChangePassword, onToggle2FA, onRevokeSession, onChangeAvatar, }: ProfileViewProps): React$1.JSX.Element;
 
 interface ColorPickerProps {
     /** Current color, hex (e.g. "#7c3aed"). */
