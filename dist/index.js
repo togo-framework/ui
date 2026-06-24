@@ -16285,14 +16285,17 @@ function fullFrame(steps) {
   return { lines, showEnd: true };
 }
 var keepStaticFrame = () => typeof window !== "undefined" && (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || navigator?.webdriver === true);
-function TypingTerminal({ steps, endSlot, title = "~/myapp \u2014 togo", className, typeMs = 26, lineMs = 110, loop = false, height = 360 }) {
+function TypingTerminal({ steps, endSlot, title = "~/myapp \u2014 togo", className, typeMs = 26, lineMs = 110, loop = false, height = 360, onComplete }) {
   const [frame, setFrame] = React32.useState(() => fullFrame(steps));
   const [done, setDone] = React32.useState(false);
   const [runId, setRunId] = React32.useState(0);
   const scrollRef = React32.useRef(null);
+  const onDone = React32.useRef(onComplete);
+  onDone.current = onComplete;
   React32.useEffect(() => {
     if (keepStaticFrame()) {
       setDone(true);
+      onDone.current?.();
       return;
     }
     let alive = true;
@@ -16338,6 +16341,7 @@ function TypingTerminal({ steps, endSlot, title = "~/myapp \u2014 togo", classNa
         toBottom();
         if (!loop) {
           setDone(true);
+          onDone.current?.();
           return;
         }
         await wait(4200);
@@ -16377,9 +16381,166 @@ function TypingTerminal({ steps, endSlot, title = "~/myapp \u2014 togo", classNa
 }
 TypingTerminal.displayName = "TypingTerminal";
 
-// src/components/marketing/MascotMark.tsx
+// src/components/marketing/ClaudeSession.tsx
 import * as React33 from "react";
+import { RotateCcw as RotateCcw4, Sparkles as Sparkles13 } from "lucide-react";
 import { jsx as jsx102, jsxs as jsxs90 } from "react/jsx-runtime";
+var Tool = ({ tool, arg }) => /* @__PURE__ */ jsxs90("div", { className: "whitespace-pre-wrap break-words", children: [
+  /* @__PURE__ */ jsx102("span", { className: "text-[#28c840]", children: "\u23FA " }),
+  /* @__PURE__ */ jsx102("span", { className: "text-foreground font-semibold", children: tool }),
+  /* @__PURE__ */ jsxs90("span", { className: "text-muted-foreground", children: [
+    "(",
+    arg,
+    ")"
+  ] })
+] });
+var Result = ({ text }) => /* @__PURE__ */ jsxs90("div", { className: "whitespace-pre-wrap break-words text-muted-foreground ps-3", children: [
+  /* @__PURE__ */ jsx102("span", { className: "text-muted-foreground/60", children: "\u23BF  " }),
+  text
+] });
+var User4 = ({ text }) => /* @__PURE__ */ jsxs90("div", { className: "whitespace-pre-wrap break-words", children: [
+  /* @__PURE__ */ jsx102("span", { className: "text-[#5CDDEC]", children: "> " }),
+  /* @__PURE__ */ jsx102("span", { className: "text-foreground", children: text })
+] });
+var Assistant = ({ text }) => /* @__PURE__ */ jsxs90("div", { className: "whitespace-pre-wrap break-words text-foreground/80", children: [
+  /* @__PURE__ */ jsx102("span", { className: "text-[var(--togo-cyan,#5CDDEC)]", children: "\u273B " }),
+  text
+] });
+function fullFrame2(steps) {
+  const out = [];
+  steps.forEach((s, i) => {
+    if (s.kind === "user") out.push(/* @__PURE__ */ jsx102(User4, { text: s.text }, `u${i}`));
+    else if (s.kind === "assistant") out.push(/* @__PURE__ */ jsx102(Assistant, { text: s.text }, `a${i}`));
+    else {
+      out.push(/* @__PURE__ */ jsx102(Tool, { tool: s.tool, arg: s.arg }, `t${i}`));
+      if (s.result) out.push(/* @__PURE__ */ jsx102(Result, { text: s.result }, `r${i}`));
+    }
+  });
+  return out;
+}
+var keepStaticFrame2 = () => typeof window !== "undefined" && (window.matchMedia?.("(prefers-reduced-motion: reduce)").matches || navigator?.webdriver === true);
+function ClaudeSession({ steps, endSlot, title = "\u273B Claude Code \u2014 togo", className, typeMs = 22, lineMs = 320, loop = false, height = 360, onComplete }) {
+  const [lines, setLines] = React33.useState(() => fullFrame2(steps));
+  const [showEnd, setShowEnd] = React33.useState(true);
+  const [done, setDone] = React33.useState(false);
+  const [runId, setRunId] = React33.useState(0);
+  const scrollRef = React33.useRef(null);
+  const onDone = React33.useRef(onComplete);
+  onDone.current = onComplete;
+  React33.useEffect(() => {
+    if (keepStaticFrame2()) {
+      setDone(true);
+      onDone.current?.();
+      return;
+    }
+    let alive = true;
+    const timers = [];
+    const wait = (ms) => new Promise((res) => timers.push(setTimeout(res, ms)));
+    const toBottom = () => {
+      if (scrollRef.current) scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+    };
+    async function run() {
+      setDone(false);
+      setShowEnd(false);
+      do {
+        const acc = [];
+        setLines([]);
+        for (let i = 0; i < steps.length && alive; i++) {
+          const s = steps[i];
+          if (s.kind === "user") {
+            for (let c = 1; c <= s.text.length && alive; c++) {
+              setLines([...acc, /* @__PURE__ */ jsxs90("div", { className: "whitespace-pre-wrap break-words", children: [
+                /* @__PURE__ */ jsx102("span", { className: "text-[#5CDDEC]", children: "> " }),
+                /* @__PURE__ */ jsx102("span", { className: "text-foreground", children: s.text.slice(0, c) }),
+                /* @__PURE__ */ jsx102("span", { className: "ml-0.5 inline-block w-2 -mb-0.5 h-4 bg-[#5CDDEC] animate-pulse" })
+              ] }, `u${i}`)]);
+              toBottom();
+              await wait(typeMs);
+            }
+            acc.push(/* @__PURE__ */ jsx102(User4, { text: s.text }, `u${i}`));
+            await wait(420);
+          } else if (s.kind === "assistant") {
+            acc.push(/* @__PURE__ */ jsx102(Assistant, { text: s.text }, `a${i}`));
+            setLines([...acc]);
+            toBottom();
+            await wait(lineMs);
+          } else {
+            acc.push(/* @__PURE__ */ jsx102(Tool, { tool: s.tool, arg: s.arg }, `t${i}`));
+            setLines([...acc]);
+            toBottom();
+            await wait(Math.round(lineMs * 0.7));
+            if (s.result) {
+              acc.push(/* @__PURE__ */ jsx102(Result, { text: s.result }, `r${i}`));
+              setLines([...acc]);
+              toBottom();
+              await wait(lineMs);
+            }
+          }
+        }
+        if (!alive) return;
+        setLines([...acc]);
+        setShowEnd(true);
+        setDone(true);
+        toBottom();
+        onDone.current?.();
+        if (!loop) return;
+        await wait(4200);
+      } while (alive);
+    }
+    run();
+    return () => {
+      alive = false;
+      timers.forEach(clearTimeout);
+    };
+  }, [steps, typeMs, lineMs, loop, runId]);
+  return /* @__PURE__ */ jsxs90("div", { className: cn("rounded-2xl border border-border overflow-hidden bg-[#080b0f] shadow-2xl", className), children: [
+    /* @__PURE__ */ jsxs90("div", { className: "flex items-center gap-2 px-4 py-3 border-b border-border", children: [
+      /* @__PURE__ */ jsx102(Sparkles13, { size: 13, className: "text-[var(--togo-cyan,#5CDDEC)]" }),
+      /* @__PURE__ */ jsx102("span", { className: "font-mono text-xs text-muted-foreground", children: title }),
+      done && !loop && /* @__PURE__ */ jsxs90(
+        "button",
+        {
+          type: "button",
+          onClick: () => setRunId((n) => n + 1),
+          className: "ms-auto inline-flex items-center gap-1.5 rounded-md border border-white/12 bg-white/[0.04] px-2.5 py-1 font-mono text-[11px] text-muted-foreground hover:text-foreground hover:bg-white/[0.08] transition-colors",
+          "aria-label": "Replay the Claude Code session",
+          children: [
+            /* @__PURE__ */ jsx102(RotateCcw4, { size: 12 }),
+            " Replay"
+          ]
+        }
+      )
+    ] }),
+    /* @__PURE__ */ jsxs90("div", { ref: scrollRef, className: "p-5 font-mono text-[12.5px] sm:text-[13px] leading-[1.9] overflow-auto", style: { height }, children: [
+      lines,
+      showEnd && endSlot ? /* @__PURE__ */ jsx102("div", { className: "mt-4 pt-4 border-t border-white/10", children: endSlot }) : null
+    ] })
+  ] });
+}
+ClaudeSession.displayName = "ClaudeSession";
+
+// src/components/marketing/BrowserFrame.tsx
+import { Lock as Lock4 } from "lucide-react";
+import { jsx as jsx103, jsxs as jsxs91 } from "react/jsx-runtime";
+function BrowserFrame({ url = "localhost:8080", children, className }) {
+  return /* @__PURE__ */ jsxs91("div", { className: cn("rounded-2xl border border-border overflow-hidden bg-[#0b0f13] shadow-2xl", className), children: [
+    /* @__PURE__ */ jsxs91("div", { className: "flex items-center gap-2 px-3 py-2.5 border-b border-border bg-white/[0.03]", children: [
+      /* @__PURE__ */ jsx103("span", { className: "w-3 h-3 rounded-full bg-[#ff5f57]" }),
+      /* @__PURE__ */ jsx103("span", { className: "w-3 h-3 rounded-full bg-[#febc2e]" }),
+      /* @__PURE__ */ jsx103("span", { className: "w-3 h-3 rounded-full bg-[#28c840]" }),
+      /* @__PURE__ */ jsxs91("div", { className: "ms-2 flex flex-1 items-center gap-1.5 rounded-md bg-black/30 px-2.5 py-1 min-w-0", children: [
+        /* @__PURE__ */ jsx103(Lock4, { size: 11, className: "text-muted-foreground shrink-0" }),
+        /* @__PURE__ */ jsx103("span", { className: "truncate font-mono text-[11px] text-muted-foreground", children: url })
+      ] })
+    ] }),
+    /* @__PURE__ */ jsx103("div", { children })
+  ] });
+}
+BrowserFrame.displayName = "BrowserFrame";
+
+// src/components/marketing/MascotMark.tsx
+import * as React34 from "react";
+import { jsx as jsx104, jsxs as jsxs92 } from "react/jsx-runtime";
 var EYES = [
   { x: 0.405, y: 0.45 },
   { x: 0.595, y: 0.45 }
@@ -16392,10 +16553,10 @@ var KEYFRAMES = `
 .tg-mascot { will-change: transform; animation: tgMascotFloat 6s ease-in-out infinite; }
 @media (prefers-reduced-motion: reduce) { .tg-mascot { animation: none !important; } }`;
 function MascotMark({ src = "/togo-mark.svg", alt = "ToGO", className }) {
-  const ref = React33.useRef(null);
-  const [active, setActive] = React33.useState(false);
-  const [look, setLook] = React33.useState({ dx: 0, dy: 0 });
-  React33.useEffect(() => {
+  const ref = React34.useRef(null);
+  const [active, setActive] = React34.useState(false);
+  const [look, setLook] = React34.useState({ dx: 0, dy: 0 });
+  React34.useEffect(() => {
     if (typeof window === "undefined" || !window.matchMedia) return;
     if (window.matchMedia("(prefers-reduced-motion: reduce)").matches) return;
     if (!window.matchMedia("(hover: hover) and (pointer: fine)").matches) return;
@@ -16424,9 +16585,9 @@ function MascotMark({ src = "/togo-mark.svg", alt = "ToGO", className }) {
     };
   }, []);
   const tilt = active ? look.dx * 4 : 0;
-  return /* @__PURE__ */ jsxs90("div", { ref, className: cn("tg-mascot", className), style: { position: "relative", display: "inline-block" }, children: [
-    /* @__PURE__ */ jsx102("style", { children: KEYFRAMES }),
-    /* @__PURE__ */ jsxs90(
+  return /* @__PURE__ */ jsxs92("div", { ref, className: cn("tg-mascot", className), style: { position: "relative", display: "inline-block" }, children: [
+    /* @__PURE__ */ jsx104("style", { children: KEYFRAMES }),
+    /* @__PURE__ */ jsxs92(
       "div",
       {
         style: {
@@ -16436,8 +16597,8 @@ function MascotMark({ src = "/togo-mark.svg", alt = "ToGO", className }) {
           transition: "transform .25s ease-out"
         },
         children: [
-          /* @__PURE__ */ jsx102("img", { src, alt, draggable: false, style: { display: "block", width: "100%", height: "100%" } }),
-          active && EYES.map((eye, i) => /* @__PURE__ */ jsx102(
+          /* @__PURE__ */ jsx104("img", { src, alt, draggable: false, style: { display: "block", width: "100%", height: "100%" } }),
+          active && EYES.map((eye, i) => /* @__PURE__ */ jsx104(
             "span",
             {
               "aria-hidden": "true",
@@ -16452,7 +16613,7 @@ function MascotMark({ src = "/togo-mark.svg", alt = "ToGO", className }) {
                 background: "rgba(255,255,255,.94)",
                 boxShadow: "inset 0 2px 4px rgba(8,16,40,.28)"
               },
-              children: /* @__PURE__ */ jsx102(
+              children: /* @__PURE__ */ jsx104(
                 "span",
                 {
                   style: {
@@ -16532,6 +16693,7 @@ export {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
+  BrowserFrame,
   Button,
   Calendar,
   Callout,
@@ -16555,6 +16717,7 @@ export {
   ChartTooltipContent,
   ChatThread_default as ChatThread,
   Checkbox,
+  ClaudeSession,
   CodeBlock,
   CodeShowcase,
   Collapsible,
