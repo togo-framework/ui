@@ -4,6 +4,7 @@ import ChatThread from "../components/copilot/ChatThread";
 import { CopilotProvider } from "../components/copilot/CopilotProvider";
 import { CopilotLauncher } from "../components/copilot/CopilotLauncher";
 import type { CopilotClient } from "../components/copilot/client";
+import { LanguageProvider } from "../i18n/LanguageProvider";
 
 const meta: Meta = {
   title: "Components/Copilot",
@@ -150,16 +151,18 @@ export const FullDock: StoryObj = {
   name: "Full Dock — markdown + artifacts (mock streaming)",
   parameters: { layout: "fullscreen", fullBleed: true, docs: { story: { inline: false, height: "640px" } } },
   render: () => (
-    <CopilotProvider client={mockClient} context={{ contextType: "global", contextRef: "", title_en: "Demo", title_ar: "تجربة", suggestions: [] } as any}>
-      <div className="min-h-screen bg-background p-8 text-foreground">
-        <h1 className="mb-2 text-2xl font-semibold">Copilot demo</h1>
-        <p className="mb-6 max-w-prose text-sm text-muted-foreground">
-          Click the launcher → send a message. The reply streams a **markdown table** + a **code block**
-          (rendered via the kit DataTable + CodeBlock) and returns a **rich card** + **chart** artifact —
-          the full response parses over markdown and artifacts.
-        </p>
-        <CopilotLauncher variant="header" />
-      </div>
-    </CopilotProvider>
+    <LanguageProvider initialLanguage="en">
+      <CopilotProvider client={mockClient} context={{ contextType: "global", contextRef: "", title_en: "Demo", title_ar: "تجربة", suggestions: [] } as any}>
+        <div className="min-h-screen bg-background p-8 text-foreground">
+          <h1 className="mb-2 text-2xl font-semibold">Copilot demo</h1>
+          <p className="mb-6 max-w-prose text-sm text-muted-foreground">
+            Click the launcher → send a message. The reply streams a markdown table + a code block
+            (rendered via the kit DataTable + CodeBlock) and returns a rich card + chart artifact —
+            the full response parses over markdown and artifacts.
+          </p>
+          <CopilotLauncher variant="header" />
+        </div>
+      </CopilotProvider>
+    </LanguageProvider>
   ),
 };
