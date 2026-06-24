@@ -141,12 +141,14 @@ const CopilotSelectionTrigger = ({
     open({ message, autoSend })
   }
 
-  // Position the bubble just below the selection, nudged inward from the edge.
+  // Position the bubble just below the selection. In RTL the button's right
+  // edge anchors at the selection's left edge (translateX(-100%)).
+  const vw = typeof window !== 'undefined' ? window.innerWidth : 9999
+  const vh = typeof window !== 'undefined' ? window.innerHeight : 9999
   const style: React.CSSProperties = {
     position: 'fixed',
-    top: Math.min(anchor.y + 6, (typeof window !== 'undefined' ? window.innerHeight : 9999) - 44),
-    [isRTL ? 'right' : 'left']: undefined as unknown as number,
-    left: Math.max(8, Math.min(anchor.x - (isRTL ? 0 : 0), (typeof window !== 'undefined' ? window.innerWidth : 9999) - 160)),
+    top: Math.min(anchor.y + 6, vh - 44),
+    left: Math.max(8, Math.min(anchor.x, vw - 8)),
     transform: isRTL ? 'translateX(-100%)' : undefined,
     zIndex: 60,
   }
