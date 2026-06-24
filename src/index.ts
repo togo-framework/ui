@@ -115,3 +115,6 @@ export { default as StreamingMessage } from "./components/copilot/StreamingMessa
 export { default as ArtifactViewer } from "./components/copilot/ArtifactViewer";
 export { default as AgentSteps } from "./components/copilot/AgentSteps";
 export type { CopilotClient, CopilotRequest, CopilotEvent } from "./components/copilot/client";
+
+// Marketing / section components (compose landing & docs pages from the kit)
+export * from "./components/marketing/Marketing";
