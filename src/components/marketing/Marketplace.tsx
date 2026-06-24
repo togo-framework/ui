@@ -7,42 +7,72 @@ import { cn } from "../../lib/utils";
 
 const DISPLAY: React.CSSProperties = { fontFamily: '"Sora", var(--togo-font-body, ui-sans-serif, system-ui, sans-serif)' };
 
+// A real brand glyph (simple-icons path + official hex), so brand plugins render
+// their actual logo/color instead of a generic category icon.
+export interface BrandGlyph { path: string; hex: string; }
+
+function Glyph({ icon: Icon, brand, size = 28 }: { icon?: LucideIcon; brand?: BrandGlyph; size?: number }) {
+  if (brand) {
+    return (
+      <svg role="img" viewBox="0 0 24 24" width={size} height={size} fill="#fff" aria-hidden="true">
+        <path d={brand.path} />
+      </svg>
+    );
+  }
+  return Icon ? <Icon size={size} style={{ color: "#fff" }} /> : null;
+}
+
+/** A provider plugin nested under a base card (auth → auth-dev, auth-firebase…). */
+export interface ProviderChip { name: string; href: string; icon?: LucideIcon; brand?: BrandGlyph; color?: string; }
+
 // ── MarketplaceCard ──────────────────────────────────────────────────────────────
-// A Filament-grade plugin card: a branded category "cover" (gradient + dotted texture +
-// the category icon — since framework plugins rarely ship screenshots), then name,
-// category, description, author/org, and stars/downloads. Glass-styled, hover-lifts.
+// A Filament-grade plugin card: a branded cover (the plugin's color gradient + its
+// icon — a real brand SVG when it represents a brand), then name, category,
+// description, author/org, stars/downloads, and — for a base capability — a row of
+// its providers. Clean, hover-lifts.
 export interface MarketplaceCardProps {
   name: string;
   href: string;
   category?: string;
-  /** Hex that drives the cover gradient + icon tint. */
+  /** Hex driving the cover gradient + glyph tint (per-plugin). */
+  color?: string;
+  /** Back-compat alias for `color`. */
   categoryColor?: string;
   icon?: LucideIcon;
+  /** Real brand SVG (path + hex). Wins over `icon`. */
+  brandIcon?: BrandGlyph;
   description?: string;
-  /** Owner/org, e.g. "togo-framework". */
   author?: string;
   stars?: number;
   downloads?: number;
   enabled?: boolean;
+  /** Providers nested under a base card. Renders a "providers" chip row. */
+  providers?: ProviderChip[];
   className?: string;
 }
 
 export function MarketplaceCard({
-  name, href, category, categoryColor = "#2D8CE6", icon: Icon,
-  description, author, stars, downloads, enabled, className,
+  name, href, category, color, categoryColor, icon: Icon, brandIcon,
+  description, author, stars, downloads, enabled, providers, className,
 }: MarketplaceCardProps) {
+  const tint = color || categoryColor || "#2D8CE6";
+  const shown = (providers || []).slice(0, 5);
+  const extra = (providers || []).length - shown.length;
   return (
     <a href={href} className={cn("group block h-full", className)}>
       <div className="rounded-2xl border border-border bg-card/40 overflow-hidden h-full flex flex-col transition-all duration-200 hover:border-foreground/25 hover:-translate-y-0.5">
         <div
           className="relative h-28 flex items-center justify-center overflow-hidden"
-          style={{ background: `radial-gradient(120% 140% at 0% 0%, ${categoryColor}55, transparent 62%), linear-gradient(135deg, ${categoryColor}26, #0b1016)` }}
+          style={{ background: `radial-gradient(120% 140% at 0% 0%, ${tint}55, transparent 62%), linear-gradient(135deg, ${tint}26, #0b1016)` }}
         >
           <div className="absolute inset-0 opacity-[0.14]" style={{ backgroundImage: "radial-gradient(circle at 1px 1px, #fff 1px, transparent 0)", backgroundSize: "16px 16px" }} />
-          {Icon && (
+          {(Icon || brandIcon) && (
             <div className="relative grid place-items-center w-14 h-14 rounded-2xl bg-black/20 ring-1 ring-white/20 transition-transform duration-300 group-hover:scale-105">
-              <Icon size={28} style={{ color: "#fff" }} />
+              <Glyph icon={Icon} brand={brandIcon} />
             </div>
+          )}
+          {typeof providers !== "undefined" && providers.length > 0 && (
+            <span className="absolute top-3 start-3 text-[10px] font-mono px-2 py-0.5 rounded-full bg-black/30 text-white/80 ring-1 ring-white/20">{providers.length} providers</span>
           )}
           {enabled && <span className="absolute top-3 end-3 text-[10px] font-mono px-2 py-0.5 rounded-full bg-black/30 text-emerald-300 ring-1 ring-emerald-400/30">enabled</span>}
         </div>
@@ -52,6 +82,25 @@ export function MarketplaceCard({
             {category && <span className="ms-auto shrink-0 text-[10px] font-mono uppercase tracking-wider px-2 py-0.5 rounded-full border border-border text-muted-foreground">{category}</span>}
           </div>
           <p className="text-[13px] text-muted-foreground mt-1.5 line-clamp-2 flex-1">{description || "A togo-framework plugin."}</p>
+
+          {shown.length > 0 && (
+            <div className="mt-3 flex flex-wrap gap-1.5">
+              {shown.map((p) => (
+                <span
+                  key={p.href}
+                  onClick={(e) => { e.preventDefault(); e.stopPropagation(); window.location.href = p.href; }}
+                  className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background/40 ps-1.5 pe-2.5 py-1 text-[11px] text-muted-foreground hover:text-foreground hover:border-foreground/25 transition-colors cursor-pointer"
+                >
+                  <span className="grid place-items-center w-4 h-4 rounded-full" style={{ background: `${(p.color || tint)}26` }}>
+                    <Glyph icon={p.icon} brand={p.brand} size={10} />
+                  </span>
+                  {p.name}
+                </span>
+              ))}
+              {extra > 0 && <span className="inline-flex items-center rounded-full border border-border px-2.5 py-1 text-[11px] text-muted-foreground">+{extra}</span>}
+            </div>
+          )}
+
           <div className="flex items-center gap-3 mt-3 text-[11px] text-muted-foreground font-mono">
             {author && <span className="truncate">{author}</span>}
             <span className="ms-auto flex items-center gap-3 shrink-0">

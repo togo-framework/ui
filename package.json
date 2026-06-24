@@ -1,6 +1,6 @@
 {
   "name": "@togo-framework/ui",
-  "version": "0.1.8",
+  "version": "0.1.9",
   "description": "togo UI kit — the prism-style admin + auth component library (layout, data, charts, primitives). Framework-agnostic, RTL-ready, dark-first.",
   "license": "MIT",
   "type": "module",
