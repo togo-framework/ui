@@ -14,6 +14,9 @@ export * from "./components/status";
 // ── Data ──
 export * from "./components/data-table";
 
+// ── Admin (user management + mail setup; product-agnostic, props-driven) ──
+export * from "./components/admin";
+
 // ── Charts ──
 export * from "./components/charts/MiniBarChart";
 

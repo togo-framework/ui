@@ -412,6 +412,305 @@ declare namespace CardGrid {
 }
 
 /**
+ * admin/ — generic, product-agnostic user-management + mail-setup components.
+ *
+ * Ported from the Fort admin suite and made framework-agnostic for any togo
+ * app: every component takes data + callback props (NO hardcoded URLs, NO data
+ * fetching), is bilingual EN/AR via a `language` prop (Rule 8), RTL-aware, and
+ * themed with semantic tokens only (Rule 16). Products wire the callbacks to
+ * their own API client (Fort `/v1/admin/*`, GraphQL, REST, …).
+ */
+type AdminLanguage = 'en' | 'ar';
+/** A single user record shown in the management table / actions menu. */
+interface AdminUser {
+    id?: string;
+    email?: string;
+    roles?: string[];
+    permissions?: string[];
+    created_at?: string;
+}
+/** Result of generating a one-time link (reset / magic sign-in). */
+interface AdminLinkResult {
+    /** The single-use URL, when the host returns one to display/copy. */
+    link?: string;
+    /** true when the host emailed the link directly to the user. */
+    emailed?: boolean;
+}
+/** Payload for creating a user. */
+interface AddUserInput {
+    email: string;
+    password?: string;
+    roles: string[];
+}
+/** Payload for editing a user. */
+interface EditUserInput {
+    email: string;
+    roles: string[];
+    permissions: string[];
+}
+/** SMTP configuration value. */
+interface MailConfig {
+    host?: string;
+    port?: number;
+    username?: string;
+    password?: string;
+    from?: string;
+    secure?: boolean;
+}
+/** Structured result of a test-send. */
+interface MailTestResult {
+    ok: boolean;
+    error?: string;
+}
+
+interface UserManagementTableProps {
+    users: AdminUser[];
+    language?: AdminLanguage;
+    loading?: boolean;
+    /** Optional slot above the list (e.g. an <AddUserButton />). */
+    toolbar?: ReactNode;
+    /** Click handler for a row (excluding the actions column). */
+    onRowClick?: (user: AdminUser) => void;
+    /** Render the per-row actions column — typically a <UserActionsMenu />. */
+    renderActions?: (user: AdminUser) => ReactNode;
+    /** Override the empty-state copy. */
+    emptyTitle?: string;
+    emptyDescription?: string;
+    className?: string;
+}
+/**
+ * UserManagementTable — accounts list with avatar, email, role badges and an
+ * actions column. Presentational + product-agnostic: pass `users` and render
+ * the actions via `renderActions`. Bilingual, RTL-aware, token-themed.
+ */
+declare function UserManagementTable({ users, language, loading, toolbar, onRowClick, renderActions, emptyTitle, emptyDescription, className, }: UserManagementTableProps): React$1.JSX.Element;
+declare namespace UserManagementTable {
+    var displayName: string;
+}
+
+interface UserActionsMenuProps {
+    user: AdminUser;
+    language?: AdminLanguage;
+    /** Render the actions inline as a button toolbar instead of a "…" menu. */
+    asToolbar?: boolean;
+    /**
+     * Each action renders only when its callback is supplied. Throw inside a
+     * callback to surface an error toast. Reset/magic-link callbacks may return
+     * an { link, emailed } result, which the menu shows in a copyable dialog.
+     */
+    onEdit?: (input: EditUserInput) => Promise<void> | void;
+    onImpersonate?: () => Promise<void> | void;
+    onResetPassword?: (input: {
+        password?: string;
+    }) => Promise<AdminLinkResult | void> | AdminLinkResult | void;
+    onSendMagicLink?: () => Promise<AdminLinkResult> | AdminLinkResult;
+    onDelete?: () => Promise<void> | void;
+}
+/**
+ * UserActionsMenu — per-user actions (Edit / Impersonate / Reset password /
+ * Send magic link / Delete). Each item calls a passed-in callback; the menu
+ * owns the edit/reset/link/confirm dialogs. Product-agnostic, bilingual, RTL.
+ */
+declare function UserActionsMenu({ user, language, asToolbar, onEdit, onImpersonate, onResetPassword, onSendMagicLink, onDelete, }: UserActionsMenuProps): React$1.JSX.Element;
+declare namespace UserActionsMenu {
+    var displayName: string;
+}
+
+interface AddUserDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    /** Create the user. Throw to surface an error toast; resolve to close + reset. */
+    onSubmit: (input: AddUserInput) => Promise<void> | void;
+    language?: AdminLanguage;
+    title?: ReactNode;
+    description?: ReactNode;
+}
+/**
+ * AddUserDialog — controlled "create account" dialog (email + password + roles).
+ * Product-agnostic: wire `onSubmit` to your API. Bilingual, RTL-aware, themed.
+ */
+declare function AddUserDialog({ open, onOpenChange, onSubmit, language, title, description, }: AddUserDialogProps): React$1.JSX.Element;
+declare namespace AddUserDialog {
+    var displayName: string;
+}
+interface AddUserButtonProps {
+    onSubmit: (input: AddUserInput) => Promise<void> | void;
+    language?: AdminLanguage;
+    children?: ReactNode;
+}
+/** AddUserButton — convenience wrapper: a button that owns its dialog state. */
+declare function AddUserButton({ onSubmit, language, children }: AddUserButtonProps): React$1.JSX.Element;
+declare namespace AddUserButton {
+    var displayName: string;
+}
+
+interface MailSettingsFormProps {
+    /** Initial SMTP config (e.g. fetched from your API). */
+    value?: MailConfig;
+    /** Persist the config. Throw to surface an error toast. */
+    onSave: (config: MailConfig) => Promise<void> | void;
+    /** Send a test email; return a structured { ok, error } result. */
+    onTest: (to: string) => Promise<MailTestResult> | MailTestResult;
+    /** When false, shows the "endpoint unavailable" notice. */
+    available?: boolean;
+    language?: AdminLanguage;
+    /** Optional override for the intro paragraph. */
+    intro?: ReactNode;
+}
+/**
+ * MailSettingsForm — SMTP setup (host/port/username/password/from/secure) plus a
+ * test-send. Product-agnostic: wire `onSave` / `onTest` to your API. Bilingual,
+ * RTL-aware, token-themed.
+ */
+declare function MailSettingsForm({ value, onSave, onTest, available, language, intro, }: MailSettingsFormProps): React$1.JSX.Element;
+declare namespace MailSettingsForm {
+    var displayName: string;
+}
+
+interface ConfirmDialogProps {
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    title: ReactNode;
+    message?: ReactNode;
+    confirmLabel?: ReactNode;
+    cancelLabel?: ReactNode;
+    /** Styles the confirm action as destructive (red). */
+    destructive?: boolean;
+    /** Fired when the user confirms. */
+    onConfirm: () => void;
+    language?: AdminLanguage;
+}
+/**
+ * ConfirmDialog — controlled confirmation built on the AlertDialog primitive.
+ * RTL-aware, token-themed. For an imperative `await confirm(...)` API use the
+ * `useConfirm()` hook below.
+ */
+declare function ConfirmDialog({ open, onOpenChange, title, message, confirmLabel, cancelLabel, destructive, onConfirm, language, }: ConfirmDialogProps): React$1.JSX.Element;
+declare namespace ConfirmDialog {
+    var displayName: string;
+}
+interface ConfirmOptions {
+    title: string;
+    message?: string;
+    confirmLabel?: string;
+    cancelLabel?: string;
+    destructive?: boolean;
+}
+interface UseConfirmResult {
+    /** Open the dialog; resolves true on confirm, false on cancel/dismiss. */
+    confirm: (opts: ConfirmOptions) => Promise<boolean>;
+    /** Render this once in your tree (it carries the live dialog). */
+    dialog: ReactNode;
+}
+/**
+ * useConfirm — imperative confirmation. Mirrors Fort's local helper so products
+ * can `if (!(await confirm({ … }))) return` before a destructive action.
+ *
+ *   const { confirm, dialog } = useConfirm({ language })
+ *   // …
+ *   if (await confirm({ title: 'Delete?', destructive: true })) doDelete()
+ *   return <>{dialog}{rest}</>
+ */
+declare function useConfirm(opts?: {
+    language?: AdminLanguage;
+}): UseConfirmResult;
+
+interface ImpersonationBannerProps {
+    /** The impersonated user's email. When falsy the banner renders nothing. */
+    email?: string | null;
+    /** Called when the admin clicks "Stop impersonating". */
+    onStop: () => void;
+    language?: AdminLanguage;
+}
+/**
+ * ImpersonationBanner — sticky top banner shown while an admin is impersonating
+ * another user. Presentational + product-agnostic: the host owns impersonation
+ * state and passes `email` + `onStop`. Bilingual, RTL-aware.
+ */
+declare function ImpersonationBanner({ email, onStop, language }: ImpersonationBannerProps): React$1.JSX.Element | null;
+declare namespace ImpersonationBanner {
+    var displayName: string;
+}
+
+interface TagInputProps {
+    value: string[];
+    onChange: (value: string[]) => void;
+    placeholder?: string;
+    className?: string;
+    /** Input direction — tags like roles/emails are usually LTR. */
+    dir?: 'ltr' | 'rtl';
+}
+/**
+ * TagInput — comma/enter separated chips. Used for roles & permissions in the
+ * user dialogs. Token-themed, logical-property spacing (RTL-safe).
+ */
+declare function TagInput({ value, onChange, placeholder, className, dir }: TagInputProps): React$1.JSX.Element;
+declare namespace TagInput {
+    var displayName: string;
+}
+
+/**
+ * Bilingual chrome strings for the admin component suite (Rule 8).
+ * Self-contained EN/AR — no LanguageProvider required, matching the
+ * `language`-prop pattern used by DataTable / ProfileView.
+ */
+interface AdminStrings {
+    cancel: string;
+    create: string;
+    done: string;
+    saveChanges: string;
+    optional: string;
+    addUser: string;
+    addUserDesc: string;
+    editUser: string;
+    email: string;
+    password: string;
+    roles: string;
+    permissions: string;
+    rolesPlaceholder: string;
+    emailRequired: string;
+    edit: string;
+    impersonate: string;
+    resetPassword: string;
+    sendMagicLink: string;
+    delete: string;
+    actions: string;
+    newPassword: string;
+    setPassword: string;
+    sendResetLink: string;
+    resetBlankHint: string;
+    passwordResetLink: string;
+    magicSignInLink: string;
+    emailedToUser: string;
+    shareSingleUse: string;
+    noLinkReturned: string;
+    copy: string;
+    copied: string;
+    deleteUserQ: string;
+    cannotBeUndone: string;
+    impersonating: string;
+    stopImpersonating: string;
+    joined: string;
+    noUsers: string;
+    noUsersDesc: string;
+    member: string;
+    mailTitle: string;
+    mailIntro: string;
+    mailUnavailable: string;
+    smtpHost: string;
+    port: string;
+    username: string;
+    fromAddress: string;
+    useTls: string;
+    sendTestTo: string;
+    sendTest: string;
+    enterRecipient: string;
+    testSentTo: string;
+    testFailed: string;
+}
+declare function adminStrings(language: AdminLanguage): AdminStrings;
+
+/**
  * MiniBarChart — a dependency-free SVG/flex bar chart.
  *
  * Recharts (via ChartContainer) is overkill for a small sparkline-style chart,
@@ -4186,4 +4485,4 @@ declare namespace MascotMark {
     var displayName: string;
 }
 
-export { type A2UIActionItem, type A2UIActionsData, type A2UIArtifact$1 as A2UIArtifact, type A2UICardData, type A2UICardField, type A2UIChartData, type A2UIChartSeries, type A2UIClientCandidate, type A2UIClientCandidatesData, type A2UIClientDiffConfirmData, type A2UIClientDiffRow, type A2UIClientField, type A2UIClientFieldPickerData, type A2UIKind, type A2UIMarkdownData, type A2UIPersonaStarter, type A2UIPersonaStartersData, type A2UITableColumn, type A2UITableData, type ActivityBucket, AdminLayout, type AdminLayoutProps, type AdminSubNavItem, AgentSteps, type AlertMapItem, type AlertSeverity, type AppBrand, AppHeader, type AppHeaderProps, AppLayout, type AppLayoutProps, type AppNavGroup, type AppNavItem, AppPageShell, type AppPageShellProps, AppSidebar, type AppSidebarProps, type AppearanceMode, ArtifactActions, type ArtifactActionsProps, ArtifactCard, type ArtifactCardProps, ArtifactChart, type ArtifactChartProps, ArtifactClientCandidates, type ArtifactClientCandidatesProps, ArtifactClientDiffConfirm, type ArtifactClientDiffConfirmProps, ArtifactClientFieldPicker, type ArtifactClientFieldPickerProps, type ArtifactInteraction, ArtifactMarkdown, type ArtifactMarkdownProps, ArtifactPersonaStarters, type ArtifactPersonaStartersProps, ArtifactRenderer, type ArtifactRendererProps, ArtifactTable, type ArtifactTableProps, ArtifactViewer, AuroraBackground, type AuroraBackgroundProps, AuthCard, type AuthCardBrand, type AuthClient, AuthErrorAlert, AuthFlow, type AuthLayout, AuthStepHeader, type BarPoint, type BrandGlyph, BrowserFrame, type BrowserFrameProps, Callout, type CardFilter, CardGrid, type CardGridLabels, ChatThread, ClaudeSession, type ClaudeSessionProps, type ClaudeStep, CodeBlock, CodeShowcase, type CodeShowcaseProps, type CodeShowcaseTab, ColorPicker, type ColorPickerProps, CommandPalette, ContextualSkeleton, type CopilotClient, type CopilotEvent, CopilotLauncher, CopilotProvider, type CopilotQuickAction, type CopilotRequest, CopilotSelectionTrigger, type CopilotSelectionTriggerProps, DEFAULT_LAYERS, DEFAULT_LEGEND_GROUPS, DEFAULT_REGION_PRESETS, DataState, type DataStateLabels, type DataStateProps, DataTable, type DataTableBulkAction, type DataTableColumnFilter, type DataTableColumnMeta, type DataTableDensity, type DataTableFilterType, type DataTableLanguage, type DataTableProps, type DataTableSelectOption, type DataTableServerCallbacks, type DataTableServerState, type DockPosition, DocsLayout, type DocsLayoutProps, type DocsNavGroup, type DocsNavItem, DocsSidebar, DocsTOC, DynamicIcon, DynamicSection, type DynamicSectionProps, EmptyState, type EmptyStateProps, EntityNetworkGraph, type EntityNetworkGraphProps, type ErrorFilter, ErrorTrackingPage, type ErrorTrackingPageProps, EventMapPanel, type EventMapPanelProps, Eyebrow, type EyebrowProps, FeatureCard, type FeatureCardProps, type FeedbackAttachment, FeedbackButton, type FeedbackButtonProps, FeedbackHub, type FeedbackHubProps, type FeedbackItem, type FeedbackKind, FeedbackWidget, type FeedbackWidgetProps, FilterBar, type FilterBarProps, type FilterChip, ForgotForm, GlassCard, type GlassCardProps, type GraphLink, type GraphNode, IconPicker, type IconPickerProps, type Issue$1 as Issue, type IssueAssignee, type IssueBreadcrumb, IssueDetail, type IssueDetailProps, type IssueLevel, type IssueSort, type IssueTag, IssuesList, type IssuesListProps, LANG_COOKIE_NAME, type LanguageContextValue, LanguageProvider, type LanguageProviderProps, type LegendGroup, type LegendItem, type LegendShapeType, LockScreen, type LockScreenProps, type LockScreenUser, type LogLevel, LoginForm, type LoginResult, Logo, type LogoProps, type LogoTone, type LogoVariant, type LogsFilter, LogsView, type LogsViewProps, MARKER_COLORS, MARKER_LABELS, type MapLayer, MapLayersPanel, type MapLayersPanelProps, MapLegend, type MapLegendProps, type MapMarker$1 as MapMarker, type MapMarkerType, MapPanel, type MapPanelProps, type MapRegionPreset, MapView, type MapViewProps, MarkdownContent, MarkdownEditor, type MarkdownEditorProps, MarkdownRenderer, type MarkdownRendererProps, MarkdownTable, type MarkdownView, MarketplaceCard, type MarketplaceCardProps, MascotMark, type MascotMarkProps, MiniBarChart, MockupWindow, type MockupWindowProps, type ModelOption, MotorFeedbackLauncher, type MotorFeedbackLauncherProps, NestedStepsEditor, type NestedStepsEditorProps, NetworkGraph, type NetworkGraphProps, type NewFeedback, OTPBoxGroup, type OtpResult, PIPELINE_STAGES, PageHeader, type PageHeaderProps, Pager, type PaletteItem, PasswordInput, PasswordLockScreen, type PasswordLockScreenProps, type PasswordLockScreenUser, type PasswordRule, PasswordStrengthMeter, type PickedLocation, PillButton, type PillButtonProps, type PipelineCard, type PipelineLane, type PipelineModel, type PluginActivitySummary, type PluginAppearanceFields, PluginAppearanceSection, type PluginAppearanceSectionProps, PluginCard, type PluginCatalogEntry, type PluginDetailIdentity, PluginDetailLayout, type PluginDetailLayoutProps, type PluginDetailTab, PluginHero, PluginHeroSkeleton, PluginPageHeader, PluginSectionCard, PluginSparkline, type ProfileSession, ProfileView, type ProfileViewProps, type ProviderChip, type RenderMapContext, ResetForm, type ResolvedIcon, Reveal, type RevealProps, RouteProgress, type RouteProgressProps, STEP_FIELD_REGISTRY, SectionBoard, type SectionBoardProps, SectionHeading, type SectionHeadingProps, type SectionModel, SectionSkeleton, SentraLoading, type ServiceLogRow, ServiceUnavailable, type ServiceUnavailableProps, SessionExpired, type SessionExpiredProps, SeverityChip, type SidebarConversation, type SidebarUser, SourceBadge, type SparklinePoint, type StackFrame, type StackFrameContextLine, StatCard, type StatCardProps, type StatTile, StatsRow, StatusBadge, type StatusBadgeProps, type StatusBadgeTone, type Step, type StepFieldDef, type StepFieldType, type StepMetrics7d, StepOptionsDialog, type StepOptionsDialogProps, StreamingMessage, type TerminalStep, type TestRunCallbacks, type TestRunCompletePayload, TestRunPanel, type TestRunPanelProps, type TestRunSavedItem, type TestRunStep, type TocItem, TwoFAForm, TypingTerminal, type TypingTerminalProps, UnifiedCopilotDock, type UnlockCredentials, type Verify2FAResult, type View, ViewToggle, type ViewToggleProps, Wordmark, type WordmarkProps, Workflow, WorkflowEditor, type WorkflowEditorProps, type WorkflowPalette, WorkflowPipeline, type WorkflowPipelineProps, type WorkflowProps, type WorkflowSource, type WorkflowStep, type WorkflowStepLike, WorkflowStepNode, type WorkflowStepNodeProps, type WorkflowView, cn, computeRules, computeScore, feedbackButtonVariants, levelTone, resolveIcon, statValueVariants, statusBadgeVariants, useCopilot, useLanguage, useT };
+export { type A2UIActionItem, type A2UIActionsData, type A2UIArtifact$1 as A2UIArtifact, type A2UICardData, type A2UICardField, type A2UIChartData, type A2UIChartSeries, type A2UIClientCandidate, type A2UIClientCandidatesData, type A2UIClientDiffConfirmData, type A2UIClientDiffRow, type A2UIClientField, type A2UIClientFieldPickerData, type A2UIKind, type A2UIMarkdownData, type A2UIPersonaStarter, type A2UIPersonaStartersData, type A2UITableColumn, type A2UITableData, type ActivityBucket, AddUserButton, type AddUserButtonProps, AddUserDialog, type AddUserDialogProps, type AddUserInput, type AdminLanguage, AdminLayout, type AdminLayoutProps, type AdminLinkResult, type AdminStrings, type AdminSubNavItem, type AdminUser, AgentSteps, type AlertMapItem, type AlertSeverity, type AppBrand, AppHeader, type AppHeaderProps, AppLayout, type AppLayoutProps, type AppNavGroup, type AppNavItem, AppPageShell, type AppPageShellProps, AppSidebar, type AppSidebarProps, type AppearanceMode, ArtifactActions, type ArtifactActionsProps, ArtifactCard, type ArtifactCardProps, ArtifactChart, type ArtifactChartProps, ArtifactClientCandidates, type ArtifactClientCandidatesProps, ArtifactClientDiffConfirm, type ArtifactClientDiffConfirmProps, ArtifactClientFieldPicker, type ArtifactClientFieldPickerProps, type ArtifactInteraction, ArtifactMarkdown, type ArtifactMarkdownProps, ArtifactPersonaStarters, type ArtifactPersonaStartersProps, ArtifactRenderer, type ArtifactRendererProps, ArtifactTable, type ArtifactTableProps, ArtifactViewer, AuroraBackground, type AuroraBackgroundProps, AuthCard, type AuthCardBrand, type AuthClient, AuthErrorAlert, AuthFlow, type AuthLayout, AuthStepHeader, type BarPoint, type BrandGlyph, BrowserFrame, type BrowserFrameProps, Callout, type CardFilter, CardGrid, type CardGridLabels, ChatThread, ClaudeSession, type ClaudeSessionProps, type ClaudeStep, CodeBlock, CodeShowcase, type CodeShowcaseProps, type CodeShowcaseTab, ColorPicker, type ColorPickerProps, CommandPalette, ConfirmDialog, type ConfirmDialogProps, type ConfirmOptions, ContextualSkeleton, type CopilotClient, type CopilotEvent, CopilotLauncher, CopilotProvider, type CopilotQuickAction, type CopilotRequest, CopilotSelectionTrigger, type CopilotSelectionTriggerProps, DEFAULT_LAYERS, DEFAULT_LEGEND_GROUPS, DEFAULT_REGION_PRESETS, DataState, type DataStateLabels, type DataStateProps, DataTable, type DataTableBulkAction, type DataTableColumnFilter, type DataTableColumnMeta, type DataTableDensity, type DataTableFilterType, type DataTableLanguage, type DataTableProps, type DataTableSelectOption, type DataTableServerCallbacks, type DataTableServerState, type DockPosition, DocsLayout, type DocsLayoutProps, type DocsNavGroup, type DocsNavItem, DocsSidebar, DocsTOC, DynamicIcon, DynamicSection, type DynamicSectionProps, type EditUserInput, EmptyState, type EmptyStateProps, EntityNetworkGraph, type EntityNetworkGraphProps, type ErrorFilter, ErrorTrackingPage, type ErrorTrackingPageProps, EventMapPanel, type EventMapPanelProps, Eyebrow, type EyebrowProps, FeatureCard, type FeatureCardProps, type FeedbackAttachment, FeedbackButton, type FeedbackButtonProps, FeedbackHub, type FeedbackHubProps, type FeedbackItem, type FeedbackKind, FeedbackWidget, type FeedbackWidgetProps, FilterBar, type FilterBarProps, type FilterChip, ForgotForm, GlassCard, type GlassCardProps, type GraphLink, type GraphNode, IconPicker, type IconPickerProps, ImpersonationBanner, type ImpersonationBannerProps, type Issue$1 as Issue, type IssueAssignee, type IssueBreadcrumb, IssueDetail, type IssueDetailProps, type IssueLevel, type IssueSort, type IssueTag, IssuesList, type IssuesListProps, LANG_COOKIE_NAME, type LanguageContextValue, LanguageProvider, type LanguageProviderProps, type LegendGroup, type LegendItem, type LegendShapeType, LockScreen, type LockScreenProps, type LockScreenUser, type LogLevel, LoginForm, type LoginResult, Logo, type LogoProps, type LogoTone, type LogoVariant, type LogsFilter, LogsView, type LogsViewProps, MARKER_COLORS, MARKER_LABELS, type MailConfig, MailSettingsForm, type MailSettingsFormProps, type MailTestResult, type MapLayer, MapLayersPanel, type MapLayersPanelProps, MapLegend, type MapLegendProps, type MapMarker$1 as MapMarker, type MapMarkerType, MapPanel, type MapPanelProps, type MapRegionPreset, MapView, type MapViewProps, MarkdownContent, MarkdownEditor, type MarkdownEditorProps, MarkdownRenderer, type MarkdownRendererProps, MarkdownTable, type MarkdownView, MarketplaceCard, type MarketplaceCardProps, MascotMark, type MascotMarkProps, MiniBarChart, MockupWindow, type MockupWindowProps, type ModelOption, MotorFeedbackLauncher, type MotorFeedbackLauncherProps, NestedStepsEditor, type NestedStepsEditorProps, NetworkGraph, type NetworkGraphProps, type NewFeedback, OTPBoxGroup, type OtpResult, PIPELINE_STAGES, PageHeader, type PageHeaderProps, Pager, type PaletteItem, PasswordInput, PasswordLockScreen, type PasswordLockScreenProps, type PasswordLockScreenUser, type PasswordRule, PasswordStrengthMeter, type PickedLocation, PillButton, type PillButtonProps, type PipelineCard, type PipelineLane, type PipelineModel, type PluginActivitySummary, type PluginAppearanceFields, PluginAppearanceSection, type PluginAppearanceSectionProps, PluginCard, type PluginCatalogEntry, type PluginDetailIdentity, PluginDetailLayout, type PluginDetailLayoutProps, type PluginDetailTab, PluginHero, PluginHeroSkeleton, PluginPageHeader, PluginSectionCard, PluginSparkline, type ProfileSession, ProfileView, type ProfileViewProps, type ProviderChip, type RenderMapContext, ResetForm, type ResolvedIcon, Reveal, type RevealProps, RouteProgress, type RouteProgressProps, STEP_FIELD_REGISTRY, SectionBoard, type SectionBoardProps, SectionHeading, type SectionHeadingProps, type SectionModel, SectionSkeleton, SentraLoading, type ServiceLogRow, ServiceUnavailable, type ServiceUnavailableProps, SessionExpired, type SessionExpiredProps, SeverityChip, type SidebarConversation, type SidebarUser, SourceBadge, type SparklinePoint, type StackFrame, type StackFrameContextLine, StatCard, type StatCardProps, type StatTile, StatsRow, StatusBadge, type StatusBadgeProps, type StatusBadgeTone, type Step, type StepFieldDef, type StepFieldType, type StepMetrics7d, StepOptionsDialog, type StepOptionsDialogProps, StreamingMessage, TagInput, type TagInputProps, type TerminalStep, type TestRunCallbacks, type TestRunCompletePayload, TestRunPanel, type TestRunPanelProps, type TestRunSavedItem, type TestRunStep, type TocItem, TwoFAForm, TypingTerminal, type TypingTerminalProps, UnifiedCopilotDock, type UnlockCredentials, type UseConfirmResult, UserActionsMenu, type UserActionsMenuProps, UserManagementTable, type UserManagementTableProps, type Verify2FAResult, type View, ViewToggle, type ViewToggleProps, Wordmark, type WordmarkProps, Workflow, WorkflowEditor, type WorkflowEditorProps, type WorkflowPalette, WorkflowPipeline, type WorkflowPipelineProps, type WorkflowProps, type WorkflowSource, type WorkflowStep, type WorkflowStepLike, WorkflowStepNode, type WorkflowStepNodeProps, type WorkflowView, adminStrings, cn, computeRules, computeScore, feedbackButtonVariants, levelTone, resolveIcon, statValueVariants, statusBadgeVariants, useConfirm, useCopilot, useLanguage, useT };
