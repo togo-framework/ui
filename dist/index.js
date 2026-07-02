@@ -12856,7 +12856,10 @@ function FeedbackWidget({
   open: openProp,
   onOpenChange,
   className,
-  pageSize = 5
+  pageSize = 5,
+  fabLabel,
+  fabDraggable = true,
+  fabStorageKey = "feedback-widget"
 }) {
   const t2 = T2[language];
   const isRTL = language === "ar";
@@ -12948,12 +12951,14 @@ function FeedbackWidget({
       hl && /* @__PURE__ */ jsx87("div", { className: "pointer-events-none fixed z-[10000] rounded border-2 border-primary bg-primary/10", style: { top: hl.top, left: hl.left, width: hl.width, height: hl.height } })
     ] }),
     openProp === void 0 && !open && !picking && /* @__PURE__ */ jsx87(
-      "button",
+      DraggableFab,
       {
-        onClick: () => setOpen(true),
-        "aria-label": t2.title,
-        className: "fixed bottom-5 end-5 z-[9990] flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition hover:opacity-90",
-        children: /* @__PURE__ */ jsx87(MessageSquarePlus4, { className: "h-5 w-5" })
+        draggable: fabDraggable,
+        storageKey: fabStorageKey,
+        label: fabLabel,
+        title: t2.title,
+        isRTL,
+        onOpen: () => setOpen(true)
       }
     ),
     open && !picking && /* @__PURE__ */ jsxs75(Fragment22, { children: [
@@ -13089,6 +13094,69 @@ function FeedbackWidget({
       ] })
     ] })
   ] });
+}
+function DraggableFab({ draggable, storageKey, label, title, onOpen }) {
+  const KEY = "feedback-fab:" + storageKey;
+  const ref = React20.useRef(null);
+  const [pos, setPos] = React20.useState(null);
+  React20.useEffect(() => {
+    if (!draggable) return;
+    try {
+      const p = JSON.parse(localStorage.getItem(KEY) || "null");
+      if (p) setPos(p);
+    } catch {
+    }
+  }, [KEY, draggable]);
+  const down = React20.useRef(null);
+  const moved = React20.useRef(false);
+  const onPointerDown = (e) => {
+    if (!draggable) return;
+    const r = ref.current.getBoundingClientRect();
+    down.current = { x: e.clientX, y: e.clientY, l: r.left, t: r.top };
+    moved.current = false;
+    ref.current.setPointerCapture(e.pointerId);
+  };
+  const onPointerMove = (e) => {
+    if (!down.current) return;
+    const dx = e.clientX - down.current.x, dy = e.clientY - down.current.y;
+    if (Math.abs(dx) + Math.abs(dy) > 5) moved.current = true;
+    if (moved.current) {
+      const el = ref.current;
+      const left = Math.min(Math.max(4, down.current.l + dx), window.innerWidth - el.offsetWidth - 4);
+      const top = Math.min(Math.max(4, down.current.t + dy), window.innerHeight - el.offsetHeight - 4);
+      setPos({ left, top });
+    }
+  };
+  const onPointerUp = () => {
+    if (down.current && moved.current) {
+      try {
+        localStorage.setItem(KEY, JSON.stringify(pos));
+      } catch {
+      }
+    } else if (down.current && !moved.current) onOpen();
+    down.current = null;
+  };
+  const style = pos ? { left: pos.left, top: pos.top, right: "auto", bottom: "auto" } : void 0;
+  return /* @__PURE__ */ jsxs75(
+    "button",
+    {
+      ref,
+      "aria-label": title,
+      title,
+      onClick: () => {
+        if (!draggable) onOpen();
+      },
+      onPointerDown,
+      onPointerMove,
+      onPointerUp,
+      style,
+      className: "fixed bottom-5 end-5 z-[9990] flex touch-none select-none items-center gap-2 rounded-full bg-primary text-primary-foreground shadow-lg transition hover:opacity-90 " + (draggable ? "cursor-grab active:cursor-grabbing " : "cursor-pointer ") + (label ? "px-4 py-3" : "h-12 w-12 justify-center"),
+      children: [
+        /* @__PURE__ */ jsx87(MessageSquarePlus4, { className: "h-5 w-5 shrink-0" }),
+        label && /* @__PURE__ */ jsx87("span", { className: "whitespace-nowrap text-sm font-semibold", children: label })
+      ]
+    }
+  );
 }
 
 // src/components/brand/Wordmark.tsx

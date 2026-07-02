@@ -3400,8 +3400,14 @@ interface FeedbackWidgetProps {
     onOpenChange?: (open: boolean) => void;
     className?: string;
     pageSize?: number;
+    /** Text shown next to the icon on the floating button (a description/label). */
+    fabLabel?: string;
+    /** Let the user drag the floating button to reposition it (persisted). Default true. */
+    fabDraggable?: boolean;
+    /** localStorage key for the dragged position (scope per app/project). */
+    fabStorageKey?: string;
 }
-declare function FeedbackWidget({ items, pageUrl, onSubmit, onSelectIssue, onScreenshot, language, open: openProp, onOpenChange, className, pageSize, }: FeedbackWidgetProps): React$1.JSX.Element;
+declare function FeedbackWidget({ items, pageUrl, onSubmit, onSelectIssue, onScreenshot, language, open: openProp, onOpenChange, className, pageSize, fabLabel, fabDraggable, fabStorageKey, }: FeedbackWidgetProps): React$1.JSX.Element;
 
 type LogoVariant = "mark" | "mono";
 /** brand = gradient · white = reversed (dark bg) · inherit = currentColor (themes with text). */

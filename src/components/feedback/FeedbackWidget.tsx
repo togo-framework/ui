@@ -46,6 +46,12 @@ export interface FeedbackWidgetProps {
   onOpenChange?: (open: boolean) => void;
   className?: string;
   pageSize?: number;
+  /** Text shown next to the icon on the floating button (a description/label). */
+  fabLabel?: string;
+  /** Let the user drag the floating button to reposition it (persisted). Default true. */
+  fabDraggable?: boolean;
+  /** localStorage key for the dragged position (scope per app/project). */
+  fabStorageKey?: string;
 }
 
 const KINDS: { key: FeedbackKind; en: string; ar: string; cls: string; sel: string }[] = [
@@ -86,6 +92,7 @@ function cssPath(el: Element): string {
 export function FeedbackWidget({
   items = [], pageUrl, onSubmit, onSelectIssue, onScreenshot, language = "en",
   open: openProp, onOpenChange, className, pageSize = 5,
+  fabLabel, fabDraggable = true, fabStorageKey = "feedback-widget",
 }: FeedbackWidgetProps) {
   const t = T[language];
   const isRTL = language === "ar";
@@ -162,12 +169,10 @@ export function FeedbackWidget({
         </>
       )}
 
-      {/* floating trigger */}
+      {/* floating trigger — draggable + optionally labeled */}
       {openProp === undefined && !open && !picking && (
-        <button onClick={() => setOpen(true)} aria-label={t.title}
-          className="fixed bottom-5 end-5 z-[9990] flex h-12 w-12 items-center justify-center rounded-full bg-primary text-primary-foreground shadow-lg transition hover:opacity-90">
-          <MessageSquarePlus className="h-5 w-5" />
-        </button>
+        <DraggableFab draggable={fabDraggable} storageKey={fabStorageKey} label={fabLabel}
+          title={t.title} isRTL={isRTL} onOpen={() => setOpen(true)} />
       )}
 
       {/* ── Feedback side panel ── */}
@@ -288,5 +293,57 @@ export function FeedbackWidget({
         </div>
       )}
     </div>
+  );
+}
+
+/** DraggableFab — the floating trigger: draggable (5px threshold, position persisted
+ *  to localStorage, clamped to the viewport) and optionally labeled. A plain click
+ *  (no drag) opens the panel. */
+function DraggableFab({ draggable, storageKey, label, title, onOpen }: {
+  draggable: boolean; storageKey: string; label?: string; title: string; isRTL: boolean; onOpen: () => void;
+}) {
+  const KEY = "feedback-fab:" + storageKey;
+  const ref = React.useRef<HTMLButtonElement>(null);
+  const [pos, setPos] = React.useState<{ left: number; top: number } | null>(null);
+  React.useEffect(() => {
+    if (!draggable) return;
+    try { const p = JSON.parse(localStorage.getItem(KEY) || "null"); if (p) setPos(p); } catch { /* ignore */ }
+  }, [KEY, draggable]);
+  const down = React.useRef<{ x: number; y: number; l: number; t: number } | null>(null);
+  const moved = React.useRef(false);
+  const onPointerDown = (e: React.PointerEvent) => {
+    if (!draggable) return;
+    const r = ref.current!.getBoundingClientRect();
+    down.current = { x: e.clientX, y: e.clientY, l: r.left, t: r.top }; moved.current = false;
+    ref.current!.setPointerCapture(e.pointerId);
+  };
+  const onPointerMove = (e: React.PointerEvent) => {
+    if (!down.current) return;
+    const dx = e.clientX - down.current.x, dy = e.clientY - down.current.y;
+    if (Math.abs(dx) + Math.abs(dy) > 5) moved.current = true;
+    if (moved.current) {
+      const el = ref.current!;
+      const left = Math.min(Math.max(4, down.current.l + dx), window.innerWidth - el.offsetWidth - 4);
+      const top = Math.min(Math.max(4, down.current.t + dy), window.innerHeight - el.offsetHeight - 4);
+      setPos({ left, top });
+    }
+  };
+  const onPointerUp = () => {
+    if (down.current && moved.current) { try { localStorage.setItem(KEY, JSON.stringify(pos)); } catch { /* ignore */ } }
+    else if (down.current && !moved.current) onOpen();
+    down.current = null;
+  };
+  const style = pos ? ({ left: pos.left, top: pos.top, right: "auto", bottom: "auto" } as React.CSSProperties) : undefined;
+  return (
+    <button ref={ref} aria-label={title} title={title}
+      onClick={() => { if (!draggable) onOpen(); }}
+      onPointerDown={onPointerDown} onPointerMove={onPointerMove} onPointerUp={onPointerUp}
+      style={style}
+      className={"fixed bottom-5 end-5 z-[9990] flex touch-none select-none items-center gap-2 rounded-full bg-primary text-primary-foreground shadow-lg transition hover:opacity-90 " +
+        (draggable ? "cursor-grab active:cursor-grabbing " : "cursor-pointer ") +
+        (label ? "px-4 py-3" : "h-12 w-12 justify-center")}>
+      <MessageSquarePlus className="h-5 w-5 shrink-0" />
+      {label && <span className="whitespace-nowrap text-sm font-semibold">{label}</span>}
+    </button>
   );
 }
