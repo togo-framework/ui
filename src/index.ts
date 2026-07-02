@@ -128,3 +128,11 @@ export * from "./components/marketing/Terminal";
 export * from "./components/marketing/ClaudeSession";
 export * from "./components/marketing/BrowserFrame";
 export * from "./components/marketing/MascotMark";
+
+// ── issues (manager board + drawer) ──
+export * from "./components/issues";
+
+// Disambiguate the two Issue types: the manager board Issue (feedback/agents) is
+// canonical; the Sentry error-tracking Issue is re-exported as ErrorIssue.
+export type { Issue } from "./components/issues";
+export type { Issue as ErrorIssue } from "./components/errors";

@@ -3073,6 +3073,8 @@ type IssueStatus = "todo" | "in_progress" | "blocked" | "ready_for_review" | "do
 type IssueType = "bug" | "change" | "question" | "discussion";
 /** Issue priority. Color-coded AND text-labelled (a11y: never color-only). */
 type IssuePriority = "low" | "normal" | "high" | "critical";
+/** Cross-issue relationship kind. */
+type IssueLinkType = "parent_of" | "blocks" | "duplicates" | "relates";
 /** Who reported the issue — an authed hub user or an external/anonymous SDK reporter. */
 type IssueReporterKind = "user" | "external";
 /** A person reference (reporter / assignee / comment author). */
@@ -3084,6 +3086,11 @@ interface IssuePerson {
     kind?: IssueReporterKind;
     /** Only set for external reporters. */
     email?: string | null;
+}
+/** An option for the assignee <select> (id + pre-resolved name). */
+interface AssigneeOption {
+    id: string;
+    name: string;
 }
 /** A stored attachment on an issue (image / pdf). URL is host-provided. */
 interface IssueAttachment {
@@ -3156,8 +3163,56 @@ interface Issue {
     createdAt: string;
     updatedAt?: string;
 }
+/** Payload emitted by NewIssueModal.onSubmit — the host turns it into a POST. */
+interface NewIssuePayload {
+    title: string;
+    description: string;
+    type: IssueType;
+    priority: IssuePriority;
+    area?: string;
+    assigneeId?: string;
+    /** Files the user attached in the modal (raw File objects). */
+    files: File[];
+    /** Route + anchor context, when the host supplies them (SDK reporter). */
+    route?: string;
+    anchor?: IssueAnchor | null;
+}
+/** Patch emitted by the drawer / detail view when a manager edits an issue. */
+interface IssuePatch {
+    title?: string;
+    description?: string;
+    status?: IssueStatus;
+    priority?: IssuePriority;
+    type?: IssueType;
+    assigneeId?: string | null;
+}
 
 type Language = "en" | "ar";
+/** Board columns, in order. Labels are bilingual. */
+declare const STATUS_COLUMNS: ReadonlyArray<{
+    key: IssueStatus;
+    en: string;
+    ar: string;
+}>;
+/** Pre-resolved status label for a given language. */
+declare const statusLabel: (s: IssueStatus, lang: Language) => string;
+/** Status → StatusBadge tone (token-driven; no hex literals). */
+declare const STATUS_TONE: Record<IssueStatus, StatusBadgeTone>;
+declare const typeLabel: (t: IssueType, lang: Language) => string;
+/** Types offered in the hub create-flow. question/discussion are SDK-only. */
+declare const HUB_TYPES: IssueType[];
+declare const priorityLabel: (p: IssuePriority, lang: Language) => string;
+declare const PRIORITY_TONE: Record<IssuePriority, StatusBadgeTone>;
+declare const ALL_PRIORITIES: IssuePriority[];
+declare const linkLabel: (l: IssueLinkType, lang: Language) => string;
+/** Attachment UX constants (client mirror of the SDK's server-side caps). */
+declare const ATTACHMENT_ACCEPT = "image/png,image/jpeg,image/webp,image/gif,application/pdf";
+declare const ATTACHMENT_MAX_BYTES: number;
+declare const ATTACHMENT_MAX_FILES = 5;
+/** Format a byte count for the attachment list. */
+declare const formatBytes: (bytes: number) => string;
+/** Format an ISO timestamp short + locale-aware (Arabic locale when lang=ar). */
+declare const formatTimestamp: (iso: string, lang: Language) => string;
 
 /**
  * FeedbackButton — the trigger that opens the feedback hub / new-issue flow.
@@ -4485,4 +4540,35 @@ declare namespace MascotMark {
     var displayName: string;
 }
 
-export { type A2UIActionItem, type A2UIActionsData, type A2UIArtifact$1 as A2UIArtifact, type A2UICardData, type A2UICardField, type A2UIChartData, type A2UIChartSeries, type A2UIClientCandidate, type A2UIClientCandidatesData, type A2UIClientDiffConfirmData, type A2UIClientDiffRow, type A2UIClientField, type A2UIClientFieldPickerData, type A2UIKind, type A2UIMarkdownData, type A2UIPersonaStarter, type A2UIPersonaStartersData, type A2UITableColumn, type A2UITableData, type ActivityBucket, AddUserButton, type AddUserButtonProps, AddUserDialog, type AddUserDialogProps, type AddUserInput, type AdminLanguage, AdminLayout, type AdminLayoutProps, type AdminLinkResult, type AdminStrings, type AdminSubNavItem, type AdminUser, AgentSteps, type AlertMapItem, type AlertSeverity, type AppBrand, AppHeader, type AppHeaderProps, AppLayout, type AppLayoutProps, type AppNavGroup, type AppNavItem, AppPageShell, type AppPageShellProps, AppSidebar, type AppSidebarProps, type AppearanceMode, ArtifactActions, type ArtifactActionsProps, ArtifactCard, type ArtifactCardProps, ArtifactChart, type ArtifactChartProps, ArtifactClientCandidates, type ArtifactClientCandidatesProps, ArtifactClientDiffConfirm, type ArtifactClientDiffConfirmProps, ArtifactClientFieldPicker, type ArtifactClientFieldPickerProps, type ArtifactInteraction, ArtifactMarkdown, type ArtifactMarkdownProps, ArtifactPersonaStarters, type ArtifactPersonaStartersProps, ArtifactRenderer, type ArtifactRendererProps, ArtifactTable, type ArtifactTableProps, ArtifactViewer, AuroraBackground, type AuroraBackgroundProps, AuthCard, type AuthCardBrand, type AuthClient, AuthErrorAlert, AuthFlow, type AuthLayout, AuthStepHeader, type BarPoint, type BrandGlyph, BrowserFrame, type BrowserFrameProps, Callout, type CardFilter, CardGrid, type CardGridLabels, ChatThread, ClaudeSession, type ClaudeSessionProps, type ClaudeStep, CodeBlock, CodeShowcase, type CodeShowcaseProps, type CodeShowcaseTab, ColorPicker, type ColorPickerProps, CommandPalette, ConfirmDialog, type ConfirmDialogProps, type ConfirmOptions, ContextualSkeleton, type CopilotClient, type CopilotEvent, CopilotLauncher, CopilotProvider, type CopilotQuickAction, type CopilotRequest, CopilotSelectionTrigger, type CopilotSelectionTriggerProps, DEFAULT_LAYERS, DEFAULT_LEGEND_GROUPS, DEFAULT_REGION_PRESETS, DataState, type DataStateLabels, type DataStateProps, DataTable, type DataTableBulkAction, type DataTableColumnFilter, type DataTableColumnMeta, type DataTableDensity, type DataTableFilterType, type DataTableLanguage, type DataTableProps, type DataTableSelectOption, type DataTableServerCallbacks, type DataTableServerState, type DockPosition, DocsLayout, type DocsLayoutProps, type DocsNavGroup, type DocsNavItem, DocsSidebar, DocsTOC, DynamicIcon, DynamicSection, type DynamicSectionProps, type EditUserInput, EmptyState, type EmptyStateProps, EntityNetworkGraph, type EntityNetworkGraphProps, type ErrorFilter, ErrorTrackingPage, type ErrorTrackingPageProps, EventMapPanel, type EventMapPanelProps, Eyebrow, type EyebrowProps, FeatureCard, type FeatureCardProps, type FeedbackAttachment, FeedbackButton, type FeedbackButtonProps, FeedbackHub, type FeedbackHubProps, type FeedbackItem, type FeedbackKind, FeedbackWidget, type FeedbackWidgetProps, FilterBar, type FilterBarProps, type FilterChip, ForgotForm, GlassCard, type GlassCardProps, type GraphLink, type GraphNode, IconPicker, type IconPickerProps, ImpersonationBanner, type ImpersonationBannerProps, type Issue$1 as Issue, type IssueAssignee, type IssueBreadcrumb, IssueDetail, type IssueDetailProps, type IssueLevel, type IssueSort, type IssueTag, IssuesList, type IssuesListProps, LANG_COOKIE_NAME, type LanguageContextValue, LanguageProvider, type LanguageProviderProps, type LegendGroup, type LegendItem, type LegendShapeType, LockScreen, type LockScreenProps, type LockScreenUser, type LogLevel, LoginForm, type LoginResult, Logo, type LogoProps, type LogoTone, type LogoVariant, type LogsFilter, LogsView, type LogsViewProps, MARKER_COLORS, MARKER_LABELS, type MailConfig, MailSettingsForm, type MailSettingsFormProps, type MailTestResult, type MapLayer, MapLayersPanel, type MapLayersPanelProps, MapLegend, type MapLegendProps, type MapMarker$1 as MapMarker, type MapMarkerType, MapPanel, type MapPanelProps, type MapRegionPreset, MapView, type MapViewProps, MarkdownContent, MarkdownEditor, type MarkdownEditorProps, MarkdownRenderer, type MarkdownRendererProps, MarkdownTable, type MarkdownView, MarketplaceCard, type MarketplaceCardProps, MascotMark, type MascotMarkProps, MiniBarChart, MockupWindow, type MockupWindowProps, type ModelOption, MotorFeedbackLauncher, type MotorFeedbackLauncherProps, NestedStepsEditor, type NestedStepsEditorProps, NetworkGraph, type NetworkGraphProps, type NewFeedback, OTPBoxGroup, type OtpResult, PIPELINE_STAGES, PageHeader, type PageHeaderProps, Pager, type PaletteItem, PasswordInput, PasswordLockScreen, type PasswordLockScreenProps, type PasswordLockScreenUser, type PasswordRule, PasswordStrengthMeter, type PickedLocation, PillButton, type PillButtonProps, type PipelineCard, type PipelineLane, type PipelineModel, type PluginActivitySummary, type PluginAppearanceFields, PluginAppearanceSection, type PluginAppearanceSectionProps, PluginCard, type PluginCatalogEntry, type PluginDetailIdentity, PluginDetailLayout, type PluginDetailLayoutProps, type PluginDetailTab, PluginHero, PluginHeroSkeleton, PluginPageHeader, PluginSectionCard, PluginSparkline, type ProfileSession, ProfileView, type ProfileViewProps, type ProviderChip, type RenderMapContext, ResetForm, type ResolvedIcon, Reveal, type RevealProps, RouteProgress, type RouteProgressProps, STEP_FIELD_REGISTRY, SectionBoard, type SectionBoardProps, SectionHeading, type SectionHeadingProps, type SectionModel, SectionSkeleton, SentraLoading, type ServiceLogRow, ServiceUnavailable, type ServiceUnavailableProps, SessionExpired, type SessionExpiredProps, SeverityChip, type SidebarConversation, type SidebarUser, SourceBadge, type SparklinePoint, type StackFrame, type StackFrameContextLine, StatCard, type StatCardProps, type StatTile, StatsRow, StatusBadge, type StatusBadgeProps, type StatusBadgeTone, type Step, type StepFieldDef, type StepFieldType, type StepMetrics7d, StepOptionsDialog, type StepOptionsDialogProps, StreamingMessage, TagInput, type TagInputProps, type TerminalStep, type TestRunCallbacks, type TestRunCompletePayload, TestRunPanel, type TestRunPanelProps, type TestRunSavedItem, type TestRunStep, type TocItem, TwoFAForm, TypingTerminal, type TypingTerminalProps, UnifiedCopilotDock, type UnlockCredentials, type UseConfirmResult, UserActionsMenu, type UserActionsMenuProps, UserManagementTable, type UserManagementTableProps, type Verify2FAResult, type View, ViewToggle, type ViewToggleProps, Wordmark, type WordmarkProps, Workflow, WorkflowEditor, type WorkflowEditorProps, type WorkflowPalette, WorkflowPipeline, type WorkflowPipelineProps, type WorkflowProps, type WorkflowSource, type WorkflowStep, type WorkflowStepLike, WorkflowStepNode, type WorkflowStepNodeProps, type WorkflowView, adminStrings, cn, computeRules, computeScore, feedbackButtonVariants, levelTone, resolveIcon, statValueVariants, statusBadgeVariants, useConfirm, useCopilot, useLanguage, useT };
+interface IssueBoardProps {
+    issues: Issue[];
+    language?: Language;
+    assignees?: AssigneeOption[];
+    reporters?: AssigneeOption[];
+    loading?: boolean;
+    onSelectIssue?: (id: string) => void;
+    onNewIssue?: () => void;
+    onStatusChange?: (id: string, status: IssueStatus) => void;
+    onVote?: (id: string) => void;
+    className?: string;
+    /** Extra buttons rendered in the toolbar (e.g. Roadmap / Cut release). */
+    toolbar?: React$1.ReactNode;
+}
+declare function IssueBoard({ issues, language, assignees, reporters, loading, onSelectIssue, onNewIssue, onStatusChange, onVote, className, toolbar, }: IssueBoardProps): React$1.JSX.Element;
+
+interface IssueDrawerProps {
+    issue: Issue | null;
+    open: boolean;
+    onOpenChange: (open: boolean) => void;
+    language?: Language;
+    assignees?: AssigneeOption[];
+    /** Whether this issue is flagged human-only (agents skip it). */
+    humanOnly?: boolean;
+    onPatch?: (patch: IssuePatch) => void;
+    onHumanOnlyChange?: (v: boolean) => void;
+    onComment?: (body: string) => void;
+    onOpenFull?: () => void;
+}
+declare function IssueDrawer({ issue, open, onOpenChange, language, assignees, humanOnly, onPatch, onHumanOnlyChange, onComment, onOpenFull, }: IssueDrawerProps): React$1.JSX.Element | null;
+
+export { type A2UIActionItem, type A2UIActionsData, type A2UIArtifact$1 as A2UIArtifact, type A2UICardData, type A2UICardField, type A2UIChartData, type A2UIChartSeries, type A2UIClientCandidate, type A2UIClientCandidatesData, type A2UIClientDiffConfirmData, type A2UIClientDiffRow, type A2UIClientField, type A2UIClientFieldPickerData, type A2UIKind, type A2UIMarkdownData, type A2UIPersonaStarter, type A2UIPersonaStartersData, type A2UITableColumn, type A2UITableData, ALL_PRIORITIES, ATTACHMENT_ACCEPT, ATTACHMENT_MAX_BYTES, ATTACHMENT_MAX_FILES, type ActivityBucket, AddUserButton, type AddUserButtonProps, AddUserDialog, type AddUserDialogProps, type AddUserInput, type AdminLanguage, AdminLayout, type AdminLayoutProps, type AdminLinkResult, type AdminStrings, type AdminSubNavItem, type AdminUser, AgentSteps, type AlertMapItem, type AlertSeverity, type AppBrand, AppHeader, type AppHeaderProps, AppLayout, type AppLayoutProps, type AppNavGroup, type AppNavItem, AppPageShell, type AppPageShellProps, AppSidebar, type AppSidebarProps, type AppearanceMode, ArtifactActions, type ArtifactActionsProps, ArtifactCard, type ArtifactCardProps, ArtifactChart, type ArtifactChartProps, ArtifactClientCandidates, type ArtifactClientCandidatesProps, ArtifactClientDiffConfirm, type ArtifactClientDiffConfirmProps, ArtifactClientFieldPicker, type ArtifactClientFieldPickerProps, type ArtifactInteraction, ArtifactMarkdown, type ArtifactMarkdownProps, ArtifactPersonaStarters, type ArtifactPersonaStartersProps, ArtifactRenderer, type ArtifactRendererProps, ArtifactTable, type ArtifactTableProps, ArtifactViewer, type AssigneeOption, AuroraBackground, type AuroraBackgroundProps, AuthCard, type AuthCardBrand, type AuthClient, AuthErrorAlert, AuthFlow, type AuthLayout, AuthStepHeader, type BarPoint, type BrandGlyph, BrowserFrame, type BrowserFrameProps, Callout, type CardFilter, CardGrid, type CardGridLabels, ChatThread, ClaudeSession, type ClaudeSessionProps, type ClaudeStep, CodeBlock, CodeShowcase, type CodeShowcaseProps, type CodeShowcaseTab, ColorPicker, type ColorPickerProps, CommandPalette, ConfirmDialog, type ConfirmDialogProps, type ConfirmOptions, ContextualSkeleton, type CopilotClient, type CopilotEvent, CopilotLauncher, CopilotProvider, type CopilotQuickAction, type CopilotRequest, CopilotSelectionTrigger, type CopilotSelectionTriggerProps, DEFAULT_LAYERS, DEFAULT_LEGEND_GROUPS, DEFAULT_REGION_PRESETS, DataState, type DataStateLabels, type DataStateProps, DataTable, type DataTableBulkAction, type DataTableColumnFilter, type DataTableColumnMeta, type DataTableDensity, type DataTableFilterType, type DataTableLanguage, type DataTableProps, type DataTableSelectOption, type DataTableServerCallbacks, type DataTableServerState, type DockPosition, DocsLayout, type DocsLayoutProps, type DocsNavGroup, type DocsNavItem, DocsSidebar, DocsTOC, DynamicIcon, DynamicSection, type DynamicSectionProps, type EditUserInput, EmptyState, type EmptyStateProps, EntityNetworkGraph, type EntityNetworkGraphProps, type ErrorFilter, type Issue$1 as ErrorIssue, ErrorTrackingPage, type ErrorTrackingPageProps, EventMapPanel, type EventMapPanelProps, Eyebrow, type EyebrowProps, FeatureCard, type FeatureCardProps, type FeedbackAttachment, FeedbackButton, type FeedbackButtonProps, FeedbackHub, type FeedbackHubProps, type FeedbackItem, type FeedbackKind, FeedbackWidget, type FeedbackWidgetProps, FilterBar, type FilterBarProps, type FilterChip, ForgotForm, GlassCard, type GlassCardProps, type GraphLink, type GraphNode, HUB_TYPES, IconPicker, type IconPickerProps, ImpersonationBanner, type ImpersonationBannerProps, type Issue, type IssueAnchor, type IssueAssignee, type IssueAttachment, IssueBoard, type IssueBoardProps, type IssueBreadcrumb, type IssueComment, type IssueCounts, IssueDetail, type IssueDetailProps, IssueDrawer, type IssueDrawerProps, type IssueLevel, type IssueLinkType, type IssuePatch, type IssuePerson, type IssuePriority, type IssueReporterKind, type IssueSort, type IssueStatus, type IssueTag, type IssueType, IssuesList, type IssuesListProps, LANG_COOKIE_NAME, type Language, type LanguageContextValue, LanguageProvider, type LanguageProviderProps, type LegendGroup, type LegendItem, type LegendShapeType, LockScreen, type LockScreenProps, type LockScreenUser, type LogLevel, LoginForm, type LoginResult, Logo, type LogoProps, type LogoTone, type LogoVariant, type LogsFilter, LogsView, type LogsViewProps, MARKER_COLORS, MARKER_LABELS, type MailConfig, MailSettingsForm, type MailSettingsFormProps, type MailTestResult, type MapLayer, MapLayersPanel, type MapLayersPanelProps, MapLegend, type MapLegendProps, type MapMarker$1 as MapMarker, type MapMarkerType, MapPanel, type MapPanelProps, type MapRegionPreset, MapView, type MapViewProps, MarkdownContent, MarkdownEditor, type MarkdownEditorProps, MarkdownRenderer, type MarkdownRendererProps, MarkdownTable, type MarkdownView, MarketplaceCard, type MarketplaceCardProps, MascotMark, type MascotMarkProps, MiniBarChart, MockupWindow, type MockupWindowProps, type ModelOption, MotorFeedbackLauncher, type MotorFeedbackLauncherProps, NestedStepsEditor, type NestedStepsEditorProps, NetworkGraph, type NetworkGraphProps, type NewFeedback, type NewIssuePayload, OTPBoxGroup, type OtpResult, PIPELINE_STAGES, PRIORITY_TONE, PageHeader, type PageHeaderProps, Pager, type PaletteItem, PasswordInput, PasswordLockScreen, type PasswordLockScreenProps, type PasswordLockScreenUser, type PasswordRule, PasswordStrengthMeter, type PickedLocation, PillButton, type PillButtonProps, type PipelineCard, type PipelineLane, type PipelineModel, type PluginActivitySummary, type PluginAppearanceFields, PluginAppearanceSection, type PluginAppearanceSectionProps, PluginCard, type PluginCatalogEntry, type PluginDetailIdentity, PluginDetailLayout, type PluginDetailLayoutProps, type PluginDetailTab, PluginHero, PluginHeroSkeleton, PluginPageHeader, PluginSectionCard, PluginSparkline, type ProfileSession, ProfileView, type ProfileViewProps, type ProviderChip, type RenderMapContext, ResetForm, type ResolvedIcon, Reveal, type RevealProps, RouteProgress, type RouteProgressProps, STATUS_COLUMNS, STATUS_TONE, STEP_FIELD_REGISTRY, SectionBoard, type SectionBoardProps, SectionHeading, type SectionHeadingProps, type SectionModel, SectionSkeleton, SentraLoading, type ServiceLogRow, ServiceUnavailable, type ServiceUnavailableProps, SessionExpired, type SessionExpiredProps, SeverityChip, type SidebarConversation, type SidebarUser, SourceBadge, type SparklinePoint, type StackFrame, type StackFrameContextLine, StatCard, type StatCardProps, type StatTile, StatsRow, StatusBadge, type StatusBadgeProps, type StatusBadgeTone, type Step, type StepFieldDef, type StepFieldType, type StepMetrics7d, StepOptionsDialog, type StepOptionsDialogProps, StreamingMessage, TagInput, type TagInputProps, type TerminalStep, type TestRunCallbacks, type TestRunCompletePayload, TestRunPanel, type TestRunPanelProps, type TestRunSavedItem, type TestRunStep, type TocItem, TwoFAForm, TypingTerminal, type TypingTerminalProps, UnifiedCopilotDock, type UnlockCredentials, type UseConfirmResult, UserActionsMenu, type UserActionsMenuProps, UserManagementTable, type UserManagementTableProps, type Verify2FAResult, type View, ViewToggle, type ViewToggleProps, Wordmark, type WordmarkProps, Workflow, WorkflowEditor, type WorkflowEditorProps, type WorkflowPalette, WorkflowPipeline, type WorkflowPipelineProps, type WorkflowProps, type WorkflowSource, type WorkflowStep, type WorkflowStepLike, WorkflowStepNode, type WorkflowStepNodeProps, type WorkflowView, adminStrings, cn, computeRules, computeScore, feedbackButtonVariants, formatBytes, formatTimestamp, levelTone, linkLabel, priorityLabel, resolveIcon, statValueVariants, statusBadgeVariants, statusLabel, typeLabel, useConfirm, useCopilot, useLanguage, useT };
