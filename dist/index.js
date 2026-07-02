@@ -17574,6 +17574,16 @@ function IssueBoard({
   const [q, setQ] = React35.useState("");
   const [assignee, setAssignee] = React35.useState("");
   const [reporter, setReporter] = React35.useState("");
+  const [dragId, setDragId] = React35.useState(null);
+  const [overCol, setOverCol] = React35.useState(null);
+  const drop = (col) => {
+    if (dragId) {
+      const it = issues.find((i) => i.id === dragId);
+      if (it && it.status !== col) onStatusChange?.(dragId, col);
+    }
+    setDragId(null);
+    setOverCol(null);
+  };
   const filtered = React35.useMemo(() => {
     const ql = q.trim().toLowerCase();
     return issues.filter((i) => {
@@ -17606,60 +17616,104 @@ function IssueBoard({
     ] }),
     /* @__PURE__ */ jsx112("div", { className: "flex flex-1 gap-3 overflow-x-auto pb-2", children: STATUS_COLUMNS.map((col) => {
       const items = byStatus(col.key);
-      return /* @__PURE__ */ jsxs100("div", { className: "flex w-[280px] shrink-0 flex-col rounded-xl border border-border bg-muted/30", children: [
-        /* @__PURE__ */ jsxs100("div", { className: "flex items-center justify-between px-3 py-2.5", children: [
-          /* @__PURE__ */ jsx112("span", { className: "text-xs font-semibold uppercase tracking-wide text-muted-foreground", children: statusLabel(col.key, language) }),
-          /* @__PURE__ */ jsx112("span", { className: "text-xs text-muted-foreground/60", children: items.length })
-        ] }),
-        /* @__PURE__ */ jsx112("div", { className: "flex-1 space-y-2 px-2 pb-2", children: items.length === 0 ? /* @__PURE__ */ jsx112("p", { className: "px-2 py-6 text-center text-xs text-muted-foreground/50", children: t2.empty }) : items.map((i) => /* @__PURE__ */ jsx112(
-          IssueCard,
-          {
-            issue: i,
-            language,
-            unassignedLabel: t2.unassigned,
-            onOpen: () => onSelectIssue?.(i.id),
-            onVote: () => onVote?.(i.id),
-            onStatus: (s) => onStatusChange?.(i.id, s)
+      return /* @__PURE__ */ jsxs100(
+        "div",
+        {
+          onDragOver: (e) => {
+            e.preventDefault();
+            if (overCol !== col.key) setOverCol(col.key);
           },
-          i.id
-        )) })
-      ] }, col.key);
+          onDragLeave: (e) => {
+            if (!e.currentTarget.contains(e.relatedTarget)) setOverCol((c) => c === col.key ? null : c);
+          },
+          onDrop: (e) => {
+            e.preventDefault();
+            drop(col.key);
+          },
+          className: cn(
+            "flex w-[280px] shrink-0 flex-col rounded-xl border bg-muted/30 transition-colors",
+            overCol === col.key ? "border-primary bg-primary/5" : "border-border"
+          ),
+          children: [
+            /* @__PURE__ */ jsxs100("div", { className: "flex items-center justify-between px-3 py-2.5", children: [
+              /* @__PURE__ */ jsx112("span", { className: "text-xs font-semibold uppercase tracking-wide text-muted-foreground", children: statusLabel(col.key, language) }),
+              /* @__PURE__ */ jsx112("span", { className: "text-xs text-muted-foreground/60", children: items.length })
+            ] }),
+            /* @__PURE__ */ jsx112("div", { className: "flex-1 space-y-2 px-2 pb-2", children: items.length === 0 ? /* @__PURE__ */ jsx112("p", { className: "px-2 py-6 text-center text-xs text-muted-foreground/50", children: overCol === col.key ? "" : t2.empty }) : items.map((i) => /* @__PURE__ */ jsx112(
+              IssueCard,
+              {
+                issue: i,
+                language,
+                unassignedLabel: t2.unassigned,
+                dragging: dragId === i.id,
+                onDragStart: () => setDragId(i.id),
+                onDragEnd: () => {
+                  setDragId(null);
+                  setOverCol(null);
+                },
+                onOpen: () => onSelectIssue?.(i.id),
+                onVote: () => onVote?.(i.id),
+                onStatus: (s) => onStatusChange?.(i.id, s)
+              },
+              i.id
+            )) })
+          ]
+        },
+        col.key
+      );
     }) })
   ] });
 }
-function IssueCard({ issue, language, unassignedLabel, onOpen, onVote, onStatus }) {
+function IssueCard({ issue, language, unassignedLabel, dragging, onDragStart, onDragEnd, onOpen, onVote, onStatus }) {
   const c = issue.counts || {};
-  return /* @__PURE__ */ jsxs100("div", { onClick: onOpen, className: "cursor-pointer rounded-lg border border-border bg-background p-2.5 transition-colors hover:border-primary/60", children: [
-    /* @__PURE__ */ jsxs100("div", { className: "mb-1.5 flex items-center gap-1.5", children: [
-      /* @__PURE__ */ jsxs100("span", { className: "text-[11px] text-muted-foreground", children: [
-        "#",
-        issue.number
-      ] }),
-      /* @__PURE__ */ jsx112(StatusBadge, { tone: PRIORITY_TONE[issue.priority], children: priorityLabel(issue.priority, language) }),
-      /* @__PURE__ */ jsx112("span", { className: "ms-auto text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70", children: typeLabel(issue.type, language) })
-    ] }),
-    /* @__PURE__ */ jsx112("div", { className: "text-sm font-semibold leading-snug text-foreground", children: issue.title }),
-    issue.area && /* @__PURE__ */ jsx112("div", { className: "mt-1.5", children: /* @__PURE__ */ jsx112("span", { className: "rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground", children: issue.area }) }),
-    /* @__PURE__ */ jsxs100("div", { className: "mt-2 flex items-center gap-3 text-[11px] text-muted-foreground", children: [
-      /* @__PURE__ */ jsxs100("button", { onClick: (e) => {
-        e.stopPropagation();
-        onVote();
-      }, className: cn("flex items-center gap-1 hover:text-foreground", issue.votedByMe && "text-primary"), children: [
-        /* @__PURE__ */ jsx112(ChevronUp5, { className: "h-3.5 w-3.5" }),
-        issue.voteCount || 0
-      ] }),
-      /* @__PURE__ */ jsxs100("span", { className: "flex items-center gap-1", children: [
-        /* @__PURE__ */ jsx112(MessageSquare, { className: "h-3.5 w-3.5" }),
-        c.comments || 0
-      ] }),
-      !!c.attachments && /* @__PURE__ */ jsxs100("span", { className: "flex items-center gap-1", children: [
-        /* @__PURE__ */ jsx112(Paperclip3, { className: "h-3.5 w-3.5" }),
-        c.attachments
-      ] }),
-      /* @__PURE__ */ jsx112("span", { className: "ms-auto flex items-center gap-1.5", children: issue.assignee ? /* @__PURE__ */ jsx112("span", { title: issue.assignee.name, className: "grid h-5 w-5 place-items-center rounded-full bg-primary/20 text-[10px] font-semibold text-primary", children: initials2(issue.assignee.name) }) : /* @__PURE__ */ jsx112("span", { className: "italic text-muted-foreground/60", children: unassignedLabel }) })
-    ] }),
-    /* @__PURE__ */ jsx112("div", { className: "mt-2", onClick: (e) => e.stopPropagation(), children: /* @__PURE__ */ jsx112(NativeSelect, { value: issue.status, onChange: (e) => onStatus(e.target.value), className: "h-8 text-xs", children: STATUS_COLUMNS.map((s) => /* @__PURE__ */ jsx112("option", { value: s.key, children: statusLabel(s.key, language) }, s.key)) }) })
-  ] });
+  return /* @__PURE__ */ jsxs100(
+    "div",
+    {
+      onClick: onOpen,
+      draggable: true,
+      onDragStart: (e) => {
+        e.dataTransfer.effectAllowed = "move";
+        e.dataTransfer.setData("text/plain", issue.id);
+        onDragStart();
+      },
+      onDragEnd,
+      className: cn(
+        "cursor-grab rounded-lg border border-border bg-background p-2.5 transition-colors hover:border-primary/60 active:cursor-grabbing",
+        dragging && "opacity-40"
+      ),
+      children: [
+        /* @__PURE__ */ jsxs100("div", { className: "mb-1.5 flex items-center gap-1.5", children: [
+          /* @__PURE__ */ jsxs100("span", { className: "text-[11px] text-muted-foreground", children: [
+            "#",
+            issue.number
+          ] }),
+          /* @__PURE__ */ jsx112(StatusBadge, { tone: PRIORITY_TONE[issue.priority], children: priorityLabel(issue.priority, language) }),
+          /* @__PURE__ */ jsx112("span", { className: "ms-auto text-[10px] font-semibold uppercase tracking-wide text-muted-foreground/70", children: typeLabel(issue.type, language) })
+        ] }),
+        /* @__PURE__ */ jsx112("div", { className: "text-sm font-semibold leading-snug text-foreground", children: issue.title }),
+        issue.area && /* @__PURE__ */ jsx112("div", { className: "mt-1.5", children: /* @__PURE__ */ jsx112("span", { className: "rounded-full bg-muted px-2 py-0.5 text-[10px] text-muted-foreground", children: issue.area }) }),
+        /* @__PURE__ */ jsxs100("div", { className: "mt-2 flex items-center gap-3 text-[11px] text-muted-foreground", children: [
+          /* @__PURE__ */ jsxs100("button", { onClick: (e) => {
+            e.stopPropagation();
+            onVote();
+          }, className: cn("flex items-center gap-1 hover:text-foreground", issue.votedByMe && "text-primary"), children: [
+            /* @__PURE__ */ jsx112(ChevronUp5, { className: "h-3.5 w-3.5" }),
+            issue.voteCount || 0
+          ] }),
+          /* @__PURE__ */ jsxs100("span", { className: "flex items-center gap-1", children: [
+            /* @__PURE__ */ jsx112(MessageSquare, { className: "h-3.5 w-3.5" }),
+            c.comments || 0
+          ] }),
+          !!c.attachments && /* @__PURE__ */ jsxs100("span", { className: "flex items-center gap-1", children: [
+            /* @__PURE__ */ jsx112(Paperclip3, { className: "h-3.5 w-3.5" }),
+            c.attachments
+          ] }),
+          /* @__PURE__ */ jsx112("span", { className: "ms-auto flex items-center gap-1.5", children: issue.assignee ? /* @__PURE__ */ jsx112("span", { title: issue.assignee.name, className: "grid h-5 w-5 place-items-center rounded-full bg-primary/20 text-[10px] font-semibold text-primary", children: initials2(issue.assignee.name) }) : /* @__PURE__ */ jsx112("span", { className: "italic text-muted-foreground/60", children: unassignedLabel }) })
+        ] }),
+        /* @__PURE__ */ jsx112("div", { className: "mt-2", onClick: (e) => e.stopPropagation(), children: /* @__PURE__ */ jsx112(NativeSelect, { value: issue.status, onChange: (e) => onStatus(e.target.value), className: "h-8 text-xs", children: STATUS_COLUMNS.map((s) => /* @__PURE__ */ jsx112("option", { value: s.key, children: statusLabel(s.key, language) }, s.key)) }) })
+      ]
+    }
+  );
 }
 
 // src/components/issues/IssueDrawer.tsx

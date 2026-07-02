@@ -61,6 +61,17 @@ export function IssueBoard({
   const [q, setQ] = React.useState("");
   const [assignee, setAssignee] = React.useState("");
   const [reporter, setReporter] = React.useState("");
+  // drag-and-drop: dragId is the issue being dragged; overCol highlights the drop target
+  const [dragId, setDragId] = React.useState<string | null>(null);
+  const [overCol, setOverCol] = React.useState<IssueStatus | null>(null);
+  const drop = (col: IssueStatus) => {
+    if (dragId) {
+      const it = issues.find((i) => i.id === dragId);
+      if (it && it.status !== col) onStatusChange?.(dragId, col);
+    }
+    setDragId(null);
+    setOverCol(null);
+  };
 
   const filtered = React.useMemo(() => {
     const ql = q.trim().toLowerCase();
@@ -100,16 +111,25 @@ export function IssueBoard({
         {STATUS_COLUMNS.map((col) => {
           const items = byStatus(col.key);
           return (
-            <div key={col.key} className="flex w-[280px] shrink-0 flex-col rounded-xl border border-border bg-muted/30">
+            <div key={col.key}
+              onDragOver={(e) => { e.preventDefault(); if (overCol !== col.key) setOverCol(col.key); }}
+              onDragLeave={(e) => { if (!e.currentTarget.contains(e.relatedTarget as Node)) setOverCol((c) => (c === col.key ? null : c)); }}
+              onDrop={(e) => { e.preventDefault(); drop(col.key); }}
+              className={cn(
+                "flex w-[280px] shrink-0 flex-col rounded-xl border bg-muted/30 transition-colors",
+                overCol === col.key ? "border-primary bg-primary/5" : "border-border",
+              )}>
               <div className="flex items-center justify-between px-3 py-2.5">
                 <span className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">{statusLabel(col.key, language)}</span>
                 <span className="text-xs text-muted-foreground/60">{items.length}</span>
               </div>
               <div className="flex-1 space-y-2 px-2 pb-2">
                 {items.length === 0 ? (
-                  <p className="px-2 py-6 text-center text-xs text-muted-foreground/50">{t.empty}</p>
+                  <p className="px-2 py-6 text-center text-xs text-muted-foreground/50">{overCol === col.key ? "" : t.empty}</p>
                 ) : items.map((i) => (
                   <IssueCard key={i.id} issue={i} language={language} unassignedLabel={t.unassigned}
+                    dragging={dragId === i.id}
+                    onDragStart={() => setDragId(i.id)} onDragEnd={() => { setDragId(null); setOverCol(null); }}
                     onOpen={() => onSelectIssue?.(i.id)} onVote={() => onVote?.(i.id)}
                     onStatus={(s) => onStatusChange?.(i.id, s)} />
                 ))}
@@ -122,13 +142,21 @@ export function IssueBoard({
   );
 }
 
-function IssueCard({ issue, language, unassignedLabel, onOpen, onVote, onStatus }: {
-  issue: Issue; language: Language; unassignedLabel: string;
+function IssueCard({ issue, language, unassignedLabel, dragging, onDragStart, onDragEnd, onOpen, onVote, onStatus }: {
+  issue: Issue; language: Language; unassignedLabel: string; dragging?: boolean;
+  onDragStart: () => void; onDragEnd: () => void;
   onOpen: () => void; onVote: () => void; onStatus: (s: IssueStatus) => void;
 }) {
   const c = issue.counts || {};
   return (
-    <div onClick={onOpen} className="cursor-pointer rounded-lg border border-border bg-background p-2.5 transition-colors hover:border-primary/60">
+    <div onClick={onOpen}
+      draggable
+      onDragStart={(e) => { e.dataTransfer.effectAllowed = "move"; e.dataTransfer.setData("text/plain", issue.id); onDragStart(); }}
+      onDragEnd={onDragEnd}
+      className={cn(
+        "cursor-grab rounded-lg border border-border bg-background p-2.5 transition-colors hover:border-primary/60 active:cursor-grabbing",
+        dragging && "opacity-40",
+      )}>
       <div className="mb-1.5 flex items-center gap-1.5">
         <span className="text-[11px] text-muted-foreground">#{issue.number}</span>
         <StatusBadge tone={PRIORITY_TONE[issue.priority]}>{priorityLabel(issue.priority, language)}</StatusBadge>
