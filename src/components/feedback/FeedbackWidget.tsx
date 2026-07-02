@@ -305,9 +305,12 @@ function DraggableFab({ draggable, storageKey, label, title, onOpen }: {
   const KEY = "feedback-fab:" + storageKey;
   const ref = React.useRef<HTMLButtonElement>(null);
   const [pos, setPos] = React.useState<{ left: number; top: number } | null>(null);
+  // posRef mirrors pos synchronously so pointerup persists the latest value (React
+  // state in the handler closure is stale during a same-tick drag).
+  const posRef = React.useRef<{ left: number; top: number } | null>(null);
   React.useEffect(() => {
     if (!draggable) return;
-    try { const p = JSON.parse(localStorage.getItem(KEY) || "null"); if (p) setPos(p); } catch { /* ignore */ }
+    try { const p = JSON.parse(localStorage.getItem(KEY) || "null"); if (p) { posRef.current = p; setPos(p); } } catch { /* ignore */ }
   }, [KEY, draggable]);
   const down = React.useRef<{ x: number; y: number; l: number; t: number } | null>(null);
   const moved = React.useRef(false);
@@ -325,11 +328,12 @@ function DraggableFab({ draggable, storageKey, label, title, onOpen }: {
       const el = ref.current!;
       const left = Math.min(Math.max(4, down.current.l + dx), window.innerWidth - el.offsetWidth - 4);
       const top = Math.min(Math.max(4, down.current.t + dy), window.innerHeight - el.offsetHeight - 4);
-      setPos({ left, top });
+      posRef.current = { left, top };
+      setPos(posRef.current);
     }
   };
   const onPointerUp = () => {
-    if (down.current && moved.current) { try { localStorage.setItem(KEY, JSON.stringify(pos)); } catch { /* ignore */ } }
+    if (down.current && moved.current) { try { localStorage.setItem(KEY, JSON.stringify(posRef.current)); } catch { /* ignore */ } }
     else if (down.current && !moved.current) onOpen();
     down.current = null;
   };

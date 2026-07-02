@@ -13099,11 +13099,15 @@ function DraggableFab({ draggable, storageKey, label, title, onOpen }) {
   const KEY = "feedback-fab:" + storageKey;
   const ref = React20.useRef(null);
   const [pos, setPos] = React20.useState(null);
+  const posRef = React20.useRef(null);
   React20.useEffect(() => {
     if (!draggable) return;
     try {
       const p = JSON.parse(localStorage.getItem(KEY) || "null");
-      if (p) setPos(p);
+      if (p) {
+        posRef.current = p;
+        setPos(p);
+      }
     } catch {
     }
   }, [KEY, draggable]);
@@ -13124,13 +13128,14 @@ function DraggableFab({ draggable, storageKey, label, title, onOpen }) {
       const el = ref.current;
       const left = Math.min(Math.max(4, down.current.l + dx), window.innerWidth - el.offsetWidth - 4);
       const top = Math.min(Math.max(4, down.current.t + dy), window.innerHeight - el.offsetHeight - 4);
-      setPos({ left, top });
+      posRef.current = { left, top };
+      setPos(posRef.current);
     }
   };
   const onPointerUp = () => {
     if (down.current && moved.current) {
       try {
-        localStorage.setItem(KEY, JSON.stringify(pos));
+        localStorage.setItem(KEY, JSON.stringify(posRef.current));
       } catch {
       }
     } else if (down.current && !moved.current) onOpen();
