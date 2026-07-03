@@ -136,3 +136,6 @@ export * from "./components/issues";
 // canonical; the Sentry error-tracking Issue is re-exported as ErrorIssue.
 export type { Issue } from "./components/issues";
 export type { Issue as ErrorIssue } from "./components/errors";
+
+// ── providers (capability backend switcher) ──
+export * from "./components/providers";

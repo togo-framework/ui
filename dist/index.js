@@ -17919,6 +17919,48 @@ function IssueDrawer({
     ] })
   ] }) }) });
 }
+
+// src/components/providers/ProviderPanel.tsx
+import { jsx as jsx114, jsxs as jsxs102 } from "react/jsx-runtime";
+var LABEL = {
+  impl: { en: "Implementation", ar: "\u0627\u0644\u062A\u0646\u0641\u064A\u0630" },
+  exec: { en: "Execution", ar: "\u0628\u064A\u0626\u0629 \u0627\u0644\u062A\u0634\u063A\u064A\u0644" },
+  compute: { en: "Compute", ar: "\u0627\u0644\u062D\u0648\u0633\u0628\u0629" },
+  data: { en: "Data", ar: "\u0627\u0644\u0628\u064A\u0627\u0646\u0627\u062A" },
+  queue: { en: "Queue", ar: "\u0627\u0644\u0637\u0627\u0628\u0648\u0631" },
+  catalog: { en: "Catalog", ar: "\u0627\u0644\u0641\u0647\u0631\u0633" },
+  share: { en: "Sharing", ar: "\u0627\u0644\u0645\u0634\u0627\u0631\u0643\u0629" },
+  storage: { en: "Storage", ar: "\u0627\u0644\u062A\u062E\u0632\u064A\u0646" },
+  cache: { en: "Cache", ar: "\u0627\u0644\u062A\u062E\u0632\u064A\u0646 \u0627\u0644\u0645\u0624\u0642\u062A" },
+  realtime: { en: "Realtime", ar: "\u0627\u0644\u0648\u0642\u062A \u0627\u0644\u0641\u0639\u0644\u064A" }
+};
+function ProviderPanel({ capabilities, language = "en", onSelect, className }) {
+  const ar = language === "ar";
+  const t2 = {
+    title: ar ? "\u0627\u0644\u0645\u0632\u0648\u0651\u062F\u0648\u0646" : "Providers",
+    subtitle: ar ? "\u0627\u0644\u0648\u0627\u062C\u0647\u0629 \u0627\u0644\u062E\u0644\u0641\u064A\u0629 \u0627\u0644\u0645\u062E\u062A\u0627\u0631\u0629 \u0644\u0643\u0644 \u0642\u062F\u0631\u0629" : "Selected backend per capability",
+    def: ar ? "\u0627\u0641\u062A\u0631\u0627\u0636\u064A" : "default"
+  };
+  return /* @__PURE__ */ jsxs102("div", { dir: ar ? "rtl" : "ltr", className: cn("rounded-xl border border-border bg-card p-4", className), children: [
+    /* @__PURE__ */ jsxs102("div", { className: "mb-3", children: [
+      /* @__PURE__ */ jsx114("h3", { className: "text-sm font-semibold text-foreground", children: t2.title }),
+      /* @__PURE__ */ jsx114("p", { className: "text-xs text-muted-foreground", children: t2.subtitle })
+    ] }),
+    /* @__PURE__ */ jsx114("div", { className: "space-y-2", children: capabilities.map((c) => {
+      const label = LABEL[c.capability]?.[ar ? "ar" : "en"] ?? c.capability;
+      return /* @__PURE__ */ jsxs102("div", { className: "flex items-center gap-3 rounded-lg border border-border px-3 py-2", children: [
+        /* @__PURE__ */ jsxs102("div", { className: "min-w-0 flex-1", children: [
+          /* @__PURE__ */ jsxs102("div", { className: "flex items-center gap-2", children: [
+            /* @__PURE__ */ jsx114("span", { className: "text-sm font-medium text-foreground", children: label }),
+            c.isDefault && /* @__PURE__ */ jsx114(StatusBadge, { tone: "neutral", children: t2.def })
+          ] }),
+          /* @__PURE__ */ jsx114("span", { className: "font-mono text-[11px] text-muted-foreground", children: c.capability })
+        ] }),
+        /* @__PURE__ */ jsx114(NativeSelect, { value: c.active, onChange: (e) => onSelect?.(c.capability, e.target.value), className: "w-auto min-w-[140px]", children: c.options.map((o) => /* @__PURE__ */ jsx114("option", { value: o, children: o }, o)) })
+      ] }, c.capability);
+    }) })
+  ] });
+}
 export {
   ALL_PRIORITIES,
   ATTACHMENT_ACCEPT,
@@ -18201,6 +18243,7 @@ export {
   PopoverTrigger,
   ProfileView,
   Progress,
+  ProviderPanel,
   RadioGroup,
   RadioGroupItem,
   ResetForm_default as ResetForm,
