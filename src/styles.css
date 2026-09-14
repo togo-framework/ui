@@ -412,93 +412,119 @@
 :where(.tg-md, .tg-code) .hljs-strong { font-weight: 700; }
 
 /* ════════════════════════════════════════════════════════════════════════════
- * ToGO BRAND REMAP — re-point the inherited (prism) HSL tokens onto the ToGO
- * palette so the entire kit + every app re-skins to the brand. Appended last so
- * it wins by cascade without editing the blocks above. [data-theme] selectors are
- * added alongside .dark so ThemeProvider can drive these tokens too.
- * HSL triples here are the ToGO hex palette converted for the hsl(var(--x)) system.
+ * ToGO BRAND × THE GRID — re-point the inherited (prism) HSL tokens onto the ToGO
+ * palette (https://to-go.dev/en/brand) laid out as fadymondy.com's grid: paper and
+ * ink grounds, hairline lines, square surfaces, 6px controls, no shadows, blur or
+ * gradients, colour-only motion. Appended last so it wins by cascade. [data-theme]
+ * selectors sit alongside .dark so ThemeProvider drives these tokens too.
+ * HSL triples are the hex palette in tokens.primitive.css for the hsl(var(--x)) contract.
+ * An app that must keep its own chrome can opt out with <html data-grid="off">.
  * ════════════════════════════════════════════════════════════════════════════ */
 
-/* Light (default + explicit) — accent = Cobalt, focus = Stack Sky, surfaces = Mist */
+/* Light — the paper ground, navy text, teal action */
 :root,
 [data-theme="light"] {
-  --background: 195 21% 96%;          /* Mist  #F4F7F8 */
-  --background-medium: 200 16% 92%;
-  --foreground: 200 18% 10%;          /* Ink   #141A1D */
-  --card: 0 0% 100%;
-  --card-foreground: 200 18% 10%;
-  --popover: 0 0% 100%;
-  --popover-foreground: 200 18% 10%;
-  --primary: 217 80% 44%;             /* Cobalt #1659C8 */
-  --primary-foreground: 0 0% 100%;
-  --secondary: 200 16% 93%;
-  --secondary-foreground: 200 18% 12%;
-  --muted: 200 16% 93%;
-  --muted-foreground: 198 12% 40%;    /* Slate #5A6B72 */
-  --accent: 200 18% 90%;
-  --accent-foreground: 200 18% 12%;
-  --border: 200 14% 88%;              /* Line  #E8EDEF */
-  --input: 200 14% 88%;
-  --ring: 209 79% 54%;                /* Stack Sky #2D8CE6 */
-  --brand-primary: 217 80% 44%;
-  --brand-primary-glow: 209 79% 54%;
-  --ai-glow: 217 80% 44%;
-  --ai-pulse: 187 75% 49%;
-  --sidebar-background: 0 0% 100%;
-  --sidebar-foreground: 198 12% 40%;
-  --sidebar-primary: 217 80% 44%;
-  --sidebar-primary-foreground: 0 0% 100%;
-  --sidebar-accent: 200 18% 95%;
-  --sidebar-accent-foreground: 200 18% 12%;
-  --sidebar-border: 200 14% 90%;
-  --sidebar-ring: 209 79% 54%;
-  --success: 157 67% 37%;             /* #1F9D6B */
-  --warning: 40 80% 49%;              /* #E0A11B */
-  --destructive: 353 62% 59%;         /* Danger #D85563 */
-  --info: 209 79% 54%;
+  --background: 40 33.3% 91.2%;         /* paper       #F0EBE1 */
+  --background-medium: 40 33.3% 89.4%;  /* soft        #EDE7DB */
+  --foreground: 224 62.2% 14.5%;        /* navy        #0E1A3C */
+  --card: 44 40.7% 94.7%;               /* card        #F7F4EC */
+  --card-foreground: 224 62.2% 14.5%;
+  --popover: 43 41.2% 96.7%;            /* elevated    #FAF8F3 */
+  --popover-foreground: 224 62.2% 14.5%;
+  --primary: 187 66.3% 36.1%;           /* teal        #1F8A99 */
+  --primary-foreground: 40 33.3% 91.2%;
+  --secondary: 40 33.3% 89.4%;
+  --secondary-foreground: 224 62.2% 14.5%;
+  --muted: 40 33.3% 89.4%;
+  --muted-foreground: 41 15.2% 37.5%;   /* muted       #6E6551 */
+  --accent: 41 32.4% 86.7%;             /* elevated-soft #E8E1D2 */
+  --accent-foreground: 224 62.2% 14.5%;
+  --border: 39 28.3% 82.0%;             /* line        #DED5C4 */
+  --input: 39 28.3% 82.0%;
+  --ring: 187 66.3% 36.1%;
+  --brand-primary: 187 66.3% 36.1%;
+  --brand-primary-glow: 187 66.3% 36.1%;
+  --ai-glow: 187 66.3% 36.1%;
+  --ai-pulse: 187 66.3% 36.1%;
+  --sidebar-background: 40 33.3% 91.2%;
+  --sidebar-foreground: 40 13.8% 25.5%; /* body        #4A4438 */
+  --sidebar-primary: 187 66.3% 36.1%;
+  --sidebar-primary-foreground: 40 33.3% 91.2%;
+  --sidebar-accent: 40 33.3% 89.4%;
+  --sidebar-accent-foreground: 224 62.2% 14.5%;
+  --sidebar-border: 39 28.3% 82.0%;
+  --sidebar-ring: 187 66.3% 36.1%;
+  --success: 110 42.6% 42.4%;           /* #4E9A3E */
+  --warning: 46 67.5% 47.1%;            /* #C9A227 */
+  --destructive: 349 66.1% 56.1%;       /* #D9455F */
+  --destructive-foreground: 224 62.2% 14.5%;
+  --info: 187 66.3% 36.1%;
+  --radius: 0px;
+
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-xl: none;
+  --shadow-brand: none;
+  --pz-shadow-glow: none;
+  --pz-shadow-glow-intense: none;
+  --landing-gradient-hero: none;
+  --pz-gradient-hero: none;
 }
 
-/* Dark (default-when-.dark + explicit) — accent = Gopher Cyan on Ink */
+/* Dark — the ink ground, paper text, teal action */
 .dark,
 [data-theme="dark"] {
-  --background: 200 20% 7%;           /* near-Ink */
-  --background-medium: 200 16% 11%;
-  --foreground: 200 15% 96%;
-  --card: 200 18% 11%;
-  --card-foreground: 200 15% 96%;
-  --popover: 200 18% 13%;
-  --popover-foreground: 200 15% 96%;
-  --primary: 187 75% 49%;             /* Gopher Cyan #1FC7DC */
-  --primary-foreground: 200 18% 10%;  /* Ink text on cyan */
-  --secondary: 200 14% 17%;
-  --secondary-foreground: 200 15% 96%;
-  --muted: 200 14% 17%;
-  --muted-foreground: 200 11% 68%;    /* Slate-300 */
-  --accent: 200 14% 20%;
-  --accent-foreground: 200 15% 96%;
-  --border: 200 14% 20%;
-  --input: 200 14% 20%;
-  --ring: 187 75% 55%;
-  --brand-primary: 187 75% 49%;
-  --brand-primary-glow: 209 79% 54%;
-  --ai-glow: 187 75% 49%;
-  --ai-pulse: 187 60% 60%;
-  --sidebar-background: 200 20% 9%;
-  --sidebar-foreground: 200 11% 68%;
-  --sidebar-primary: 187 75% 49%;
-  --sidebar-primary-foreground: 200 18% 10%;
-  --sidebar-accent: 200 14% 16%;
-  --sidebar-accent-foreground: 200 15% 96%;
-  --sidebar-border: 200 14% 18%;
-  --sidebar-ring: 187 75% 55%;
-  --success: 157 60% 45%;
-  --warning: 40 80% 55%;
-  --destructive: 353 62% 59%;
-  --info: 209 79% 60%;
+  --background: 222 57.7% 10.2%;        /* ink         #0B1429 */
+  --background-medium: 223 46.4% 19.0%; /* soft        #1A2747 */
+  --foreground: 40 33.3% 91.2%;         /* paper       #F0EBE1 */
+  --card: 224 62.2% 14.5%;              /* card        #0E1A3C */
+  --card-foreground: 40 33.3% 91.2%;
+  --popover: 223 51.0% 19.2%;           /* elevated    #18264A */
+  --popover-foreground: 40 33.3% 91.2%;
+  --primary: 187 66.3% 36.1%;           /* teal        #1F8A99 */
+  --primary-foreground: 40 33.3% 91.2%;
+  --secondary: 223 46.4% 19.0%;
+  --secondary-foreground: 40 33.3% 91.2%;
+  --muted: 223 46.4% 19.0%;
+  --muted-foreground: 223 24.5% 63.1%;  /* muted       #8A97B8 */
+  --accent: 223 41.7% 28.2%;            /* elevated-soft #2A3B66 */
+  --accent-foreground: 40 33.3% 91.2%;
+  --border: 223 42.6% 25.3%;            /* line        #25355C */
+  --input: 223 42.6% 25.3%;
+  --ring: 187 66.3% 36.1%;
+  --brand-primary: 187 66.3% 36.1%;
+  --brand-primary-glow: 187 66.3% 36.1%;
+  --ai-glow: 187 66.3% 36.1%;
+  --ai-pulse: 187 66.3% 36.1%;
+  --sidebar-background: 222 57.7% 10.2%;
+  --sidebar-foreground: 223 34.1% 83.9%; /* body       #C8D0E4 */
+  --sidebar-primary: 187 66.3% 36.1%;
+  --sidebar-primary-foreground: 40 33.3% 91.2%;
+  --sidebar-accent: 223 46.4% 19.0%;
+  --sidebar-accent-foreground: 40 33.3% 91.2%;
+  --sidebar-border: 223 42.6% 25.3%;
+  --sidebar-ring: 187 66.3% 36.1%;
+  --success: 110 42.6% 42.4%;
+  --warning: 46 67.5% 47.1%;
+  --destructive: 349 66.1% 56.1%;
+  --destructive-foreground: 224 62.2% 14.5%;
+  --info: 187 66.3% 36.1%;
+  --radius: 0px;
+
+  --shadow-xs: none;
+  --shadow-sm: none;
+  --shadow-md: none;
+  --shadow-lg: none;
+  --shadow-xl: none;
+  --shadow-brand: none;
+  --pz-shadow-glow: none;
+  --pz-shadow-glow-intense: none;
+  --pz-gradient-hero: none;
 }
 
-/* New ToGO Tailwind aliases for the §2 authoring API (non-conflicting names).
- * The brand accent is also available as `bg-primary` (remapped above). */
+/* ToGO Tailwind aliases + the grid's scales. The brand accent is also `bg-primary`. */
 @theme inline {
   --color-surface: var(--togo-color-surface);
   --color-surface-alt: var(--togo-color-surface-alt);
@@ -506,23 +532,121 @@
   --color-accent-strong: var(--togo-color-accent-strong);
   --color-danger: var(--togo-color-danger);
   --color-warn: var(--togo-color-warn);
+  --color-mark-body: var(--togo-color-mark-body);
   --font-display: var(--togo-font-display);
   --font-mono: var(--togo-font-mono);
   --font-sans: var(--togo-font-body);
+
+  /* Radius by ROLE, not size: controls (rounded-sm / rounded-md) take 6px, surfaces
+     (rounded-lg and up) are square. Floating surfaces get 0.75rem below. */
+  --radius-xs: 2px;
+  --radius-sm: 4px;
+  --radius-md: var(--togo-radius-control);
+  --radius-lg: var(--togo-radius-surface);
+  --radius-xl: var(--togo-radius-surface);
+  --radius-2xl: var(--togo-radius-surface);
+  --radius-3xl: var(--togo-radius-surface);
+  --radius-4xl: var(--togo-radius-surface);
+
+  /* Lusail is served at 300/400/500; nothing is heavier. */
+  --font-weight-semibold: 500;
+  --font-weight-bold: 500;
+  --font-weight-extrabold: 500;
+  --font-weight-black: 500;
+}
+
+/* The glow keyframes above pulse box-shadows; on the grid they pulse colour only. */
+@keyframes breathing { 0%, 100% { opacity: 1 } 50% { opacity: 0.72 } }
+@keyframes pulse-brand { 0%, 100% { opacity: 1 } 50% { opacity: 0.72 } }
+
+/* The grid's hatch band and micro-label, as utilities. */
+@utility tg-hatch {
+  background-image: repeating-linear-gradient(135deg, hsl(var(--border)) 0 1px, transparent 1px 8px);
+}
+@utility tg-micro {
+  font-family: var(--togo-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  &:lang(ar) {
+    font-family: var(--togo-font-body);
+    font-size: 11.5px;
+    letter-spacing: 0;
+    text-transform: none;
+  }
+}
+
+@layer base {
+  b, strong, th, h1, h2, h3, h4, h5, h6 { font-weight: 500; }
+  ::selection { background: color-mix(in oklab, hsl(var(--primary)) 30%, transparent); }
+}
+
+/* ── No shadows, no blur, no gradients, colour-only motion ── */
+html:not([data-grid="off"]) *,
+html:not([data-grid="off"]) *::before,
+html:not([data-grid="off"]) *::after {
+  --tw-shadow: 0 0 #0000 !important;
+  --tw-inset-shadow: 0 0 #0000 !important;
+}
+html:not([data-grid="off"]) [class*="shadow-["] { box-shadow: none !important; }
+html:not([data-grid="off"]) [class*="drop-shadow"] { filter: none !important; }
+html:not([data-grid="off"]) [class*="backdrop-blur"] { -webkit-backdrop-filter: none !important; backdrop-filter: none !important; }
+html:not([data-grid="off"]) [class*="bg-gradient"] { background-image: none !important; }
+html:not([data-grid="off"]) [class*="transition"],
+html:not([data-grid="off"]) [class*="duration-"] {
+  transition-property: color, background-color, border-color, outline-color, text-decoration-color, fill, stroke !important;
+  transition-duration: 150ms !important;
+  transition-timing-function: ease !important;
+}
+html:not([data-grid="off"]) [class*="animate-in"],
+html:not([data-grid="off"]) [class*="animate-out"] { animation: none !important; }
+@media (prefers-reduced-motion: reduce) {
+  html:not([data-grid="off"]) [class*="transition"] { transition: none !important; }
+}
+
+/* ── Floating surfaces: the one place with a radius ── */
+html:not([data-grid="off"]) :is(
+  [role="menu"],
+  [role="listbox"],
+  [role="alertdialog"],
+  [data-radix-popper-content-wrapper] > [role="dialog"],
+  [role="dialog"][data-state].left-\[50\%\]
+) {
+  border-radius: var(--togo-radius-floating);
+}
+/* Modal scrim: the ground itself, not black. */
+html:not([data-grid="off"]) :is(.fixed.inset-0.bg-black\/80[data-state], .bg-black\/60, .bg-black\/50, .bg-black\/40) {
+  background-color: color-mix(in oklab, hsl(var(--background)) 80%, transparent);
+}
+/* Edge sheets are panels, not islands. */
+html:not([data-grid="off"]) [role="dialog"][data-state].inset-y-0 { border-radius: 0; }
+/* Badges are 6px chips; avatars are square cells. */
+html:not([data-grid="off"]) .inline-flex.rounded-full.border.px-2\.5.py-0\.5 { border-radius: var(--togo-radius-control); }
+html:not([data-grid="off"]) :is(.relative.flex.shrink-0.overflow-hidden.rounded-full, .flex.h-full.w-full.items-center.justify-center.rounded-full) { border-radius: 0; }
+/* Sidebar group labels are micro-labels. */
+html:not([data-grid="off"]) [data-sidebar="group-label"] {
+  font-family: var(--togo-font-mono);
+  font-size: 10.5px;
+  font-weight: 500;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+}
+html:not([data-grid="off"]) [data-sidebar="group-label"]:lang(ar) {
+  font-family: var(--togo-font-body);
+  font-size: 11.5px;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
 /* ════════════════════════════════════════════════════════════════════════════
- * ToGO brand fonts — self-hosted (OFL), variable woff2. Latin display/body/mono;
- * Lusail stays the Arabic face. Consumers serve /fonts/** from their public dir
- * (same model as Lusail). Making IBM Plex Sans the default Latin UI font fixes the
- * top-aligned-glyph issue Lusail caused (its tall ascent pushed Latin text up in
- * the line box) — IBM Plex has normal vertical metrics so text centers.
+ * Fonts — Lusail (declared above) for Arabic and Latin, JetBrains Mono for code and
+ * numbers. Self-hosted (OFL); consumers serve /fonts/** from their public dir.
  * ════════════════════════════════════════════════════════════════════════════ */
-@font-face { font-family: "Sora";          src: url("/fonts/sora/sora.woff2") format("woff2");                       font-weight: 100 800; font-style: normal; font-display: swap; }
-@font-face { font-family: "IBM Plex Sans";  src: url("/fonts/ibm-plex-sans/ibm-plex-sans.woff2") format("woff2");     font-weight: 100 700; font-style: normal; font-display: swap; }
-@font-face { font-family: "JetBrains Mono"; src: url("/fonts/jetbrains-mono/jetbrains-mono.woff2") format("woff2");   font-weight: 100 800; font-style: normal; font-display: swap; }
+@font-face { font-family: "JetBrains Mono"; src: url("/fonts/jetbrains-mono/jetbrains-mono.woff2") format("woff2"); font-weight: 100 800; font-style: normal; font-display: swap; }
 
 :root { --tg-font: var(--togo-font-body); }
 .tg-root { font-family: var(--togo-font-body); }
-/* Arabic / RTL renders in the Lusail brand face. */
-[dir="rtl"], :lang(ar) { font-family: "Lusail", var(--togo-font-body); }
+/* Arabic is never letter-spaced. */
+:lang(ar) :where(*), :lang(ar) :where(*)::after { letter-spacing: 0 !important; }

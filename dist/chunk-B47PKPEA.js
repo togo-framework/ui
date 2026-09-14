@@ -6,7 +6,7 @@ import {
   DropdownMenuSeparator,
   DropdownMenuTrigger,
   cn
-} from "./chunk-NRF3KNQX.js";
+} from "./chunk-DCONO6WD.js";
 
 // src/theme/brand.ts
 function isHSL(value) {
@@ -121,8 +121,8 @@ import * as React from "react";
 
 // src/theme/themes.ts
 var themes = [
-  { id: "dark", label: "Dark", base: "dark", accent: "#1FC7DC" },
-  { id: "light", label: "Light", base: "light", accent: "#1659C8" },
+  { id: "dark", label: "Dark", base: "dark", accent: "#1F8A99" },
+  { id: "light", label: "Light", base: "light", accent: "#1F8A99" },
   { id: "purple", label: "Purple", base: "dark", accent: "#9B6DF5" },
   { id: "rose", label: "Rose", base: "dark", accent: "#F5427B" },
   { id: "emerald", label: "Emerald", base: "dark", accent: "#10B981" },
@@ -284,4 +284,4 @@ export {
   useTheme,
   ThemePicker
 };
-//# sourceMappingURL=chunk-7B6OKTGY.js.map
+//# sourceMappingURL=chunk-B47PKPEA.js.map

@@ -2,70 +2,86 @@
 
 import * as React from "react";
 import { cn } from "../../lib/utils";
-import markColor from "../../assets/brand/mark-color.svg";
-import markWhite from "../../assets/brand/mark-white.svg";
-import monoColor from "../../assets/brand/mono-color.svg";
-import monoWhite from "../../assets/brand/mono-white.svg";
 
+/**
+ * The ToGO mark — the six-cube lattice from https://to-go.dev/en/brand.
+ * Cells are [column, row] on a 4×4 lattice; each cube is 21 units on a 100-unit
+ * canvas with 8 units of clear space, exactly as the brand's own SVG draws it.
+ */
+export const TOGO_MARK = {
+  cells: [
+    [0, 1],
+    [1, 0],
+    [1, 2],
+    [2, 1],
+    [2, 3],
+    [3, 2],
+  ],
+  accentCells: [
+    [2, 1],
+    [2, 3],
+    [3, 2],
+  ],
+} as const;
+
+/** `mono` is kept as an alias of `mark`: the brand has one mark and no monogram. */
 export type LogoVariant = "mark" | "mono";
-/** brand = gradient · white = reversed (dark bg) · inherit = currentColor (themes with text). */
-export type LogoTone = "brand" | "white" | "inherit";
+/**
+ * brand    — body follows the ground (navy on paper, paper on ink), teal accent
+ * on-light — navy body, teal accent
+ * on-dark  — paper body, teal accent (`white` is an alias)
+ * knockout — every cube paper, for the mark on a teal ground
+ * inherit  — every cube currentColor, to theme with surrounding text
+ */
+export type LogoTone = "brand" | "on-light" | "on-dark" | "white" | "knockout" | "inherit";
 
-const ASSET: Record<LogoVariant, { color: string; white: string; ratio: number }> = {
-  mark: { color: markColor, white: markWhite, ratio: 507 / 618 },   // tall mascot mark
-  mono: { color: monoColor, white: monoWhite, ratio: 507 / 398.6 }, // wide monogram
+const COLOURS: Record<Exclude<LogoTone, "white">, { body: string; accent: string }> = {
+  brand: { body: "var(--togo-color-mark-body, #0E1A3C)", accent: "var(--togo-teal, #1F8A99)" },
+  "on-light": { body: "var(--togo-navy, #0E1A3C)", accent: "var(--togo-teal, #1F8A99)" },
+  "on-dark": { body: "var(--togo-paper, #F0EBE1)", accent: "var(--togo-teal, #1F8A99)" },
+  knockout: { body: "var(--togo-paper, #F0EBE1)", accent: "var(--togo-paper, #F0EBE1)" },
+  inherit: { body: "currentColor", accent: "currentColor" },
 };
 
-export interface LogoProps extends Omit<React.HTMLAttributes<HTMLElement>, "color"> {
+export interface LogoProps extends Omit<React.SVGProps<SVGSVGElement>, "color"> {
   variant?: LogoVariant;
   tone?: LogoTone;
-  /** Rendered height in px; width derives from the mark's aspect ratio. */
+  /** Rendered size in px — the mark is square. */
   size?: number;
   title?: string;
 }
 
-/** ToGO Logo — the mascot mark or the monogram. `tone="inherit"` masks the shape
- * with currentColor so it themes with the surrounding text color. */
-export function Logo({ variant = "mark", tone = "brand", size = 32, title = "ToGO", className, style, ...props }: LogoProps) {
-  const a = ASSET[variant];
-  const width = Math.round(size * a.ratio);
-
-  if (tone === "inherit") {
-    return (
-      <span
-        role="img"
-        aria-label={title}
-        className={cn("inline-block shrink-0", className)}
-        style={{
-          width,
-          height: size,
-          backgroundColor: "currentColor",
-          WebkitMaskImage: `url(${a.white})`,
-          maskImage: `url(${a.white})`,
-          WebkitMaskRepeat: "no-repeat",
-          maskRepeat: "no-repeat",
-          WebkitMaskSize: "contain",
-          maskSize: "contain",
-          WebkitMaskPosition: "center",
-          maskPosition: "center",
-          ...style,
-        }}
-        {...props}
-      />
-    );
-  }
-
+/** ToGO Logo — the mark alone. The brand never locks it up with the wordmark; give it at
+ * least one cube of clear space on every side. */
+export function Logo({ variant: _variant, tone = "brand", size = 32, title = "ToGO", className, style, ...props }: LogoProps) {
+  const c = COLOURS[tone === "white" ? "on-dark" : tone];
   return (
-    // eslint-disable-next-line @next/next/no-img-element
-    <img
-      src={tone === "white" ? a.white : a.color}
-      alt={title}
-      width={width}
+    <svg
+      viewBox="0 0 100 100"
+      width={size}
       height={size}
+      role="img"
+      aria-label={title}
+      shapeRendering="crispEdges"
       className={cn("inline-block shrink-0", className)}
       style={style}
-      {...(props as React.ImgHTMLAttributes<HTMLImageElement>)}
-    />
+      {...props}
+    >
+      <title>{title}</title>
+      {TOGO_MARK.cells.map(([col, row]) => {
+        const accent = TOGO_MARK.accentCells.some(([ac, ar]) => ac === col && ar === row);
+        return (
+          <rect
+            key={`${col}-${row}`}
+            x={8 + col * 21}
+            y={8 + row * 21}
+            width={21}
+            height={21}
+            fill={accent ? c.accent : c.body}
+          />
+        );
+      })}
+    </svg>
   );
 }
 Logo.displayName = "Logo";

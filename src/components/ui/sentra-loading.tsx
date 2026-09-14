@@ -89,7 +89,7 @@ const SentraLoading = ({
           <Icon className="relative h-10 w-10 text-primary animate-pulse" aria-hidden />
         ) : (
           <span className="relative text-primary animate-pulse" aria-hidden>
-            <Logo variant="mono" tone="inherit" size={38} />
+            <Logo tone="inherit" size={38} />
           </span>
         )}
       </div>

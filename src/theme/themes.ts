@@ -14,8 +14,8 @@ export interface ThemeDef {
 }
 
 export const themes: ThemeDef[] = [
-  { id: "dark",    label: "Dark",    base: "dark",  accent: "#1FC7DC" },
-  { id: "light",   label: "Light",   base: "light", accent: "#1659C8" },
+  { id: "dark",    label: "Dark",    base: "dark",  accent: "#1F8A99" },
+  { id: "light",   label: "Light",   base: "light", accent: "#1F8A99" },
   { id: "purple",  label: "Purple",  base: "dark",  accent: "#9B6DF5" },
   { id: "rose",    label: "Rose",    base: "dark",  accent: "#F5427B" },
   { id: "emerald", label: "Emerald", base: "dark",  accent: "#10B981" },

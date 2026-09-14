@@ -30,7 +30,7 @@ function Sample({ label }: { label: string }) {
         <Button variant="outline">Outline</Button>
         <Button variant="ghost">Ghost</Button>
       </div>
-      <div className="h-14 rounded-lg" style={{ background: "var(--togo-flow)" }} />
+      <div className="tg-hatch h-14 border border-border" />
     </Card>
   );
 }

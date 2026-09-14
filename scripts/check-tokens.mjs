@@ -13,8 +13,9 @@
  */
 import { readFileSync, readdirSync, statSync } from "node:fs";
 import { join } from "node:path";
+import { fileURLToPath } from "node:url";
 
-const ROOT = new URL("../src", import.meta.url).pathname;
+const ROOT = fileURLToPath(new URL("../src", import.meta.url));
 const RE = /\b(?:bg|text|border|ring|fill|stroke|from|to|via|decoration|outline|shadow|caret|accent|divide)-\[#[0-9A-Fa-f]{3,8}\]/g;
 
 function walk(dir, out = []) {
